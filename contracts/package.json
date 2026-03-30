@@ -1,0 +1,19 @@
+{
+  "name": "acredia-contracts",
+  "scripts": {
+    "compile": "npx hardhat compile",
+    "deploy:mantle-sepolia": "npx hardhat run scripts/deploy.js --network mantleSepolia",
+    "deploy:mantle-mainnet": "npx hardhat run scripts/deploy.js --network mantleMainnet",
+    "verify": "npx hardhat verify"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-ethers": "^3.0.5",
+    "@nomicfoundation/hardhat-verify": "^2.0.3",
+    "dotenv": "^16.3.1",
+    "ethers": "^6.9.0",
+    "hardhat": "^2.19.1"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "4.9.6"
+  }
+}
