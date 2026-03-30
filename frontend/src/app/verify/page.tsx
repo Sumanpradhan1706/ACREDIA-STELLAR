@@ -822,7 +822,7 @@ function VerifyContent() {
                                 <div className="flex items-center justify-between mb-2">
                                     <p className="text-sm font-semibold text-gray-700">Transaction Hash</p>
                                     <Badge variant="outline" className="text-xs">
-                                        Mantle Sepolia
+                                        Stellar Testnet
                                     </Badge>
                                 </div>
                                 <div className="flex items-center space-x-2 bg-gray-50 p-4 rounded-lg border border-gray-200">
@@ -836,7 +836,7 @@ function VerifyContent() {
                                         asChild
                                     >
                                         <a
-                                            href={`https://sepolia.mantlescan.xyz/tx/${credential.blockchain_hash}`}
+                                            href={`https://stellar.expert/explorer/testnet/tx/${credential.blockchain_hash}`}
                                             target="_blank"
                                             rel="noopener noreferrer"
                                         >
@@ -880,7 +880,7 @@ function VerifyContent() {
                                 <p className="text-sm text-gray-700 flex items-start">
                                     <Shield className="h-5 w-5 text-blue-600 mr-2 mt-0.5 shrink-0" />
                                     <span>
-                                        <strong>Blockchain Security:</strong> This credential is permanently recorded on the Mantle Sepolia blockchain
+                                        <strong>Blockchain Security:</strong> This credential is permanently recorded on the Stellar testnet blockchain
                                         and stored on IPFS, ensuring it cannot be altered, forged, or tampered with.
                                     </span>
                                 </p>

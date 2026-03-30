@@ -13,7 +13,7 @@ import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { useActiveAccount } from 'thirdweb/react';
 import { ConnectButton } from 'thirdweb/react';
-import { client, mantleSepolia } from '@/lib/thirdweb';
+import { client, stellarTestnet } from '@/lib/thirdweb';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
 
@@ -117,7 +117,7 @@ function DashboardContent() {
                         <div className="flex items-center space-x-4">
                             <ConnectButton
                                 client={client}
-                                chain={mantleSepolia}
+                                chain={stellarTestnet}
                                 appMetadata={{
                                     name: 'Acredia',
                                     url: 'https://acredia.app',

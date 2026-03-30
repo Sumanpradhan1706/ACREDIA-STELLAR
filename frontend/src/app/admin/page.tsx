@@ -12,7 +12,7 @@ import { useState, useEffect } from 'react';
 import { useActiveAccount } from 'thirdweb/react';
 import { ConnectButton } from 'thirdweb/react';
 import { getContract, readContract } from 'thirdweb';
-import { client, mantleSepolia } from '@/lib/thirdweb';
+import { client, stellarTestnet } from '@/lib/thirdweb';
 import { toast } from 'sonner';
 
 const CREDENTIAL_NFT_ABI = [
@@ -51,7 +51,7 @@ function AdminDashboardContent() {
 
     const contract = getContract({
         client,
-        chain: mantleSepolia,
+        chain: stellarTestnet,
         address: process.env.NEXT_PUBLIC_CREDENTIAL_NFT_CONTRACT!,
         abi: CREDENTIAL_NFT_ABI,
     });
@@ -159,7 +159,7 @@ function AdminDashboardContent() {
                     <div className="flex justify-center">
                         <ConnectButton
                             client={client}
-                            chain={mantleSepolia}
+                            chain={stellarTestnet}
                             appMetadata={{
                                 name: 'Acredia Admin',
                                 url: 'https://acredia.app',
@@ -216,7 +216,7 @@ function AdminDashboardContent() {
                         <div className="flex justify-center">
                             <ConnectButton
                                 client={client}
-                                chain={mantleSepolia}
+                                chain={stellarTestnet}
                                 appMetadata={{
                                     name: 'Acredia Admin',
                                     url: 'https://acredia.app',
@@ -277,7 +277,7 @@ function AdminDashboardContent() {
                         <div className="flex items-center space-x-4">
                             <ConnectButton
                                 client={client}
-                                chain={mantleSepolia}
+                                chain={stellarTestnet}
                                 appMetadata={{
                                     name: 'Acredia Admin',
                                     url: 'https://acredia.app',

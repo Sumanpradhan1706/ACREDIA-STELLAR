@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useActiveAccount } from 'thirdweb/react';
 import { getContract, prepareContractCall, sendTransaction, waitForReceipt, readContract } from 'thirdweb';
-import { client, mantleSepolia } from '@/lib/thirdweb';
+import { client, stellarTestnet } from '@/lib/thirdweb';
 import { toast } from 'sonner';
 import { Shield, CheckCircle2 } from 'lucide-react';
 
@@ -45,7 +45,7 @@ export function AuthorizeIssuer() {
 
     const contract = getContract({
         client,
-        chain: mantleSepolia,
+        chain: stellarTestnet,
         address: process.env.NEXT_PUBLIC_CREDENTIAL_NFT_CONTRACT!,
         abi: CREDENTIAL_NFT_ABI,
     });
@@ -136,7 +136,7 @@ export function AuthorizeIssuer() {
 
             await waitForReceipt({
                 client,
-                chain: mantleSepolia,
+                chain: stellarTestnet,
                 transactionHash: result.transactionHash,
             });
 

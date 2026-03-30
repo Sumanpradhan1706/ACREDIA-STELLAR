@@ -5,22 +5,22 @@
   
   ### Blockchain-Based Academic Credential Verification System
   
-  *Secure, Transparent, and Tamper-Proof Educational Credentials on Mantle Network*
+  *Secure, Transparent, and Tamper-Proof Educational Credentials on Stellar Network*
 
 ![Next.js](https://img.shields.io/badge/Next.js_15-000000?style=for-the-badge&logo=next.js)
 ![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript)
-![Solidity](https://img.shields.io/badge/Solidity-393939?style=for-the-badge&logo=ethereum)
-![Mantle](https://img.shields.io/badge/Mantle_Network-000000?style=for-the-badge)
+![Soroban](https://img.shields.io/badge/Soroban-393939?style=for-the-badge&logo=stellar)
+![Stellar](https://img.shields.io/badge/Stellar_Network-05192E?style=for-the-badge)
 ![Supabase](https://img.shields.io/badge/Supabase-3ECF8E?style=for-the-badge&logo=supabase)
 ![IPFS](https://img.shields.io/badge/IPFS-65C2CB?style=for-the-badge&logo=ipfs)
 
 ---
 
-### 🎯 Built on Mantle Network Layer 2
+### 🎯 Built on Stellar Network
 
-**Ultra-low gas fees** • **Lightning-fast transactions** • **Ethereum security** • **EVM compatible**
+**Cost-effective transactions** • **Fast settlement** • **Decentralized infrastructure** • **Native Soroban contracts**
 
-[🌐 Mantle Network](https://mantle.xyz) | [📊 MantleScan Explorer](https://sepolia.mantlescan.xyz) | [💧 Get Test MNT](https://faucet.sepolia.mantle.xyz)
+[🌐 Stellar Network](https://stellar.org) | [📊 Stellar Expert Explorer](https://stellar.expert) | [💧 Get Test XLM](https://laboratory.stellar.org/)
 
 </div>
 
@@ -29,7 +29,7 @@
 ## 📑 Table of Contents
 
 - [Overview](#-overview)
-- [Why Mantle Network](#-why-mantle-network)
+- [Why Stellar Network](#-why-stellar-network)
 - [The Problem](#-the-problem)
 - [Our Solution](#-our-solution)
 - [Screenshots](#-screenshots)
@@ -48,7 +48,7 @@
 
 ## 🌟 Overview
 
-**Acredia** is a revolutionary decentralized platform that transforms how academic credentials are issued, stored, and verified. Built on **Mantle Network**, a high-performance Layer 2 blockchain, Acredia leverages cutting-edge blockchain technology, IPFS, and modern web technologies to eliminate credential fraud, reduce verification time, and provide lifetime access to verified academic records.
+**Acredia** is a revolutionary decentralized platform that transforms how academic credentials are issued, stored, and verified. Built on **Stellar Network**, a decentralized network focused on financial inclusivity and fast, low-cost transfers, Acredia leverages blockchain technology, IPFS, and modern web technologies to eliminate credential fraud, reduce verification time, and provide lifetime access to verified academic records.
 
 ### Why Acredia?
 
@@ -70,48 +70,51 @@ Acredia solves these problems by creating **immutable, blockchain-verified crede
 
 ---
 
-## 🚀 Why Mantle Network?
+## 🚀 Why Stellar Network?
 
-Acredia is built on **Mantle Network**, an Ethereum Layer 2 scaling solution that offers significant advantages:
+Acredia is built on **Stellar Network**, a decentralized network focused on providing financial inclusion and fast, low-cost transfers of assets globally:
 
 ### Key Benefits
 
-**💰 Ultra-Low Transaction Costs**
+**💰 Cost-Effective Transactions**
 
-- Drastically reduced gas fees compared to Ethereum mainnet
-- Makes credential issuance affordable for educational institutions
-- Students can claim credentials without worrying about high costs
+- Minimal transaction fees (less than a cent)
+- Makes credential issuance affordable for educational institutions worldwide
+- Students can claim credentials without significant costs
 
-**⚡ High Performance**
+**⚡ Fast Settlement**
 
-- Fast transaction finality (typically under 2 seconds)
+- Transaction finality in 3-5 seconds
 - Instant credential verification
 - Improved user experience with near-instant confirmations
 
-**🔒 Ethereum Security**
+**🌍 Global Reach & Accessibility**
 
-- Inherits Ethereum's security through Layer 2 architecture
-- Modular design with optimistic rollups
-- Battle-tested smart contract standards (OpenZeppelin)
+- Designed for global financial inclusion
+- Works on low-bandwidth connections
+- Accessible from anywhere in the world
 
-**🌍 EVM Compatibility**
+**🔒 Decentralized Infrastructure**
 
-- Full compatibility with Ethereum tooling and infrastructure
-- Seamless integration with MetaMask and other Web3 wallets
-- Easy migration and deployment of Solidity contracts
+- No single point of failure
+- Community-run validator network
+- Battle-tested since 2014
 
-**♻️ Eco-Friendly**
+**♻️ Energy Efficient**
 
-- Significantly lower energy consumption than Layer 1 solutions
-- Supports sustainable blockchain applications
-- Reduced carbon footprint for credential management
+- Minimal energy consumption
+- Uses consensus algorithm designed for efficiency
+- Supports sustainable applications
 
 ### Network Details
 
-- **Mantle Sepolia Testnet**: Chain ID 5003
-- **Mantle Mainnet**: Chain ID 5000
-- **Block Explorer**: [MantleScan](https://mantlescan.xyz)
-- **RPC Endpoints**: High-availability infrastructure for reliable connections
+- **Stellar Public Network**: Production network (Network ID: Public Global Stellar Network)
+- **Stellar Testnet**: Testing environment with test XLM faucet
+- **Block Explorer**: [Stellar Expert](https://stellar.expert)
+- **RPC/API Endpoints**: Horizon API for reliable connections
+- **Native Currency**: XLM (Lumens)
+
+**Smart Contracts**: Soroban - Stellar's smart contract platform built on Rust
 
 ---
 
@@ -129,21 +132,21 @@ The current academic credential system faces critical challenges:
 
 ## 💡 Our Solution
 
-Acredia creates a **three-layer verification system** powered by Mantle Network:
+Acredia creates a **three-layer verification system** powered by Stellar Network:
 
-1. **Blockchain Layer**: Immutable credential records on Mantle Network (Layer 2)
+1. **Blockchain Layer**: Immutable credential records on Stellar Network using Soroban smart contracts
 2. **Storage Layer**: Decentralized metadata storage on IPFS
 3. **Database Layer**: Fast querying and indexing via Supabase
 
 This architecture ensures credentials are:
 
 - **Permanent**: Stored on blockchain forever
-- **Cost-Effective**: Low gas fees on Mantle Network make issuance affordable
-- **Fast**: Near-instant transaction finality
+- **Cost-Effective**: Minimal transaction fees on Stellar Network make issuance affordable
+- **Fast**: Near-instant transaction settlement
 - **Verifiable**: Instant verification via token ID or QR code
 - **Decentralized**: No single point of failure
 - **Detailed**: Subject-wise marks, grades, and complete academic records
-- **Accessible**: Students own their credentials via NFTs
+- **Accessible**: Students own their credentials via blockchain accounts
 
 ---
 
@@ -222,100 +225,75 @@ _Contract owner dashboard for authorizing institutions and monitoring system sta
 
 ## 📜 Smart Contracts
 
-Acredia uses two main smart contracts deployed on **Mantle Sepolia Testnet**:
+Acredia uses smart contracts deployed on **Stellar Network** using **Soroban**:
 
-### CredentialNFT Contract
+### ⚠️ Migration in Progress
 
-**Purpose**: ERC-721 NFT contract for issuing academic credentials
+The Solidity contracts are being migrated to **Soroban (Stellar's native smart contract platform)**.
+
+### CredentialNFT Contract (Planned for Soroban)
+
+**Purpose**: Issue academic credentials as tokens on Stellar Network
 
 **Key Features**:
 
-- ERC-721 standard compliance for maximum compatibility
-- ERC-721URIStorage for IPFS metadata links
-- Ownable pattern with authorized issuer system
+- Token issuance to student accounts
+- Credential metadata linking to IPFS
 - Revocation mechanism for invalid credentials
+- Authorization system for institutions
 
-**Key Functions**:
+**Key Functions** (Soroban version):
 
-- `issueCredential(address student, string credentialHash, string uri)` - Issue new credential NFT
-- `authorizeIssuer(address issuer)` - Authorize institution to issue credentials (owner only)
-- `revokeIssuer(address issuer)` - Revoke institution authorization (owner only)
-- `revokeCredential(uint256 tokenId)` - Revoke a credential if needed
-- `authorizedIssuers(address)` - Check if address is authorized
-- `credentialHashes(uint256)` - Get credential hash by token ID
-- `credentialIssuers(uint256)` - Get issuer address by token ID
-- `revokedCredentials(uint256)` - Check if credential is revoked
+- `issue_credential(student, credential_hash, uri)` - Issue new credential token
+- `authorize_issuer(issuer)` - Authorize institution to issue credentials (admin only)
+- `revoke_credential(token_id)` - Revoke a credential if needed
+- `get_credential_hash(token_id)` - Get credential hash by token ID
+- `get_issuer(token_id)` - Get issuer address by token ID
+- `is_revoked(token_id)` - Check if credential is revoked
 
-### CredentialRegistry Contract
+### CredentialRegistry Contract (Planned for Soroban)
 
-**Purpose**: Central registry for tracking all credentials and their metadata
+**Purpose**: Central registry for tracking all credentials on Stellar
 
 **Key Features**:
 
 - Immutable record of all issued credentials
 - Efficient lookup by token ID or credential hash
 - Timestamp tracking for issuance verification
-- Public verification without authentication
+- Public verification capability
 
-**Key Functions**:
+**Key Functions** (Soroban version):
 
-- `registerCredential(tokenId, student, issuer, credentialHash, ipfsHash)` - Register credential
-- `verifyCredential(string credentialHash)` - Verify and retrieve credential details
-- `getCredentialByTokenId(uint256 tokenId)` - Get credential by token ID
-- `getAllCredentials()` - Get list of all credential hashes
-- `getTotalCredentials()` - Get total number of credentials issued
+- `register_credential(token_id, student, issuer, credential_hash, ipfs_hash)` - Register credential
+- `verify_credential(credential_hash)` - Verify and retrieve credential details
+- `get_credential(token_id)` - Get credential by token ID
+- `get_all_credentials()` - List all credential hashes
+- `get_total_credentials()` - Get total number of credentials issued
 
-### Contract Architecture
+### Stellar Testnet Deployment
 
-```solidity
-// CredentialNFT - ERC721 with authorization system
-contract CredentialNFT is ERC721, ERC721URIStorage, Ownable {
-    mapping(address => bool) public authorizedIssuers;
-    mapping(uint256 => string) public credentialHashes;
-    mapping(uint256 => bool) public revokedCredentials;
-}
+**Network**: Stellar Testnet  
+**RPC Endpoint**: `https://soroban-testnet.stellar.org`  
+**Horizon API**: `https://horizon-testnet.stellar.org`  
+**Block Explorer**: [Stellar Expert (Testnet)](https://stellar.expert/explorer/testnet)
 
-// CredentialRegistry - Central tracking system
-contract CredentialRegistry is Ownable {
-    struct CredentialRecord {
-        uint256 tokenId;
-        address studentWallet;
-        address issuerWallet;
-        string credentialHash;
-        string ipfsHash;
-        uint256 issuedAt;
-        bool exists;
-    }
-}
-```
+### Stellar Mainnet Deployment (Production)
 
-### Deployment Information
+**Network**: Stellar Public Network  
+**RPC Endpoint**: `https://soroban-mainnet.stellar.org`  
+**Horizon API**: `https://horizon.stellar.org`  
+**Block Explorer**: [Stellar Expert](https://stellar.expert/explorer/public)
 
-**Network**: Mantle Sepolia Testnet (Chain ID: 5003)  
-**Compiler**: Solidity 0.8.23  
-**Optimization**: Enabled (200 runs)  
-**Dependencies**: OpenZeppelin Contracts 4.9.6  
-**Block Explorer**: [MantleScan Sepolia](https://sepolia.mantlescan.xyz)
-
-### 📍 Deployed Contract Addresses
-
-#### Mantle Sepolia Testnet
-
-**CredentialNFT Contract**  
-📜 [`0xfC2f2614dF998f9b07075A5a02939825E6cde04a`](https://sepolia.mantlescan.xyz/address/0xfC2f2614dF998f9b07075A5a02939825E6cde04a)
-
-**CredentialRegistry Contract**  
-📜 [`0x46C29C7572772936AA7f9FC3fA18084f2fa82fA6`](https://sepolia.mantlescan.xyz/address/0x46C29C7572772936AA7f9FC3fA18084f2fa82fA6)
-
-> **📝 Deployment Instructions**:
+> **📝 Deployment Instructions for Stellar**:
 >
-> 1. Run `cd contracts && pnpm deploy:mantle-sepolia`
-> 2. Copy the deployed contract addresses from the console output
-> 3. Update your `frontend/.env.local` with the addresses
-> 4. Verify contracts on MantleScan using the verification command
-> 5. Update this README with your deployed addresses
+> 1. Install Stellar CLI: `curl https://github.com/stellar/rs-soroban-cli/releases/download/latest/soroban-cli-latest-x86_64-unknown-linux-gnu.tar.gz | tar xz`
+> 2. Create Stellar account: `soroban config identity generate --name admin`
+> 3. Fund testnet account: `soroban config identity fund --identity admin`
+> 4. Deploy contracts: `soroban contract deploy --wasm /path/to/contract.wasm --network testnet`
+> 5. Update frontend `.env` with contract IDs
+> 6. For mainnet, use `--network public`
 
-> **⚠️ Important**: Always verify contract addresses on MantleScan before interacting with them. Never trust addresses from unofficial sources.
+> **⚠️ Important**: Always verify contract IDs on Stellar Expert before interacting with them. Never trust addresses from unofficial sources.
 
 ---
 
@@ -327,17 +305,16 @@ contract CredentialRegistry is Ownable {
 - **TypeScript** - Type-safe development
 - **Tailwind CSS** - Utility-first styling
 - **Radix UI** - Accessible component primitives
-- **Thirdweb SDK** - Wallet connection and blockchain interactions
+- **Stellar SDK** - Wallet connection and blockchain interactions
 - **Lucide React** - Modern icon library
 
-### Blockchain
+### Blockchain (Stellar)
 
-- **Solidity 0.8.23** - Smart contract language
-- **Hardhat** - Development environment and testing framework
-- **Mantle Network** - Layer 2 blockchain deployment (Sepolia Testnet & Mainnet)
-- **Ethers.js v5** - Ethereum library for blockchain interactions
-- **OpenZeppelin 4.9.6** - Secure and audited contract libraries
-- **MantleScan** - Block explorer for transaction verification
+- **Rust** - Language for Soroban smart contracts
+- **Soroban SDK** - Smart contract development on Stellar
+- **Stellar Network** - Distributed ledger for credential management
+- **Stellar SDK (JavaScript/Python)** - Client library for blockchain interactions
+- **Horizon API** - REST API for Stellar network queries
 
 ### Storage & Backend
 
@@ -362,13 +339,13 @@ graph TB
     subgraph "Frontend Layer"
         A[Next.js Application]
         B[React Components]
-        C[Thirdweb SDK]
+        C[Stellar SDK]
     end
 
     subgraph "Blockchain Layer"
         D[CredentialNFT Contract]
         E[CredentialRegistry Contract]
-        F[Mantle Network Layer 2]
+        F[Stellar Network]
     end
 
     subgraph "Storage Layer"
@@ -403,19 +380,19 @@ graph TB
 
 1. **Presentation Layer**: User interfaces for students, institutions, and verifiers
 2. **Application Layer**: Business logic, authentication, and API routes
-3. **Blockchain Layer**: Smart contracts deployed on Mantle Network Layer 2 for low-cost, high-speed transactions
+3. **Blockchain Layer**: Smart contracts deployed on Stellar Network using Soroban for decentralized transaction processing
 4. **Storage Layer**: IPFS for decentralized metadata storage ensuring data persistence
 5. **Database Layer**: Supabase for fast queries and off-chain indexing with Row Level Security
 
 ### Why This Architecture?
 
-**Scalability**: Mantle Network's Layer 2 solution allows thousands of credentials to be issued without network congestion
+**Global Reach**: Stellar Network's infrastructure is designed for global financial inclusion and accessibility
 
-**Cost-Efficiency**: Dramatically reduced gas fees compared to Ethereum mainnet make the system economically viable for educational institutions
+**Cost-Efficiency**: Minimal transaction fees on Stellar Network make the system economically viable for educational institutions worldwide
 
 **Security**: Multi-layer approach ensures data integrity - blockchain for immutability, IPFS for decentralization, and Supabase for access control
 
-**Performance**: Near-instant transaction finality on Mantle Network provides excellent user experience
+**Performance**: Fast transaction settlement on Stellar Network provides excellent user experience
 
 ---
 
@@ -467,30 +444,30 @@ sequenceDiagram
 
 #### For Institutions (Issuing Credentials)
 
-1. **Connect Wallet**: Institution connects authorized wallet
+1. **Connect Wallet**: Institution connects authorized wallet (Stellar account)
 2. **Enter Student Details**: Name, wallet address, credential type
 3. **Add Academic Data**: Degree, major, GPA, issue date
 4. **Add Subject Marks**: Subject name, marks obtained, maximum marks, grade
 5. **Upload to IPFS**: System uploads metadata to decentralized storage
-6. **Mint NFT**: Smart contract mints credential NFT to student's wallet on Mantle Network
+6. **Record on Blockchain**: Smart contract records credential on Stellar Network
 7. **Database Record**: System creates searchable database entry
-8. **Confirmation**: Student receives NFT in their wallet (typically within 2 seconds on Mantle)
+8. **Confirmation**: Student receives credential on Stellar blockchain
 
 #### For Students (Viewing Credentials)
 
 1. **Login**: Authenticate with email or wallet
-2. **Dashboard**: View all issued credentials as NFTs
-3. **Details**: Click credential to see complete information stored on Mantle blockchain
+2. **Dashboard**: View all issued credentials from Stellar
+3. **Details**: Click credential to see complete information stored on Stellar blockchain
 4. **Share**: Generate QR code or verification link
-5. **Download**: Export credential details or share blockchain proof from MantleScan
+5. **Download**: Export credential details or share blockchain proof from Stellar Expert
 
 #### For Verifiers (Checking Credentials)
 
 1. **Access**: Navigate to public verification page (no login required)
 2. **Input**: Enter credential token ID or scan QR code
-3. **Verification**: System checks Mantle blockchain and IPFS
+3. **Verification**: System checks Stellar blockchain and IPFS
 4. **Results**: View complete credential details with blockchain proof
-5. **Confirmation**: Verify authenticity via MantleScan blockchain explorer link
+5. **Confirmation**: Verify authenticity via Stellar Expert blockchain explorer link
 
 ---
 
@@ -498,7 +475,7 @@ sequenceDiagram
 
 ### Quick Start Guide
 
-> **TL;DR**: Set up MetaMask with Mantle Sepolia → Get test MNT → Clone repo → Install dependencies → Configure `.env` files → Deploy contracts → Run frontend
+> **TL;DR**: Install Stellar CLI → Set up test account → Clone repo → Install dependencies → Configure `.env` files → Deploy Soroban contracts → Run frontend
 
 ### Prerequisites
 
@@ -507,8 +484,9 @@ Before you begin, ensure you have the following installed:
 - **Node.js** (v18 or higher) - [Download](https://nodejs.org/)
 - **pnpm** (v8 or higher) - Install via: `npm install -g pnpm`
 - **Git** - [Download](https://git-scm.com/)
-- **MetaMask** or compatible Web3 wallet - [Install](https://metamask.io/)
-- **Test MNT Tokens** - Get from [Mantle Sepolia Faucet](https://faucet.sepolia.mantle.xyz)
+- **Stellar CLI** - [Install Guide](https://developers.stellar.org/docs/build/guides/cli/install)
+- **Rust** (for Soroban contracts) - [Install](https://www.rust-lang.org/tools/install)
+- **Test XLM Tokens** - Get from [Stellar Testnet Faucet](https://laboratory.stellar.org/)
 
 ### Installation
 
@@ -543,13 +521,18 @@ Create a `.env.local` file in the `frontend` directory:
 # Thirdweb Configuration
 NEXT_PUBLIC_THIRDWEB_CLIENT_ID=your_thirdweb_client_id
 
-# Smart Contract Addresses (Mantle Sepolia Testnet)
-NEXT_PUBLIC_CREDENTIAL_NFT_CONTRACT=0x_your_nft_contract_address
-NEXT_PUBLIC_CREDENTIAL_REGISTRY_CONTRACT=0x_your_registry_contract_address
+# Smart Contract Addresses (Stellar Testnet)
+NEXT_PUBLIC_CREDENTIAL_NFT_CONTRACT=your_stellar_contract_id
+NEXT_PUBLIC_CREDENTIAL_REGISTRY_CONTRACT=your_stellar_registry_id
 
-# Network Configuration
-NEXT_PUBLIC_CHAIN_ID=5003
-NEXT_PUBLIC_NETWORK_NAME=mantleSepolia
+# Network Configuration (Stellar)
+NEXT_PUBLIC_CHAIN_ID=testnet
+NEXT_PUBLIC_NETWORK_NAME=stellarTestnet
+NEXT_PUBLIC_NETWORK_PASSPHRASE=Test SDF Network ; September 2015
+
+# Stellar Configuration
+NEXT_PUBLIC_HORIZON_URL=https://horizon-testnet.stellar.org
+NEXT_PUBLIC_SOROBAN_RPC_URL=https://soroban-testnet.stellar.org
 
 # Supabase Configuration
 NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
@@ -562,15 +545,12 @@ NEXT_PUBLIC_NFT_STORAGE_KEY=your_thirdweb_storage_key
 Create a `.env` file in the `contracts` directory:
 
 ```env
-# Wallet Private Key (for deployment - NEVER commit this!)
-PRIVATE_KEY=your_wallet_private_key_without_0x
+# Stellar Account Private Key (for deployment - NEVER commit this!)
+PRIVATE_KEY=your_stellar_secret_key
 
-# MantleScan API Key (for contract verification)
-MANTLESCAN_API_KEY=your_mantlescan_api_key
-
-# Optional: RPC URL (uses public RPC if not specified)
-MANTLE_SEPOLIA_RPC=https://rpc.sepolia.mantle.xyz
-MANTLE_MAINNET_RPC=https://rpc.mantle.xyz
+# Network Configuration
+STELLAR_NETWORK=testnet  # Use 'public' for mainnet
+STELLAR_ADMIN_SECRET_KEY=your_admin_secret_key
 ```
 
 ### Database Setup
@@ -589,32 +569,39 @@ Run the following SQL scripts in your Supabase SQL Editor:
 
 ### Smart Contract Deployment
 
-6. **Compile and Deploy Contracts**
+6. **Set Up Stellar Account**
+
+```powershell
+# Create a new Stellar account
+soroban config identity generate --name admin
+
+# Fund your account with test XLM from the faucet
+soroban config identity fund --identity admin
+```
+
+7. **Deploy Soroban Contracts**
 
 ```powershell
 cd contracts
 
-# Compile contracts
-pnpm compile
+# Build Soroban contracts (if migrated from Solidity)
+soroban contract build  # Requires Rust toolchain
 
-# Deploy to Mantle Sepolia Testnet
-pnpm deploy:mantle-sepolia
+# Deploy CredentialNFT to Stellar Testnet
+soroban contract deploy --wasm path/to/credential_nft.wasm --network testnet
 
-# Deploy to Mantle Mainnet (when ready for production)
-pnpm deploy:mantle-mainnet
+# Deploy CredentialRegistry to Stellar Testnet
+soroban contract deploy --wasm path/to/credential_registry.wasm --network testnet
+
+# For Mainnet deployment (production):
+soroban contract deploy --wasm path/to/credential_nft.wasm --network public
 ```
 
-7. **Verify Contracts on MantleScan**
+**Note**: After deployment, copy the contract IDs from the console output and update your `frontend/.env.local` file with the new addresses.
 
-```powershell
-# Verify CredentialNFT
-pnpm hardhat verify --network mantleSepolia YOUR_NFT_CONTRACT_ADDRESS
-
-# Verify CredentialRegistry
-pnpm hardhat verify --network mantleSepolia YOUR_REGISTRY_CONTRACT_ADDRESS
-```
-
-**Note**: After deployment, copy the contract addresses from the console output and update your `frontend/.env.local` file with the new addresses.
+For guidance on migrating Solidity contracts to Soroban, see:
+- [Soroban Smart Contracts Guide](https://developers.stellar.org/docs/build/smart-contracts/overview)
+- [Soroban SDK Documentation](https://github.com/stellar/rs-soroban-sdk)
 
 ### Running the Application
 
@@ -648,7 +635,7 @@ pnpm start
 1. Visit [Thirdweb Dashboard](https://thirdweb.com/dashboard)
 2. Create a new project
 3. Copy your Client ID
-4. Configure for Mantle Network support
+4. Configure for multi-chain support
 
 #### Supabase Setup
 
@@ -661,13 +648,18 @@ pnpm start
    - `sql/enable_public_verification.sql`
    - `sql/enable_admin_stats.sql`
 
-#### MantleScan API Key (for contract verification)
+#### Stellar Account Setup
 
-1. Visit [MantleScan](https://mantlescan.xyz)
-2. Create an account or sign in
-3. Navigate to API Keys section
-4. Generate a new API key
-5. Add to your `.env` file as `MANTLESCAN_API_KEY`
+1. Create Stellar account using Stellar CLI:
+   ```bash
+   soroban config identity generate --name admin
+   ```
+2. Fund your account with test XLM:
+   ```bash
+   soroban config identity fund --identity admin
+   ```
+3. Get your public key: `soroban config identity address --name admin`
+4. For testnet, fund from [Stellar Testnet Faucet](https://laboratory.stellar.org/)
 
 #### NFT.Storage / Thirdweb Storage
 
@@ -675,39 +667,37 @@ pnpm start
 2. Or use [NFT.Storage](https://nft.storage/) as alternative
 3. Generate API token for IPFS uploads
 
-### Wallet Setup for Mantle Network
+### Wallet Setup for Stellar Network
 
-1. **Install MetaMask** browser extension
-2. **Create or import wallet**
-3. **Add Mantle Sepolia Testnet** to MetaMask:
+1. **Install Stellar Wallet** (Options):
+   - [Stellar Laboratory](https://laboratory.stellar.org/) - Web-based
+   - [Freighter Wallet](https://www.freighter.app/) - Browser extension (recommended)
+   - [StellarTerm](https://stellarterm.com/) - Web interface
 
-   **Manual Configuration:**
+2. **Create or Import Wallet**:
+   - Generate new Stellar keypair or import existing
+   - Save your secret key securely (never share!)
 
-   - Network Name: `Mantle Sepolia Testnet`
-   - RPC URL: `https://rpc.sepolia.mantle.xyz`
-   - Chain ID: `5003`
-   - Currency Symbol: `MNT`
-   - Block Explorer: `https://sepolia.mantlescan.xyz`
+3. **Configure for Testnet**:
+   - Network: `Stellar Testnet`
+   - Horizon API: `https://horizon-testnet.stellar.org`
+   - Soroban RPC: `https://soroban-testnet.stellar.org`
+   - Network Passphrase: `Test SDF Network ; September 2015`
 
-   **Or use Chainlist:**
-
-   - Visit [Chainlist](https://chainlist.org)
-   - Search for "Mantle Sepolia"
-   - Click "Add to MetaMask"
-
-4. **Get Test MNT Tokens**:
-
-   - Visit [Mantle Sepolia Faucet](https://faucet.sepolia.mantle.xyz)
-   - Connect your wallet
-   - Request test MNT tokens
-   - Tokens usually arrive within 1-2 minutes
+4. **Get Test XLM Tokens**:
+   - Visit [Stellar Testnet Faucet](https://laboratory.stellar.org/)
+   - Click "Get Test Network Lumens"
+   - Select Account ID
+   - Enter your public key
+   - Request 10,000 test XLM
+   - Tokens arrive instantly
 
 5. **For Mainnet Deployment** (Production):
-   - Network Name: `Mantle`
-   - RPC URL: `https://rpc.mantle.xyz`
-   - Chain ID: `5000`
-   - Currency Symbol: `MNT`
-   - Block Explorer: `https://mantlescan.xyz`
+   - Network: `Stellar Public Network`
+   - Horizon API: `https://horizon.stellar.org`
+   - Soroban RPC: `https://soroban-mainnet.stellar.org`
+   - Network Passphrase: `Public Global Stellar Network ; September 2015`
+   - Purchase XLM from exchange or use peer-to-peer transfers
 
 ---
 

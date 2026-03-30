@@ -234,7 +234,7 @@ function CredentialCard({ credential }: { credential: Credential }) {
     const metadata = credential.metadata?.credentialData || {};
     const ipfsUrl = credential.ipfs_hash ? getIPFSUrl(credential.ipfs_hash) : null;
     const blockchainUrl = credential.blockchain_hash
-        ? `https://sepolia.mantlescan.xyz/tx/${credential.blockchain_hash}`
+        ? `https://stellar.expert/explorer/testnet/tx/${credential.blockchain_hash}`
         : null;
 
     const [showQRModal, setShowQRModal] = useState(false);

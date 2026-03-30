@@ -1,10 +1,35 @@
-node_modules
-.env
-coverage
-coverage.json
-typechain
-typechain-types
+# Rust/Cargo
+/target/
+Cargo.lock
+**/*.rs.bk
+*.pdb
 
-#Hardhat files
-cache*
-artifacts*
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# OS
+Thumbs.db
+*.log
+
+# Build artifacts
+dist/
+build/
+*.o
+*.a
+*.so
+*.dylib
+
+# Editor backups
+*~
+*.bak
+
