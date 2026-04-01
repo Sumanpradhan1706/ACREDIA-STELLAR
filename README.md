@@ -22,6 +22,8 @@
 
 [🌐 Stellar Network](https://stellar.org) | [📊 Stellar Expert Explorer](https://stellar.expert) | [💧 Get Test XLM](https://laboratory.stellar.org/)
 
+<h3><a href="https://acredia-stellar.vercel.app/"> 🌐 VIEW LIVE DEMO </a></h3>
+
 </div>
 
 ---
@@ -160,13 +162,13 @@ _Modern, responsive landing page showcasing the platform's features_
 
 ### Student Dashboard
 
-<img src="frontend/public/student.png" alt="Student Dashboard" width="800"/>
+<img src="frontend/public/student-dashboard.png" alt="Student Dashboard" width="800"/>
 
 _Students can view all their credentials with detailed information and blockchain verification_
 
 ### Institution Dashboard
 
-<img src="frontend/public/institute.png" alt="Institution Dashboard" width="800"/>
+<img src="frontend/public/instituion-dashboard.png" alt="Institution Dashboard" width="800"/>
 
 _Institutions can issue credentials with subject-wise marks, grades, and complete academic records_
 
@@ -182,9 +184,15 @@ _Detailed subject-wise performance and blockchain transaction information_
 
 ### Admin Panel
 
-<img src="frontend/public/admin.png" alt="Admin Panel" width="800"/>
+<img src="frontend/public/admin-dashboard.png" alt="Admin Panel" width="800"/>
 
 _Contract owner dashboard for authorizing institutions and monitoring system statistics_
+
+### IPFS Decentralized Storage
+
+<img src="frontend/public/ipfs-view.png" alt="IPFS File View" width="800"/>
+
+_Credential files and JSON metadata are permanently anchored on the decentralized IPFS network via Pinata_
 
 ---
 
@@ -231,13 +239,13 @@ Acredia uses a unified Soroban smart contract deployed on **Stellar Network**:
 
 ### ✅ AcrediaCredential Contract — Live on Testnet
 
-> **Contract ID**: `CAESO2QQ4SJ42W2CESTYD3BP52V57WWIMB2MMMRD2WJJ4TY26UFGGZFZ`  
+> **Contract ID**: `CCGDFDLPELTOWG5H5OA4MBR5OZWDP4XJI3S3TQZVZ7XTVP77EKOFORYF`  
 > **Network**: Stellar Testnet  
-> **Owner / Deployer**: `GAMHNZ6QDGUP5ONSGJOP5BLYLZFISEA4JZWUGXNHPHIAPEYNZBKTTLV6`  
-> **Deployed**: 2026-04-01  
-> **Explorer**: [View on Stellar Expert ↗](https://stellar.expert/explorer/testnet/contract/CAESO2QQ4SJ42W2CESTYD3BP52V57WWIMB2MMMRD2WJJ4TY26UFGGZFZ)
+> **Owner / Deployer**: `GAJRNUO6HSMQG4FNHNWQVRXJZJZ7QRA7HXPYYB6H5PTA3EAAJXJNZD7U`  
+> **Deployed**: 2026-04-01 (Updated Setup)
+> **Explorer**: [View on Stellar Expert ↗](https://stellar.expert/explorer/testnet/contract/CCGDFDLPELTOWG5H5OA4MBR5OZWDP4XJI3S3TQZVZ7XTVP77EKOFORYF)
 
-This single contract replaces two separate EVM contracts (CredentialNFT + CredentialRegistry) with one unified Soroban contract written in Rust.
+This single contract replaces two separate EVM contracts (CredentialNFT + CredentialRegistry) with one unified Soroban contract written in Rust. Additionally, it features upgraded Next.js boundary protection to bypass `@stellar/stellar-sdk` object coercions on the browser.
 
 **Purpose**: Issue, store, and verify academic credentials on Stellar Network
 
@@ -287,8 +295,8 @@ This single contract replaces two separate EVM contracts (CredentialNFT + Creden
 
 All deployments, metadata hashes, and transaction executions can be publicly verified directly on the Stellar ledger explorer:
 
-1. **Main Contract Viewer**: [AcrediaCredential Testnet Explorer ↗](https://stellar.expert/explorer/testnet/contract/CAESO2QQ4SJ42W2CESTYD3BP52V57WWIMB2MMMRD2WJJ4TY26UFGGZFZ)
-2. **Deployer Account Ledger**: [Stellar Account Overview ↗](https://stellar.expert/explorer/testnet/account/GAMHNZ6QDGUP5ONSGJOP5BLYLZFISEA4JZWUGXNHPHIAPEYNZBKTTLV6)
+1. **Main Contract Viewer**: [AcrediaCredential Testnet Explorer ↗](https://stellar.expert/explorer/testnet/contract/CCGDFDLPELTOWG5H5OA4MBR5OZWDP4XJI3S3TQZVZ7XTVP77EKOFORYF)
+2. **Deployer Account Ledger**: [Stellar Account Overview ↗](https://stellar.expert/explorer/testnet/account/GAJRNUO6HSMQG4FNHNWQVRXJZJZ7QRA7HXPYYB6H5PTA3EAAJXJNZD7U)
 3. **Soroban RPC Instance**: `https://soroban-testnet.stellar.org`
 
 > **⚠️ Important**: Always verify contract IDs on Stellar Expert before interacting with them. Never trust addresses from unofficial sources.
@@ -345,6 +353,11 @@ Comprehensive unit testing utilizing `vitest` covering all utility logic nativel
 - **Ledger Identity Matching**: `isValidAddress` accurately verifies if a 55-character string matches the absolute Stellar Ledger Public pattern (`^G[A-Z2-7]{54}$`).
 - **State Transition Machine**: Business-logic evaluations (`getNextStatus`) verifying strict one-way credential progression: _Draft ➔ Pending_Issuance ➔ Issued ➔ Revoked_. Hard-coded safety blocks malicious regression.
 - **Malicious Payload Defense**: Dynamic testing blocking inputs containing short strings, missing public keys, or invalid empty object injections before the transaction reaches the `Freighter` wallet prompt.
+
+### 3. Edge-case SDK Resiliency (Implemented)
+- **Freighter API v6 Compatibility**: Safe-parse bypass resolving `e.switch is not a function` by seamlessly handling both string and object responses (`signedTxXdr`) natively returned during wallet transaction signing.
+- **RPC Parsing Fallback**: Strict bypasses for parsing `xdr.ScVal` primitives (like booleans) ensuring boolean RPC responses (e.g., `is_authorized_issuer`) do not crash if executed directly through client-side Javascript prototype boundaries.
+- **Zero-Balance Accounts**: The simulation explicitly constructs dummy `Account` sequences (e.g., Sequence "0") to ensure read-only blockchain queries execute gracefully even if the user connects an unfunded `0 XLM` wallet.
 
 ---
 
@@ -538,8 +551,8 @@ Create a `.env.local` file in the `frontend` directory:
 ```env
 # Smart Contract Addresses — Stellar Testnet (deployed 2026-04-01)
 # Single unified AcrediaCredential contract (replaces separate NFT + Registry)
-NEXT_PUBLIC_CREDENTIAL_NFT_CONTRACT=CAESO2QQ4SJ42W2CESTYD3BP52V57WWIMB2MMMRD2WJJ4TY26UFGGZFZ
-NEXT_PUBLIC_CREDENTIAL_REGISTRY_CONTRACT=CAESO2QQ4SJ42W2CESTYD3BP52V57WWIMB2MMMRD2WJJ4TY26UFGGZFZ
+NEXT_PUBLIC_CREDENTIAL_NFT_CONTRACT=CCGDFDLPELTOWG5H5OA4MBR5OZWDP4XJI3S3TQZVZ7XTVP77EKOFORYF
+NEXT_PUBLIC_CREDENTIAL_REGISTRY_CONTRACT=CCGDFDLPELTOWG5H5OA4MBR5OZWDP4XJI3S3TQZVZ7XTVP77EKOFORYF
 
 # Stellar Network Configuration
 NEXT_PUBLIC_CHAIN_ID=testnet
@@ -577,10 +590,11 @@ Run the following SQL scripts in your Supabase SQL Editor:
 
 ```sql
 -- Run these in order:
-1. frontend/database_schema.sql
-2. frontend/FIX_DATABASE_RLS.sql
-3. frontend/enable_public_verification.sql
-4. frontend/enable_admin_stats.sql
+1. frontend/sql/database_schema.sql
+2. frontend/sql/FIX_DATABASE_RLS.sql
+3. frontend/sql/enable_public_verification.sql
+4. frontend/sql/enable_admin_stats.sql
+5. frontend/sql/add_profiles_table.sql (Triggers automated auth.users sync)
 ```
 
 ### Smart Contract Deployment
@@ -611,11 +625,11 @@ stellar contract deploy \
   --wasm target/wasm32-unknown-unknown/release/acredia_credential.wasm \
   --source deployer \
   --network testnet
-# => Returns: CAESO2QQ4SJ42W2CESTYD3BP52V57WWIMB2MMMRD2WJJ4TY26UFGGZFZ
+# => Returns: CCGDFDLPELTOWG5H5OA4MBR5OZWDP4XJI3S3TQZVZ7XTVP77EKOFORYF
 
 # Step 3: Initialize the contract with your admin address
 stellar contract invoke \
-  --id CAESO2QQ4SJ42W2CESTYD3BP52V57WWIMB2MMMRD2WJJ4TY26UFGGZFZ \
+  --id CCGDFDLPELTOWG5H5OA4MBR5OZWDP4XJI3S3TQZVZ7XTVP77EKOFORYF \
   --source deployer \
   --network testnet \
   -- initialize \
@@ -623,7 +637,7 @@ stellar contract invoke \
 
 # Step 4: Authorize an institution to issue credentials
 stellar contract invoke \
-  --id CAESO2QQ4SJ42W2CESTYD3BP52V57WWIMB2MMMRD2WJJ4TY26UFGGZFZ \
+  --id CCGDFDLPELTOWG5H5OA4MBR5OZWDP4XJI3S3TQZVZ7XTVP77EKOFORYF \
   --source deployer \
   --network testnet \
   -- authorize_issuer \
@@ -680,10 +694,11 @@ pnpm start
 2. Create a new project
 3. Get your project URL and anon key from Settings > API
 4. Run the provided SQL scripts in SQL Editor (in order):
-   - `sql/database_schema.sql`
-   - `sql/FIX_DATABASE_RLS.sql`
-   - `sql/enable_public_verification.sql`
-   - `sql/enable_admin_stats.sql`
+   - `frontend/sql/database_schema.sql`
+   - `frontend/sql/FIX_DATABASE_RLS.sql`
+   - `frontend/sql/enable_public_verification.sql`
+   - `frontend/sql/enable_admin_stats.sql`
+   - `frontend/sql/add_profiles_table.sql`
 
 #### Stellar Account Setup
 
