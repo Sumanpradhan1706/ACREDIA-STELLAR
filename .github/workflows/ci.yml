@@ -70,33 +70,22 @@ jobs:
         with:
           node-version: '18'
 
-      - name: Install pnpm
-        uses: pnpm/action-setup@v2
-        with:
-          version: 8
-
-      - name: Get pnpm store directory
-        id: pnpm-cache
-        shell: bash
-        run: |
-          echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
-
-      - name: Cache pnpm dependencies
+      - name: Cache npm dependencies
         uses: actions/cache@v3
         with:
-          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
-          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
           restore-keys: |
-            ${{ runner.os }}-pnpm-store-
+            ${{ runner.os }}-node-
 
       - name: Install Dependencies
-        run: pnpm install --frozen-lockfile
+        run: npm ci
 
       - name: Run Vitest Unit Tests
-        run: pnpm test
+        run: npm test
 
       - name: Run Next.js Build (Check Types & Production Build)
-        run: pnpm build
+        run: npm run build
         env:
           # Mock variables necessary for the Next.js build step to pass successfully
           NEXT_PUBLIC_SUPABASE_URL: "https://placeholder.supabase.co"

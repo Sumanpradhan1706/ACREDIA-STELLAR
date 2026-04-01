@@ -1,5 +1,5 @@
 #![no_std]
-use soroban_sdk::{contract, contractimpl, contracttype, symbol_short, Env, String, Address};
+use soroban_sdk::{contract, contractimpl, contracttype, symbol_short, Address, Env, String};
 
 /// Storage key enum — avoids `format!` (unavailable in no_std)
 #[contracttype]
@@ -53,8 +53,7 @@ impl AcrediaCredential {
             .instance()
             .set(&DataKey::Authorized(issuer.clone()), &true);
 
-        env.events()
-            .publish((symbol_short!("auth_ok"),), issuer);
+        env.events().publish((symbol_short!("auth_ok"),), issuer);
     }
 
     /// Revoke issuer authorization
@@ -66,8 +65,7 @@ impl AcrediaCredential {
             .instance()
             .remove(&DataKey::Authorized(issuer.clone()));
 
-        env.events()
-            .publish((symbol_short!("revoked"),), issuer);
+        env.events().publish((symbol_short!("revoked"),), issuer);
     }
 
     /// Check if an address is authorized to issue credentials
@@ -142,12 +140,7 @@ impl AcrediaCredential {
 
         // Emit event
         env.events().publish(
-            (
-                symbol_short!("issued"),
-                token_id,
-                student,
-                issuer,
-            ),
+            (symbol_short!("issued"), token_id, student, issuer),
             (credential_hash, ipfs_uri),
         );
 
