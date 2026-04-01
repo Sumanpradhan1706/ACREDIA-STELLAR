@@ -316,7 +316,7 @@ All deployments, metadata hashes, and transaction executions can be publicly ver
 
 ### Storage & Backend
 
-- **IPFS** - Decentralized metadata storage via Thirdweb
+- **IPFS** - Decentralized metadata storage via Pinata
 - **Supabase** - PostgreSQL database with Row Level Security
 - **PostgreSQL** - Relational database for indexing
 - **RESTful APIs** - Custom API routes in Next.js
@@ -365,7 +365,7 @@ graph TB
 
     subgraph "Storage Layer"
         G[IPFS Network]
-        H[Thirdweb Storage]
+        H[Pinata IPFS Gateway]
     end
 
     subgraph "Database Layer"
@@ -1130,7 +1130,7 @@ Built with amazing open-source technologies:
 
 - [Next.js](https://nextjs.org/) - React framework
 - [Stellar Network](https://stellar.org/) - Decentralized network for global financial infrastructure
-- [Thirdweb](https://thirdweb.com/) - Web3 development platform
+- [Pinata](https://pinata.cloud/) - Immutable IPFS file storage APIs
 - [Supabase](https://supabase.com/) - Open-source Firebase alternative
 - [Soroban SDK](https://stellar.org/soroban) - Native smart contracts platform for Stellar
 - [Tailwind CSS](https://tailwindcss.com/) - Utility-first CSS framework
