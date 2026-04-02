@@ -150,7 +150,7 @@ function AdminDashboardContent() {
             {/* Navigation */}
             <nav className="border-b border-gray-200 bg-white/90 backdrop-blur-lg sticky top-0 z-50 shadow-sm">
                 <div className="container mx-auto px-4 py-4">
-                    <div className="flex items-center justify-between">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                         <Link href="/" className="flex items-center space-x-3">
                             <Image
                                 src="/logo.png"
@@ -160,7 +160,7 @@ function AdminDashboardContent() {
                                 className="rounded-lg"
                             />
                             <div>
-                                <span className="text-2xl font-bold bg-linear-to-r from-teal-600 to-cyan-600 bg-clip-text text-transparent">
+                                <span className="text-xl sm:text-2xl font-bold bg-linear-to-r from-teal-600 to-cyan-600 bg-clip-text text-transparent">
                                     ACREDIA
                                 </span>
                                 <span className="ml-2 text-xs bg-red-600 text-white px-2 py-1 rounded-full font-semibold">
@@ -168,15 +168,15 @@ function AdminDashboardContent() {
                                 </span>
                             </div>
                         </Link>
-                        <div className="flex items-center space-x-4">
+                        <div className="flex w-full flex-wrap items-center justify-end gap-2 sm:w-auto sm:flex-nowrap sm:space-x-4">
                             <ConnectWallet />
                             <Button
                                 onClick={handleSignOut}
                                 variant="ghost"
-                                className="text-gray-700 hover:text-red-600"
+                                className="text-gray-700 hover:text-red-600 text-sm sm:text-base px-3 sm:px-4"
                             >
                                 <LogOut className="h-5 w-5 mr-2" />
-                                Sign Out
+                                <span className="hidden sm:inline">Sign Out</span>
                             </Button>
                         </div>
                     </div>
@@ -188,7 +188,7 @@ function AdminDashboardContent() {
                 <div className="mb-8">
                     <div className="flex items-center space-x-3 mb-2">
                         <Shield className="h-10 w-10 text-red-600" />
-                        <h1 className="text-4xl font-bold text-gray-900">
+                        <h1 className="text-3xl sm:text-4xl font-bold text-gray-900">
                             Admin Dashboard
                         </h1>
                     </div>

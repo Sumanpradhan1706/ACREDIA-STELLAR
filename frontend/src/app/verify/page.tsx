@@ -190,7 +190,7 @@ function VerifyContent() {
                 {/* Navbar */}
                 <nav className="border-b border-gray-200 bg-white/90 backdrop-blur-lg sticky top-0 z-50 shadow-sm">
                     <div className="container mx-auto px-4 py-4">
-                        <div className="flex items-center justify-between">
+                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                             <Link href="/" className="flex items-center space-x-3">
                                 <Image
                                     src="/logo.png"
@@ -200,7 +200,7 @@ function VerifyContent() {
                                     className="rounded-lg"
                                 />
                                 <div>
-                                    <span className="text-2xl font-bold bg-linear-to-r from-teal-600 to-cyan-600 bg-clip-text text-transparent">
+                                    <span className="text-xl sm:text-2xl font-bold bg-linear-to-r from-teal-600 to-cyan-600 bg-clip-text text-transparent">
                                         ACREDIA
                                     </span>
                                     <span className="ml-2 text-xs bg-blue-600 text-white px-2 py-1 rounded-full font-semibold">
@@ -208,7 +208,7 @@ function VerifyContent() {
                                     </span>
                                 </div>
                             </Link>
-                            <div className="flex items-center space-x-4">
+                            <div className="flex w-full flex-wrap items-center justify-end gap-2 sm:w-auto sm:flex-nowrap sm:space-x-4">
                                 <Link href="/">
                                     <Button variant="ghost" size="sm">
                                         <Home className="h-4 w-4 mr-2" />
@@ -361,7 +361,7 @@ function VerifyContent() {
                 {/* Navbar */}
                 <nav className="border-b border-gray-200 bg-white/90 backdrop-blur-lg sticky top-0 z-50 shadow-sm">
                     <div className="container mx-auto px-4 py-4">
-                        <div className="flex items-center justify-between">
+                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                             <Link href="/" className="flex items-center space-x-3">
                                 <Image
                                     src="/logo.png"
@@ -371,7 +371,7 @@ function VerifyContent() {
                                     className="rounded-lg"
                                 />
                                 <div>
-                                    <span className="text-2xl font-bold bg-linear-to-r from-teal-600 to-cyan-600 bg-clip-text text-transparent">
+                                    <span className="text-xl sm:text-2xl font-bold bg-linear-to-r from-teal-600 to-cyan-600 bg-clip-text text-transparent">
                                         ACREDIA
                                     </span>
                                     <span className="ml-2 text-xs bg-blue-600 text-white px-2 py-1 rounded-full font-semibold">
@@ -379,7 +379,7 @@ function VerifyContent() {
                                     </span>
                                 </div>
                             </Link>
-                            <div className="flex items-center space-x-4">
+                            <div className="flex w-full flex-wrap items-center justify-end gap-2 sm:w-auto sm:flex-nowrap sm:space-x-4">
                                 <Link href="/">
                                     <Button variant="ghost" size="sm">
                                         <Home className="h-4 w-4 mr-2" />
@@ -410,7 +410,7 @@ function VerifyContent() {
                 {/* Navbar */}
                 <nav className="border-b border-gray-200 bg-white/90 backdrop-blur-lg sticky top-0 z-50 shadow-sm">
                     <div className="container mx-auto px-4 py-4">
-                        <div className="flex items-center justify-between">
+                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                             <Link href="/" className="flex items-center space-x-3">
                                 <Image
                                     src="/logo.png"
@@ -420,7 +420,7 @@ function VerifyContent() {
                                     className="rounded-lg"
                                 />
                                 <div>
-                                    <span className="text-2xl font-bold bg-linear-to-r from-teal-600 to-cyan-600 bg-clip-text text-transparent">
+                                    <span className="text-xl sm:text-2xl font-bold bg-linear-to-r from-teal-600 to-cyan-600 bg-clip-text text-transparent">
                                         ACREDIA
                                     </span>
                                     <span className="ml-2 text-xs bg-red-600 text-white px-2 py-1 rounded-full font-semibold">
@@ -428,7 +428,7 @@ function VerifyContent() {
                                     </span>
                                 </div>
                             </Link>
-                            <div className="flex items-center space-x-4">
+                            <div className="flex w-full flex-wrap items-center justify-end gap-2 sm:w-auto sm:flex-nowrap sm:space-x-4">
                                 <Link href="/">
                                     <Button variant="ghost" size="sm">
                                         <Home className="h-4 w-4 mr-2" />
@@ -453,14 +453,14 @@ function VerifyContent() {
                                     The credential token ID may be invalid or the credential does not exist in our system.
                                 </p>
                             </div>
-                            <div className="flex space-x-4">
+                            <div className="flex w-full flex-col sm:w-auto sm:flex-row gap-3 sm:space-x-4">
                                 <Link href="/verify">
-                                    <Button className="bg-blue-600 hover:bg-blue-700">
+                                    <Button className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700">
                                         Try Again
                                     </Button>
                                 </Link>
                                 <Link href="/">
-                                    <Button variant="outline">
+                                    <Button variant="outline" className="w-full sm:w-auto">
                                         Return to Home
                                     </Button>
                                 </Link>
@@ -477,7 +477,7 @@ function VerifyContent() {
             {/* Navbar */}
             <nav className="border-b border-gray-200 bg-white/90 backdrop-blur-lg sticky top-0 z-50 shadow-sm">
                 <div className="container mx-auto px-4 py-4">
-                    <div className="flex items-center justify-between">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                         <Link href="/" className="flex items-center space-x-3">
                             <Image
                                 src="/logo.png"
@@ -487,7 +487,7 @@ function VerifyContent() {
                                 className="rounded-lg"
                             />
                             <div>
-                                <span className="text-2xl font-bold bg-linear-to-r from-teal-600 to-cyan-600 bg-clip-text text-transparent">
+                                <span className="text-xl sm:text-2xl font-bold bg-linear-to-r from-teal-600 to-cyan-600 bg-clip-text text-transparent">
                                     ACREDIA
                                 </span>
                                 <span className="ml-2 text-xs bg-green-600 text-white px-2 py-1 rounded-full font-semibold">
@@ -495,7 +495,7 @@ function VerifyContent() {
                                 </span>
                             </div>
                         </Link>
-                        <div className="flex items-center space-x-4">
+                        <div className="flex w-full flex-wrap items-center justify-end gap-2 sm:w-auto sm:flex-nowrap sm:space-x-4">
                             <Link href="/verify">
                                 <Button variant="ghost" size="sm">
                                     <Shield className="h-4 w-4 mr-2" />
@@ -517,7 +517,7 @@ function VerifyContent() {
                 <div className="max-w-5xl mx-auto space-y-6">
                     {/* Header with Timestamp */}
                     <div className="text-center space-y-3">
-                        <h1 className="text-4xl font-bold text-gray-900">Credential Verification Report</h1>
+                        <h1 className="text-3xl sm:text-4xl font-bold text-gray-900">Credential Verification Report</h1>
                         <p className="text-gray-600">Blockchain-verified academic credential</p>
                         <p className="text-sm text-gray-500">
                             Verified on: {new Date().toLocaleString('en-US', {

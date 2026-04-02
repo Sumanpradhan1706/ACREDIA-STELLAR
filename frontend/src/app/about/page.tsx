@@ -73,7 +73,7 @@ export default function AboutPage() {
             {/* Navigation */}
             <nav className="border-b border-gray-200 bg-white/90 backdrop-blur-lg sticky top-0 z-50 shadow-sm">
                 <div className="container mx-auto px-4 py-4">
-                    <div className="flex items-center justify-between">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                         <Link href="/" className="flex items-center space-x-3">
                             <Image
                                 src="/logo.png"
@@ -82,11 +82,11 @@ export default function AboutPage() {
                                 height={40}
                                 className="rounded-lg"
                             />
-                            <span className="text-2xl font-bold bg-gradient-to-r from-teal-600 to-cyan-600 bg-clip-text text-transparent">
+                            <span className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-teal-600 to-cyan-600 bg-clip-text text-transparent">
                                 ACREDIA
                             </span>
                         </Link>
-                        <div className="flex items-center space-x-4">
+                        <div className="flex w-full flex-wrap items-center justify-end gap-2 sm:w-auto sm:flex-nowrap sm:space-x-4">
                             {/* Solutions Dropdown */}
                             <div 
                                 className="relative"
@@ -94,8 +94,10 @@ export default function AboutPage() {
                                 onMouseLeave={handleMouseLeave}
                             >
                                 <Button 
+                                    type="button"
                                     variant="ghost" 
-                                    className="text-gray-700 hover:text-teal-600 flex items-center gap-1"
+                                    onClick={() => setShowSolutions((prev) => !prev)}
+                                    className="text-gray-700 hover:text-teal-600 flex items-center gap-1 text-sm sm:text-base"
                                 >
                                     Solutions
                                     <svg 
@@ -189,17 +191,17 @@ export default function AboutPage() {
                             </div>
 
                             <Link href="/about">
-                                <Button variant="ghost" className="text-gray-700 hover:text-teal-600">
+                                <Button variant="ghost" className="text-gray-700 hover:text-teal-600 text-sm sm:text-base px-3 sm:px-4">
                                     About
                                 </Button>
                             </Link>
                             <Link href="/auth/login">
-                                <Button variant="ghost" className="text-gray-700 hover:text-teal-600">
+                                <Button variant="ghost" className="text-gray-700 hover:text-teal-600 text-sm sm:text-base px-3 sm:px-4">
                                     Sign In
                                 </Button>
                             </Link>
                             <Link href="/verify">
-                                <Button className="bg-gradient-to-r from-teal-600 to-cyan-600 hover:from-teal-700 hover:to-cyan-700 text-white">
+                                <Button className="bg-gradient-to-r from-teal-600 to-cyan-600 hover:from-teal-700 hover:to-cyan-700 text-white text-sm sm:text-base px-3 sm:px-4">
                                     <Shield className="w-4 h-4 mr-2" />
                                     Verify
                                 </Button>
@@ -212,13 +214,13 @@ export default function AboutPage() {
             {/* Hero Section */}
             <section className="container mx-auto px-4 py-20">
                 <div className="max-w-4xl mx-auto text-center space-y-6">
-                    <h1 className="text-5xl md:text-6xl font-bold leading-tight">
+                    <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold leading-tight">
                         <span className="text-gray-900">About </span>
                         <span className="bg-gradient-to-r from-teal-600 to-cyan-600 bg-clip-text text-transparent">
                             Acredia
                         </span>
                     </h1>
-                    <p className="text-xl text-gray-600 leading-relaxed">
+                    <p className="text-lg sm:text-xl text-gray-600 leading-relaxed">
                         The world's first comprehensive blockchain-powered academic credential platform combining
                         Soulbound NFTs, Zero-Knowledge Proofs, and AI-driven verification for secure, tamper-proof,
                         and globally recognized educational credentials.
