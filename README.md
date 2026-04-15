@@ -22,6 +22,7 @@
 [🌐 Stellar Network](https://stellar.org) | [📊 Stellar Expert Explorer](https://stellar.expert) | [💧 Get Test XLM](https://laboratory.stellar.org/)
 
 <h3><a href="https://acredia-stellar.vercel.app/"> 🌐 VIEW LIVE DEMO </a></h3>
+<h3><a href="https://youtu.be/CG7UF-_Du2Y"> 📽️ VIEW LIVE DEMO </a></h3>
 
 </div>
 
