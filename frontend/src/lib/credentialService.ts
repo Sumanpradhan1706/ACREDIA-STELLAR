@@ -157,7 +157,6 @@ export async function issueCredential(
             metadataUrl,
             issuerAddress
         );
-        const resolvedTokenId = tokenId && tokenId !== 'pending' ? tokenId : transactionHash;
         console.log('✅ Credential issued! Token ID:', tokenId);
         console.log('✅ Transaction:', transactionHash);
 
@@ -182,7 +181,7 @@ export async function issueCredential(
             student_wallet_address: data.studentWallet, // Store wallet for lookup
             institution_id: data.institutionId,
             issuer_wallet_address: data.institutionWallet, // Store issuer wallet
-            token_id: resolvedTokenId,
+            token_id: tokenId,
             ipfs_hash: metadataPath, // Store full path (CID/filename)
             blockchain_hash: transactionHash,
             metadata: metadata,
@@ -201,7 +200,7 @@ export async function issueCredential(
         console.log('✅ Credential saved to database');
 
         return {
-            tokenId: resolvedTokenId,
+            tokenId,
             transactionHash,
             ipfsHash: fileCID,
             metadataHash: metadataPath,
