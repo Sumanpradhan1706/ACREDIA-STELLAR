@@ -1,27 +1,27 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import { safeGetSession, supabase } from '@/lib/supabase';
-import { getIPFSUrl } from '@/lib/ipfs';
-import {
-    Award,
-    Search,
-    ExternalLink,
-    QrCode,
-    Share2,
-    Download,
-    Calendar,
-    Building2,
-    GraduationCap,
-    RefreshCw,
-    AlertCircle,
-} from 'lucide-react';
 import { format } from 'date-fns';
+import {
+    AlertCircle,
+    Award,
+    Building2,
+    Calendar,
+    ExternalLink,
+    GraduationCap,
+    QrCode,
+    RefreshCw,
+    Search,
+    Share2,
+} from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 import QRCodeModal from './QRCodeModal';
+import { getIPFSUrl } from '@/lib/ipfs';
+import { debugLog } from '@/lib/debug';
+import { safeGetSession, supabase } from '@/lib/supabase';
 
 interface Credential {
     id: string;
@@ -73,7 +73,6 @@ export default function StudentCredentialsList({
                 return;
             }
 
-            // Keep student's wallet_address synced for legacy credential linking.
             if (studentWallet) {
                 await supabase
                     .from('students')
@@ -105,11 +104,11 @@ export default function StudentCredentialsList({
                 (a, b) => new Date(b.issued_at).getTime() - new Date(a.issued_at).getTime()
             );
 
-            console.log('✅ Credentials fetched:', data.length, 'credentials');
+            debugLog(`Fetched ${data.length} credentials for the student dashboard.`);
             setCredentials(data);
-        } catch (err: any) {
-            console.error('Error loading credentials:', err);
-            setError(err.message || 'Failed to load credentials');
+        } catch (error: any) {
+            console.error('Error loading credentials:', error);
+            setError(error.message || 'Failed to load credentials');
         } finally {
             setLoading(false);
         }
@@ -119,9 +118,8 @@ export default function StudentCredentialsList({
         loadCredentials();
     }, [studentId, studentWallet]);
 
-    // Filter credentials based on search
-    const filteredCredentials = credentials.filter((cred) => {
-        const metadata = cred.metadata?.credentialData;
+    const filteredCredentials = credentials.filter((credential) => {
+        const metadata = credential.metadata?.credentialData;
         const searchLower = searchQuery.toLowerCase();
 
         return (
@@ -129,15 +127,15 @@ export default function StudentCredentialsList({
             metadata?.degree?.toLowerCase().includes(searchLower) ||
             metadata?.major?.toLowerCase().includes(searchLower) ||
             metadata?.institutionName?.toLowerCase().includes(searchLower) ||
-            cred.token_id?.toLowerCase().includes(searchLower)
+            credential.token_id?.toLowerCase().includes(searchLower)
         );
     });
 
     if (loading) {
         return (
-            <Card className="p-8 bg-white border-gray-200 shadow-lg">
+            <Card className="border-gray-200 bg-white p-8 shadow-lg">
                 <div className="flex items-center justify-center py-12">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-600"></div>
+                    <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-teal-600"></div>
                     <p className="ml-4 text-gray-600">Loading your credentials...</p>
                 </div>
             </Card>
@@ -146,7 +144,7 @@ export default function StudentCredentialsList({
 
     if (error) {
         return (
-            <Card className="p-8 bg-white border-gray-200 shadow-lg">
+            <Card className="border-gray-200 bg-white p-8 shadow-lg">
                 <div className="flex flex-col items-center justify-center space-y-4">
                     <AlertCircle className="h-12 w-12 text-red-500" />
                     <p className="text-red-600">{error}</p>
@@ -164,8 +162,8 @@ export default function StudentCredentialsList({
     }
 
     return (
-        <Card className="p-6 bg-white border-gray-200 shadow-lg">
-            <div className="flex items-center justify-between mb-6">
+        <Card className="border-gray-200 bg-white p-6 shadow-lg">
+            <div className="mb-6 flex items-center justify-between">
                 <h2 className="text-2xl font-bold text-gray-900">My Credentials</h2>
                 <Button
                     onClick={loadCredentials}
@@ -178,10 +176,9 @@ export default function StudentCredentialsList({
                 </Button>
             </div>
 
-            {/* Search */}
             <div className="mb-6">
                 <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                    <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
                     <Input
                         placeholder="Search by type, degree, major, or institution..."
                         value={searchQuery}
@@ -191,31 +188,29 @@ export default function StudentCredentialsList({
                 </div>
             </div>
 
-            {/* Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                <div className="bg-teal-50 rounded-lg p-4">
-                    <p className="text-sm text-teal-700 font-medium">Total Credentials</p>
+            <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-3">
+                <div className="rounded-lg bg-teal-50 p-4">
+                    <p className="text-sm font-medium text-teal-700">Total Credentials</p>
                     <p className="text-3xl font-bold text-teal-900">{credentials.length}</p>
                 </div>
-                <div className="bg-green-50 rounded-lg p-4">
-                    <p className="text-sm text-green-700 font-medium">Active</p>
+                <div className="rounded-lg bg-green-50 p-4">
+                    <p className="text-sm font-medium text-green-700">Active</p>
                     <p className="text-3xl font-bold text-green-900">
-                        {credentials.filter((c) => !c.revoked).length}
+                        {credentials.filter((credential) => !credential.revoked).length}
                     </p>
                 </div>
-                <div className="bg-red-50 rounded-lg p-4">
-                    <p className="text-sm text-red-700 font-medium">Revoked</p>
+                <div className="rounded-lg bg-red-50 p-4">
+                    <p className="text-sm font-medium text-red-700">Revoked</p>
                     <p className="text-3xl font-bold text-red-900">
-                        {credentials.filter((c) => c.revoked).length}
+                        {credentials.filter((credential) => credential.revoked).length}
                     </p>
                 </div>
             </div>
 
-            {/* Credentials List */}
             {filteredCredentials.length === 0 ? (
-                <div className="text-center py-12">
-                    <Award className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-                    <p className="text-gray-500 text-lg">
+                <div className="py-12 text-center">
+                    <Award className="mx-auto mb-4 h-16 w-16 text-gray-300" />
+                    <p className="text-lg text-gray-500">
                         {searchQuery
                             ? 'No credentials found matching your search'
                             : 'No credentials issued yet'}
@@ -253,16 +248,11 @@ function CredentialCard({ credential }: { credential: Credential }) {
     const handleShare = () => {
         const shareUrl = `${window.location.origin}/verify?token=${credential.token_id}`;
         navigator.clipboard.writeText(shareUrl);
-        // TODO: Add toast notification
         alert('Share link copied to clipboard!');
     };
 
     const handleGenerateQR = () => {
-        console.log('🔍 Opening QR modal for credential:', {
-            id: credential.id,
-            token_id: credential.token_id,
-            full_credential: credential
-        });
+        debugLog('Opening credential QR modal.');
         setShowQRModal(true);
     };
 
@@ -273,10 +263,9 @@ function CredentialCard({ credential }: { credential: Credential }) {
                 onClose={() => setShowQRModal(false)}
                 credential={credential}
             />
-            <div className="border border-gray-200 rounded-lg p-4 hover:border-teal-500 transition-colors">
+            <div className="rounded-lg border border-gray-200 p-4 transition-colors hover:border-teal-500">
                 <div className="flex items-start justify-between">
                     <div className="flex-1 space-y-3">
-                        {/* Header */}
                         <div className="flex items-center space-x-3">
                             <Award className="h-5 w-5 text-teal-600" />
                             <h3 className="font-semibold text-gray-900">
@@ -291,7 +280,6 @@ function CredentialCard({ credential }: { credential: Credential }) {
                             )}
                         </div>
 
-                        {/* Details */}
                         <div className="grid grid-cols-2 gap-3 text-sm">
                             {metadata.degree && (
                                 <div className="flex items-center space-x-2">
@@ -327,21 +315,19 @@ function CredentialCard({ credential }: { credential: Credential }) {
                             </div>
                         </div>
 
-                        {/* Token ID */}
-                        <div className="text-xs text-gray-500 font-mono">
+                        <div className="font-mono text-xs text-gray-500">
                             Token ID: {credential.token_id || 'Pending...'}
                         </div>
                     </div>
 
-                    {/* Actions */}
-                    <div className="flex flex-col space-y-2 ml-4">
+                    <div className="ml-4 flex flex-col space-y-2">
                         <Button
                             onClick={handleGenerateQR}
                             variant="outline"
                             size="sm"
                             className="border-teal-600 text-teal-600 hover:bg-teal-50"
                         >
-                            <QrCode className="h-4 w-4 mr-1" />
+                            <QrCode className="mr-1 h-4 w-4" />
                             QR Code
                         </Button>
                         <Button
@@ -350,7 +336,7 @@ function CredentialCard({ credential }: { credential: Credential }) {
                             size="sm"
                             className="border-blue-600 text-blue-600 hover:bg-blue-50"
                         >
-                            <Share2 className="h-4 w-4 mr-1" />
+                            <Share2 className="mr-1 h-4 w-4" />
                             Share
                         </Button>
                         {ipfsUrl && (
@@ -358,9 +344,9 @@ function CredentialCard({ credential }: { credential: Credential }) {
                                 <Button
                                     variant="outline"
                                     size="sm"
-                                    className="border-purple-600 text-purple-600 hover:bg-purple-50 w-full"
+                                    className="w-full border-purple-600 text-purple-600 hover:bg-purple-50"
                                 >
-                                    <ExternalLink className="h-4 w-4 mr-1" />
+                                    <ExternalLink className="mr-1 h-4 w-4" />
                                     IPFS
                                 </Button>
                             </a>
@@ -370,9 +356,9 @@ function CredentialCard({ credential }: { credential: Credential }) {
                                 <Button
                                     variant="outline"
                                     size="sm"
-                                    className="border-cyan-600 text-cyan-600 hover:bg-cyan-50 w-full"
+                                    className="w-full border-cyan-600 text-cyan-600 hover:bg-cyan-50"
                                 >
-                                    <ExternalLink className="h-4 w-4 mr-1" />
+                                    <ExternalLink className="mr-1 h-4 w-4" />
                                     Blockchain
                                 </Button>
                             </a>

@@ -1,16 +1,26 @@
 'use client';
 
 import { useState } from 'react';
+import Image from 'next/image';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import {
+    AlertTriangle,
+    ArrowLeft,
+    Eye,
+    EyeOff,
+    Lock,
+    Mail,
+    Shield,
+    User,
+} from 'lucide-react';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { debugLog } from '@/lib/debug';
 import { supabase } from '@/lib/supabase';
-import { toast } from 'sonner';
-import Link from 'next/link';
-import Image from 'next/image';
-import { Shield, Lock, Mail, Eye, EyeOff, ArrowLeft, User, AlertTriangle } from 'lucide-react';
 
 export default function AdminSetupPage() {
     const [name, setName] = useState('');
@@ -21,8 +31,8 @@ export default function AdminSetupPage() {
     const [loading, setLoading] = useState(false);
     const router = useRouter();
 
-    const handleRegister = async (e: React.FormEvent) => {
-        e.preventDefault();
+    const handleRegister = async (event: React.FormEvent) => {
+        event.preventDefault();
 
         if (password !== confirmPassword) {
             toast.error('Passwords do not match');
@@ -54,25 +64,21 @@ export default function AdminSetupPage() {
                 return;
             }
 
-            if (data.user) {
-                if (data.session) {
-                    // No email confirmation needed - user can login immediately
-                    toast.success('✅ Admin account created successfully!');
-                    toast.info('Redirecting to admin login...');
-                    setTimeout(() => router.push('/auth/admin-login'), 2000);
-                } else {
-                    // Email confirmation required
-                    toast.success('✅ Registration successful!');
-                    toast.warning('📧 Check your email for confirmation link');
-                    toast.info('⚠️ Check spam/junk folder if not in inbox');
-
-                    // Show detailed message
-                    console.log('✉️ Confirmation email sent to:', email);
-                    console.log('📌 Check your spam folder if you don\'t see it');
-                    console.log('🔗 Click the link in the email to verify your account');
-                    console.log('⏰ After verification, login at /auth/admin-login');
-                }
+            if (!data.user) {
+                return;
             }
+
+            if (data.session) {
+                toast.success('Admin account created successfully!');
+                toast.info('Redirecting to admin login...');
+                setTimeout(() => router.push('/auth/admin-login'), 2000);
+                return;
+            }
+
+            toast.success('Registration successful!');
+            toast.warning('Check your email for a confirmation link');
+            toast.info('Check spam or junk if it does not arrive in your inbox');
+            debugLog('Admin registration requires email confirmation.');
         } catch (error: any) {
             console.error('Registration error:', error);
             toast.error('Registration failed: ' + error.message);
@@ -82,15 +88,13 @@ export default function AdminSetupPage() {
     };
 
     return (
-        <div className="min-h-screen bg-linear-to-br from-gray-50 via-red-50 to-orange-50 flex items-center justify-center p-4">
-            {/* Background decoration */}
+        <div className="flex min-h-screen items-center justify-center bg-linear-to-br from-gray-50 via-red-50 to-orange-50 p-4">
             <div className="absolute inset-0 overflow-hidden">
-                <div className="absolute top-20 right-0 w-96 h-96 bg-red-200/20 rounded-full blur-3xl"></div>
-                <div className="absolute bottom-0 left-0 w-96 h-96 bg-orange-200/20 rounded-full blur-3xl"></div>
+                <div className="absolute right-0 top-20 h-96 w-96 rounded-full bg-red-200/20 blur-3xl"></div>
+                <div className="absolute bottom-0 left-0 h-96 w-96 rounded-full bg-orange-200/20 blur-3xl"></div>
             </div>
 
-            <Card className="w-full max-w-md p-8 space-y-6 relative z-10 shadow-2xl border-2 border-red-100">
-                {/* Logo & Title */}
+            <Card className="relative z-10 w-full max-w-md space-y-6 border-2 border-red-100 p-8 shadow-2xl">
                 <div className="text-center space-y-4">
                     <div className="flex justify-center">
                         <div className="relative">
@@ -101,36 +105,33 @@ export default function AdminSetupPage() {
                                 height={80}
                                 className="rounded-lg"
                             />
-                            <Shield className="absolute -bottom-2 -right-2 h-8 w-8 text-red-600 bg-white rounded-full p-1 shadow-lg" />
+                            <Shield className="absolute -bottom-2 -right-2 h-8 w-8 rounded-full bg-white p-1 text-red-600 shadow-lg" />
                         </div>
                     </div>
-                    <h1 className="text-3xl font-bold text-gray-900">
-                        Admin Registration
-                    </h1>
-                    <p className="text-gray-600">
-                        Create your admin account
-                    </p>
+                    <h1 className="text-3xl font-bold text-gray-900">Admin Registration</h1>
+                    <p className="text-gray-600">Create your admin account</p>
                 </div>
 
-                {/* Info Notice */}
-                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-4">
                     <div className="flex items-start space-x-3">
-                        <AlertTriangle className="h-5 w-5 text-yellow-600 mt-0.5" />
+                        <AlertTriangle className="mt-0.5 h-5 w-5 text-yellow-600" />
                         <div>
                             <p className="text-sm font-semibold text-yellow-900">
                                 Email Confirmation Required
                             </p>
-                            <p className="text-xs text-yellow-700 mt-1">
-                                After registration, check your email (including spam/junk folder) for a confirmation link from Supabase. Click the link to verify your email before logging in.
+                            <p className="mt-1 text-xs text-yellow-700">
+                                After registration, check your email, including spam or junk, for a
+                                confirmation link from Supabase. Open the link before logging in.
                             </p>
-                            <p className="text-xs text-yellow-700 mt-2 font-semibold">
-                                📧 Not receiving emails? Check Supabase Dashboard → Settings → Authentication → SMTP Settings to configure custom email service.
+                            <p className="mt-2 text-xs font-semibold text-yellow-700">
+                                Not receiving emails? Check Supabase Dashboard -&gt; Settings -&gt;
+                                Authentication -&gt; SMTP Settings to configure a custom email
+                                service.
                             </p>
                         </div>
                     </div>
                 </div>
 
-                {/* Registration Form */}
                 <form onSubmit={handleRegister} className="space-y-4">
                     <div className="space-y-2">
                         <Label htmlFor="name" className="text-gray-700">
@@ -143,9 +144,9 @@ export default function AdminSetupPage() {
                                 type="text"
                                 placeholder="Enter your name"
                                 value={name}
-                                onChange={(e) => setName(e.target.value)}
+                                onChange={(event) => setName(event.target.value)}
                                 required
-                                className="pl-10 border-gray-300 focus:border-red-500 focus:ring-red-500"
+                                className="border-gray-300 pl-10 focus:border-red-500 focus:ring-red-500"
                                 disabled={loading}
                             />
                         </div>
@@ -162,9 +163,9 @@ export default function AdminSetupPage() {
                                 type="email"
                                 placeholder="your@email.com"
                                 value={email}
-                                onChange={(e) => setEmail(e.target.value)}
+                                onChange={(event) => setEmail(event.target.value)}
                                 required
-                                className="pl-10 border-gray-300 focus:border-red-500 focus:ring-red-500"
+                                className="border-gray-300 pl-10 focus:border-red-500 focus:ring-red-500"
                                 disabled={loading}
                             />
                         </div>
@@ -179,11 +180,11 @@ export default function AdminSetupPage() {
                             <Input
                                 id="password"
                                 type={showPassword ? 'text' : 'password'}
-                                placeholder="••••••••"
+                                placeholder="********"
                                 value={password}
-                                onChange={(e) => setPassword(e.target.value)}
+                                onChange={(event) => setPassword(event.target.value)}
                                 required
-                                className="pl-10 pr-10 border-gray-300 focus:border-red-500 focus:ring-red-500"
+                                className="border-gray-300 pl-10 pr-10 focus:border-red-500 focus:ring-red-500"
                                 disabled={loading}
                             />
                             <button
@@ -210,11 +211,11 @@ export default function AdminSetupPage() {
                             <Input
                                 id="confirmPassword"
                                 type={showPassword ? 'text' : 'password'}
-                                placeholder="••••••••"
+                                placeholder="********"
                                 value={confirmPassword}
-                                onChange={(e) => setConfirmPassword(e.target.value)}
+                                onChange={(event) => setConfirmPassword(event.target.value)}
                                 required
-                                className="pl-10 border-gray-300 focus:border-red-500 focus:ring-red-500"
+                                className="border-gray-300 pl-10 focus:border-red-500 focus:ring-red-500"
                                 disabled={loading}
                             />
                         </div>
@@ -222,31 +223,27 @@ export default function AdminSetupPage() {
 
                     <Button
                         type="submit"
-                        className="w-full bg-red-600 hover:bg-red-700 text-white"
+                        className="w-full bg-red-600 text-white hover:bg-red-700"
                         disabled={loading}
                     >
                         {loading ? (
                             <>
-                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                                <div className="mr-2 h-4 w-4 animate-spin rounded-full border-b-2 border-white"></div>
                                 Creating Account...
                             </>
                         ) : (
                             <>
-                                <Shield className="h-4 w-4 mr-2" />
+                                <Shield className="mr-2 h-4 w-4" />
                                 Create Admin Account
                             </>
                         )}
                     </Button>
                 </form>
 
-                {/* Back Link */}
-                <div className="pt-4 border-t border-gray-200 space-y-2">
+                <div className="space-y-2 border-t border-gray-200 pt-4">
                     <Link href="/auth/admin-login">
-                        <Button
-                            variant="ghost"
-                            className="w-full text-gray-600 hover:text-gray-900"
-                        >
-                            <ArrowLeft className="h-4 w-4 mr-2" />
+                        <Button variant="ghost" className="w-full text-gray-600 hover:text-gray-900">
+                            <ArrowLeft className="mr-2 h-4 w-4" />
                             Back to Admin Login
                         </Button>
                     </Link>

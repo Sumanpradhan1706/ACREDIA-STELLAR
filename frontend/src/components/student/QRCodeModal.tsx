@@ -2,10 +2,17 @@
 
 import { useEffect, useRef, useState } from 'react';
 import QRCode from 'qrcode';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Download, Share2, Copy, Check } from 'lucide-react';
+import { Check, Copy, Download, Share2 } from 'lucide-react';
+import { debugLog } from '@/lib/debug';
 
 interface QRCodeModalProps {
     open: boolean;
@@ -23,80 +30,50 @@ export default function QRCodeModal({ open, onClose, credential }: QRCodeModalPr
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const [copied, setCopied] = useState(false);
 
-    // Generate verification URL
     const verificationUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/verify?token=${credential?.token_id || ''}`;
 
-    // Debug: Log credential data when modal opens
-    useEffect(() => {
-        if (open) {
-            console.log('📋 QRCodeModal received credential:', {
-                token_id: credential?.token_id,
-                blockchain_hash: credential?.blockchain_hash,
-                full_credential: credential
-            });
-        }
-    }, [open, credential]);
-
-    // Generate QR code when modal opens
     useEffect(() => {
         if (!open || !credential?.token_id) {
-            console.log('⚠️ QR generation skipped:', {
-                open,
-                hasCanvas: !!canvasRef.current,
-                hasTokenId: !!credential?.token_id
-            });
             return;
         }
 
-        // Wait for canvas to be ready in the DOM
         const timer = setTimeout(() => {
             if (!canvasRef.current) {
-                console.error('❌ Canvas still not ready after timeout');
+                console.error('QR canvas is not ready.');
                 return;
             }
 
-            const verificationUrl = `${window.location.origin}/verify?token=${credential.token_id}`;
             const canvas = canvasRef.current;
-
-            console.log('🎨 Generating QR for token:', credential.token_id);
-            console.log('🔗 Verification URL:', verificationUrl);
-            console.log('📐 Canvas element:', canvas);
-            console.log('📏 Canvas dimensions:', canvas.width, 'x', canvas.height);
-
-            // Clear canvas first
+            const qrUrl = `${window.location.origin}/verify?token=${credential.token_id}`;
             const ctx = canvas.getContext('2d');
+
             if (ctx) {
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
-                console.log('🧹 Canvas cleared');
             }
 
-            // Generate QR code
+            debugLog('Generating credential QR code.');
             QRCode.toCanvas(
                 canvas,
-                verificationUrl,
+                qrUrl,
                 {
                     width: 240,
                     margin: 2,
                     errorCorrectionLevel: 'H',
                     color: {
-                        dark: '#0F766E', // Teal color
+                        dark: '#0F766E',
                         light: '#FFFFFF',
                     },
                 },
                 (error) => {
                     if (error) {
-                        console.error('❌ Error generating QR code:', error);
-                    } else {
-                        console.log('✅ QR code generated successfully on canvas');
-                        console.log('📊 Canvas after generation:', {
-                            width: canvas.width,
-                            height: canvas.height,
-                            style: canvas.style.cssText
-                        });
+                        console.error('Error generating QR code:', error);
+                        return;
                     }
+
+                    debugLog('Credential QR code generated.');
                 }
             );
-        }, 100); // Small delay to ensure DOM is ready
+        }, 100);
 
         return () => clearTimeout(timer);
     }, [open, credential?.token_id]);
@@ -104,15 +81,13 @@ export default function QRCodeModal({ open, onClose, credential }: QRCodeModalPr
     const handleDownload = () => {
         if (!canvasRef.current) return;
 
-        // Convert canvas to image and download
         canvasRef.current.toBlob((blob) => {
             if (!blob) return;
 
             const url = URL.createObjectURL(blob);
             const link = document.createElement('a');
             link.href = url;
-            const filename = `${credential.metadata?.credentialData?.credentialType || 'credential'}-${credential.token_id}-qr.png`;
-            link.download = filename;
+            link.download = `${credential.metadata?.credentialData?.credentialType || 'credential'}-${credential.token_id}-qr.png`;
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
@@ -125,25 +100,26 @@ export default function QRCodeModal({ open, onClose, credential }: QRCodeModalPr
             await navigator.clipboard.writeText(verificationUrl);
             setCopied(true);
             setTimeout(() => setCopied(false), 2000);
-        } catch (err) {
-            console.error('Failed to copy:', err);
+        } catch (error) {
+            console.error('Failed to copy verification link:', error);
         }
     };
 
     const handleShare = async () => {
         const credType = credential.metadata?.credentialData?.credentialType || 'Credential';
-        if (navigator.share) {
-            try {
-                await navigator.share({
-                    title: `Verify My ${credType}`,
-                    text: `Scan this QR code or visit the link to verify my ${credType} from ${credential.metadata?.credentialData?.institutionName || 'institution'}`,
-                    url: verificationUrl,
-                });
-            } catch (err) {
-                console.log('Share canceled or failed:', err);
-            }
-        } else {
+        if (!navigator.share) {
             handleCopyLink();
+            return;
+        }
+
+        try {
+            await navigator.share({
+                title: `Verify My ${credType}`,
+                text: `Scan this QR code or visit the link to verify my ${credType} from ${credential.metadata?.credentialData?.institutionName || 'institution'}`,
+                url: verificationUrl,
+            });
+        } catch (error) {
+            debugLog('Credential share sheet was dismissed or failed.', error);
         }
     };
 
@@ -158,8 +134,7 @@ export default function QRCodeModal({ open, onClose, credential }: QRCodeModalPr
                 </DialogHeader>
 
                 <div className="space-y-4">
-                    {/* QR Code - Compact */}
-                    <div className="flex justify-center bg-linear-to-br from-teal-50 to-white p-4 rounded-lg border border-teal-200">
+                    <div className="flex justify-center rounded-lg border border-teal-200 bg-linear-to-br from-teal-50 to-white p-4">
                         <canvas
                             ref={canvasRef}
                             width={240}
@@ -168,28 +143,26 @@ export default function QRCodeModal({ open, onClose, credential }: QRCodeModalPr
                         />
                     </div>
 
-                    {/* Token ID - Minimal */}
-                    <div className="flex flex-col gap-1 px-3 py-2 bg-gray-50 rounded-md sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex flex-col gap-1 rounded-md bg-gray-50 px-3 py-2 sm:flex-row sm:items-center sm:justify-between">
                         <span className="text-xs text-gray-500">Token ID:</span>
-                        <span className="text-sm font-mono font-semibold text-gray-900 break-all sm:text-right">
+                        <span className="break-all text-sm font-mono font-semibold text-gray-900 sm:text-right">
                             #{credential?.token_id || 'N/A'}
                         </span>
                     </div>
 
-                    {/* Verification Link - Compact */}
                     <div className="space-y-1.5">
                         <label className="text-xs font-medium text-gray-700">Verification Link</label>
-                        <div className="flex gap-2 min-w-0">
+                        <div className="flex min-w-0 gap-2">
                             <Input
                                 value={verificationUrl}
                                 readOnly
-                                className="font-mono text-xs h-9 bg-white min-w-0 truncate"
+                                className="h-9 min-w-0 truncate bg-white font-mono text-xs"
                             />
                             <Button
                                 onClick={handleCopyLink}
                                 variant="outline"
                                 size="sm"
-                                className="shrink-0 h-9 w-9 p-0"
+                                className="h-9 w-9 shrink-0 p-0"
                             >
                                 {copied ? (
                                     <Check className="h-3.5 w-3.5 text-green-600" />
@@ -200,13 +173,12 @@ export default function QRCodeModal({ open, onClose, credential }: QRCodeModalPr
                         </div>
                     </div>
 
-                    {/* Action Buttons - Streamlined */}
                     <div className="flex flex-col gap-2 pt-2 sm:flex-row">
                         <Button
                             onClick={handleDownload}
                             variant="outline"
                             size="sm"
-                            className="flex-1 h-9 text-sm"
+                            className="h-9 flex-1 text-sm"
                         >
                             <Download className="mr-1.5 h-3.5 w-3.5" />
                             Download
@@ -214,7 +186,7 @@ export default function QRCodeModal({ open, onClose, credential }: QRCodeModalPr
                         <Button
                             onClick={handleShare}
                             size="sm"
-                            className="flex-1 h-9 bg-teal-600 hover:bg-teal-700 text-sm"
+                            className="h-9 flex-1 bg-teal-600 text-sm hover:bg-teal-700"
                         >
                             <Share2 className="mr-1.5 h-3.5 w-3.5" />
                             Share

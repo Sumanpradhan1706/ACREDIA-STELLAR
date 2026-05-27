@@ -1,16 +1,17 @@
-import { activeNetwork, sorobanServer, getContractAddress } from "./stellar";
-import { signTransaction } from "@stellar/freighter-api";
+import { signTransaction } from '@stellar/freighter-api';
 import {
+    Account,
     Address,
+    Contract,
     nativeToScVal,
     scValToNative,
-    TransactionBuilder,
-    TimeoutInfinite,
     StrKey,
-    Contract,
-    Account,
+    TimeoutInfinite,
+    TransactionBuilder,
     xdr,
-} from "@stellar/stellar-sdk";
+} from '@stellar/stellar-sdk';
+import { activeNetwork, getContractAddress, sorobanServer } from './stellar';
+import { debugLog, debugWarn } from './debug';
 
 export interface CredentialMetadata {
     studentAddress: string;
@@ -20,36 +21,30 @@ export interface CredentialMetadata {
     issuedAt: number;
 }
 
-/**
- * Poll for transaction confirmation after sendTransaction()
- * Soroban transactions are async — sendTransaction() only queues them.
- */
 async function waitForConfirmation(hash: string, maxAttempts = 20): Promise<any> {
     for (let i = 0; i < maxAttempts; i++) {
         await new Promise((res) => setTimeout(res, 1500));
         const response = await sorobanServer.getTransaction(hash);
 
-        if (response.status === "SUCCESS") {
+        if (response.status === 'SUCCESS') {
             return response;
         }
-        if (response.status === "FAILED") {
+
+        if (response.status === 'FAILED') {
             const resultMeta = (response as any).resultMetaXdr;
             throw new Error(
                 `Transaction FAILED on-chain.\n` +
-                `Hash: ${hash}\n` +
-                `Result: ${resultMeta || "No result metadata available"}`
+                    `Hash: ${hash}\n` +
+                    `Result: ${resultMeta || 'No result metadata available'}`
             );
         }
-        // Status is "NOT_FOUND" or "PENDING" — keep polling
-        console.log(`⏳ Waiting for confirmation (attempt ${i + 1})...`);
+
+        debugLog(`Waiting for transaction confirmation (attempt ${i + 1}).`);
     }
+
     throw new Error(`Transaction ${hash} not confirmed after ${maxAttempts} attempts`);
 }
 
-/**
- * Core smart contract invocation helper for Soroban.
- * Handles transaction building, simulation, Freighter signing, submission, and confirmation polling.
- */
 async function invokeContractMethod(
     contractId: string,
     method: string,
@@ -60,7 +55,7 @@ async function invokeContractMethod(
     const sourceAccount = await sorobanServer.getAccount(signerAddress);
 
     const txBuilder = new TransactionBuilder(sourceAccount, {
-        fee: "100",
+        fee: '100',
         networkPassphrase: activeNetwork.networkPassphrase,
     })
         .addOperation(contract.call(method, ...args))
@@ -68,232 +63,209 @@ async function invokeContractMethod(
 
     const transaction = txBuilder.build();
 
-    // Simulate first — this catches authorization and logic errors BEFORE submitting
-    console.log(`🔍 Simulating ${method}...`);
+    debugLog(`Simulating contract method "${method}".`);
     const simResult = await sorobanServer.simulateTransaction(transaction as any);
 
-    if ("error" in simResult) {
+    if ('error' in simResult) {
         const errStr = String((simResult as any).error);
-        // Parse common contract panics into human-readable messages
-        if (errStr.includes("Issuer not authorized") || errStr.includes("UnreachableCodeReached")) {
+        if (errStr.includes('Issuer not authorized') || errStr.includes('UnreachableCodeReached')) {
             throw new Error(
-                `❌ Your wallet is not authorized to issue credentials.\n\n` +
-                `The contract owner (admin) must first authorize your Stellar address:\n` +
-                `"${signerAddress}"\n\n` +
-                `Ask the admin to use Admin Dashboard → Authorize Wallet.`
+                `Your wallet is not authorized to issue credentials.\n\n` +
+                    `The contract owner (admin) must first authorize your Stellar address:\n` +
+                    `"${signerAddress}"\n\n` +
+                    `Ask the admin to use Admin Dashboard -> Authorize Wallet.`
             );
         }
+
         throw new Error(`Simulation failed: ${errStr}`);
     }
 
-    // Prepare (adds resource fees from simulation result)
-    console.log(`📝 Preparing ${method}...`);
+    debugLog(`Preparing contract method "${method}".`);
     const preparedTx = await sorobanServer.prepareTransaction(transaction as any);
 
-    // Sign with Freighter wallet
-    console.log(`✍️ Signing with Freighter...`);
+    debugLog('Signing transaction with Freighter.');
     const signedXdrResponse = await signTransaction(preparedTx.toXDR(), {
         networkPassphrase: activeNetwork.networkPassphrase,
         network: activeNetwork.networkName,
     } as any);
 
-    // Support both Freighter v5 (returns string) and v6 (returns object)
-    const finalXdr = typeof signedXdrResponse === "string" 
-        ? signedXdrResponse 
-        : (signedXdrResponse as any)?.signedTxXdr || Object.values(signedXdrResponse || {})[0];
+    const finalXdr =
+        typeof signedXdrResponse === 'string'
+            ? signedXdrResponse
+            : (signedXdrResponse as any)?.signedTxXdr || Object.values(signedXdrResponse || {})[0];
 
-    if (!finalXdr || typeof finalXdr !== "string") {
-        throw new Error("❌ Freighter signing failed or was canceled. Response: " + JSON.stringify(signedXdrResponse));
-    }
-
-    // Submit to network
-    const signedTx = TransactionBuilder.fromXDR(finalXdr, activeNetwork.networkPassphrase);
-    console.log(`📡 Submitting to Stellar network...`);
-    const sendResponse = await sorobanServer.sendTransaction(signedTx as any);
-
-    if (sendResponse.status === "ERROR") {
+    if (!finalXdr || typeof finalXdr !== 'string') {
         throw new Error(
-            `Submission failed: ${sendResponse.errorResult?.toXDR("base64") || "Unknown error"}`
+            'Freighter signing failed or was canceled. Response: ' + JSON.stringify(signedXdrResponse)
         );
     }
 
-    // Wait for on-chain confirmation
-    console.log(`⏳ Waiting for confirmation (hash: ${sendResponse.hash})...`);
+    const signedTx = TransactionBuilder.fromXDR(finalXdr, activeNetwork.networkPassphrase);
+    debugLog('Submitting signed transaction to Stellar.');
+    const sendResponse = await sorobanServer.sendTransaction(signedTx as any);
+
+    if (sendResponse.status === 'ERROR') {
+        throw new Error(
+            `Submission failed: ${sendResponse.errorResult?.toXDR('base64') || 'Unknown error'}`
+        );
+    }
+
+    debugLog('Waiting for on-chain confirmation.');
     await waitForConfirmation(sendResponse.hash);
-    console.log(`✅ ${method} confirmed on-chain.`);
+    debugLog(`Contract method "${method}" confirmed on-chain.`);
 
     return sendResponse.hash;
 }
 
-/**
- * Read-only simulation helper (no auth, no submission)
- */
-async function simulateRead(contractId: string, method: string, args: any[] = [], sourceAddress: string): Promise<any> {
+async function simulateRead(
+    contractId: string,
+    method: string,
+    args: any[] = [],
+    sourceAddress: string
+): Promise<any> {
     const contract = new Contract(contractId);
     let sourceAccount;
+
     try {
         sourceAccount = await sorobanServer.getAccount(sourceAddress);
     } catch {
-        // If the wallet is empty/unfunded (0 XLM), it won't exist on the ledger yet.
-        // For read-only simulations, we can bypass this by constructing a dummy Account struct.
-        sourceAccount = new Account(sourceAddress, "0");
+        sourceAccount = new Account(sourceAddress, '0');
     }
 
     const txBuilder = new TransactionBuilder(sourceAccount, {
-        fee: "100",
+        fee: '100',
         networkPassphrase: activeNetwork.networkPassphrase,
     })
         .addOperation(contract.call(method, ...args))
         .setTimeout(TimeoutInfinite);
 
     const sim = await sorobanServer.simulateTransaction(txBuilder.build() as any);
-    if ("error" in sim) {
-        console.error("DEBUG simulateRead errored:", (sim as any).error);
+    if ('error' in sim) {
+        debugWarn('simulateRead failed.', (sim as any).error);
         return null;
     }
 
     const resultXdr = (sim as any).result?.retval;
-    console.log("DEBUG simulateRead resultXdr:", resultXdr);
     if (!resultXdr) {
-        console.error("DEBUG resultXdr is empty.");
+        debugWarn('simulateRead returned an empty result.');
         return null;
     }
 
     try {
-        if (typeof resultXdr === "string") {
-            const scval = xdr.ScVal.fromXDR(resultXdr, "base64");
+        if (typeof resultXdr === 'string') {
+            const scval = xdr.ScVal.fromXDR(resultXdr, 'base64');
             return scValToNative(scval);
         }
-        
-        // Failsafe raw object bypass for booleans (in case browser SDK swallowed prototype)
+
         if (typeof resultXdr === 'object' && !resultXdr.switch && resultXdr._switch?.name === 'scvBool') {
-             console.log("DEBUG: Using failsafe boolean bypass");
-             return resultXdr._value;
+            debugLog('Using boolean fallback for simulateRead result.');
+            return resultXdr._value;
         }
 
-        // It's already an xdr.ScVal object in newer stellar-sdk versions
         return scValToNative(resultXdr);
-    } catch (e) {
-        console.error("DEBUG scValToNative errored:", e);
+    } catch (error) {
+        debugWarn('Failed to decode simulateRead result.', error);
         return null;
     }
 }
 
-/**
- * Get the contract owner address
- */
 export async function getContractOwner(callerAddress: string): Promise<string> {
-    const contractId = getContractAddress("CREDENTIAL_NFT");
+    const contractId = getContractAddress('CREDENTIAL_NFT');
     if (!contractId) {
-        console.error("DEBUG: Contract ID is empty!");
-        return "";
+        debugWarn('Contract address is unavailable while loading owner.');
+        return '';
     }
+
     try {
-        const result = await simulateRead(contractId, "get_owner", [], callerAddress);
-        return result || "";
-    } catch (e: any) {
-        console.error("DEBUG getContractOwner error:", e?.message || String(e));
-        return "";
+        const result = await simulateRead(contractId, 'get_owner', [], callerAddress);
+        return result || '';
+    } catch (error: any) {
+        debugWarn('Failed to load contract owner.', error?.message || String(error));
+        return '';
     }
 }
 
-/**
- * Check if a Stellar address is an authorized issuer
- */
-export async function isAuthorizedIssuer(issuerAddress: string, callerAddress: string): Promise<boolean> {
-    const contractId = getContractAddress("CREDENTIAL_NFT");
+export async function isAuthorizedIssuer(
+    issuerAddress: string,
+    callerAddress: string
+): Promise<boolean> {
+    const contractId = getContractAddress('CREDENTIAL_NFT');
+
     try {
-        const result = await simulateRead(contractId, "is_authorized_issuer", [
-            new Address(issuerAddress).toScVal(),
-        ], callerAddress);
-        console.log("DEBUG isAuthorizedIssuer returned:", result);
+        const result = await simulateRead(
+            contractId,
+            'is_authorized_issuer',
+            [new Address(issuerAddress).toScVal()],
+            callerAddress
+        );
         return result === true;
-    } catch (e: any) {
-        console.error("DEBUG isAuthorizedIssuer error:", e);
+    } catch (error) {
+        debugWarn('Failed to check issuer authorization.', error);
         return false;
     }
 }
 
-/**
- * Authorize an issuer (admin only)
- */
 export async function authorizeIssuer(adminAddress: string, issuerAddress: string): Promise<string> {
-    const contractId = getContractAddress("CREDENTIAL_NFT");
+    const contractId = getContractAddress('CREDENTIAL_NFT');
     const args = [new Address(issuerAddress).toScVal()];
-    return invokeContractMethod(contractId, "authorize_issuer", args, adminAddress);
+    return invokeContractMethod(contractId, 'authorize_issuer', args, adminAddress);
 }
 
-/**
- * Issue a credential on the Stellar Network
- */
 export async function issueCredentialOnStellar(
     studentAddress: string,
     credentialHash: string,
     ipfsUri: string,
     issuerAddress: string
 ): Promise<{ tokenId: string; transactionHash: string }> {
-    console.log("🚀 Issuing credential on Stellar Network...");
-    console.log("  Student:", studentAddress);
-    console.log("  Issuer:", issuerAddress);
+    debugLog('Issuing credential on Stellar.');
 
-    // Pre-flight: check authorization before wasting the user's time
     const authorized = await isAuthorizedIssuer(issuerAddress, issuerAddress);
     if (!authorized) {
         throw new Error(
-            `❌ Your wallet ("${issuerAddress}") is not authorized to issue credentials.\n\n` +
-            `The contract admin must authorize your wallet first via:\n` +
-            `Admin Dashboard → "Authorize Wallet" → enter your Stellar address.`
+            `Your wallet ("${issuerAddress}") is not authorized to issue credentials.\n\n` +
+                `The contract admin must authorize your wallet first via:\n` +
+                `Admin Dashboard -> "Authorize Wallet" -> enter your Stellar address.`
         );
     }
 
-    const contractId = getContractAddress("CREDENTIAL_NFT");
+    const contractId = getContractAddress('CREDENTIAL_NFT');
     const args = [
         new Address(studentAddress).toScVal(),
         new Address(issuerAddress).toScVal(),
-        nativeToScVal(credentialHash, { type: "string" }),
-        nativeToScVal(ipfsUri, { type: "string" }),
+        nativeToScVal(credentialHash, { type: 'string' }),
+        nativeToScVal(ipfsUri, { type: 'string' }),
     ];
 
-    const txHash = await invokeContractMethod(contractId, "issue_credential", args, issuerAddress);
+    const txHash = await invokeContractMethod(contractId, 'issue_credential', args, issuerAddress);
+    debugLog('Credential issue transaction submitted successfully.');
 
-    console.log("✅ Credential issued on Stellar Network. Tx:", txHash);
     return {
-        tokenId: "pending",
+        tokenId: 'pending',
         transactionHash: txHash,
     };
 }
 
-/**
- * Revoke a credential on the Stellar Network
- */
 export async function revokeCredentialOnStellar(tokenId: string, issuerAddress: string): Promise<string> {
-    console.log("🗑️ Revoking credential on Stellar Network...");
-    const contractId = getContractAddress("CREDENTIAL_NFT");
-
+    debugLog('Revoking credential on Stellar.');
+    const contractId = getContractAddress('CREDENTIAL_NFT');
     const args = [
-        nativeToScVal(Number(tokenId), { type: "u64" }),
+        nativeToScVal(Number(tokenId), { type: 'u64' }),
         new Address(issuerAddress).toScVal(),
     ];
 
-    const txHash = await invokeContractMethod(contractId, "revoke_credential", args, issuerAddress);
-    console.log("✅ Credential revoked on Stellar Network. Tx:", txHash);
+    const txHash = await invokeContractMethod(contractId, 'revoke_credential', args, issuerAddress);
+    debugLog('Credential revocation transaction submitted successfully.');
     return txHash;
 }
 
-/**
- * Generate SHA-256 credential hash from metadata using the Browser Crypto API
- */
 export async function generateCredentialHash(metadata: any): Promise<string> {
     const dataString = JSON.stringify(metadata);
     const msgUint8 = new TextEncoder().encode(dataString);
-    const hashBuffer = await crypto.subtle.digest("SHA-256", msgUint8);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', msgUint8);
     const hashArray = Array.from(new Uint8Array(hashBuffer));
-    return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
+    return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
 }
 
-/**
- * Validate a Stellar public key
- */
 export function isValidStellarAddress(address: string): boolean {
     return StrKey.isValidEd25519PublicKey(address);
 }
@@ -302,7 +274,7 @@ export function isValidAddress(address: string): boolean {
     return isValidStellarAddress(address);
 }
 
-export function formatStellarAddress(address: string, length: number = 8): string {
+export function formatStellarAddress(address: string, length = 8): string {
     if (!address || address.length < 2 * length) return address;
     return `${address.substring(0, length)}...${address.substring(address.length - length)}`;
 }
