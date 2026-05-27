@@ -57,6 +57,54 @@ CREATE TABLE students (
         TIME ZONE DEFAULT NOW()
 );
 
+-- Function to automatically create institution records on signup.
+CREATE OR REPLACE FUNCTION public.handle_new_institution_user()
+RETURNS trigger AS $$
+BEGIN
+  IF new.raw_user_meta_data->>'role' = 'institution' THEN
+    INSERT INTO public.institutions (auth_user_id, name, email)
+    VALUES (
+      new.id,
+      COALESCE(new.raw_user_meta_data->>'name', split_part(new.email, '@', 1)),
+      new.email
+    )
+    ON CONFLICT (email) DO UPDATE
+      SET auth_user_id = EXCLUDED.auth_user_id
+      WHERE public.institutions.auth_user_id IS NULL;
+  END IF;
+  RETURN new;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
+
+DROP TRIGGER IF EXISTS on_auth_user_created_institution ON auth.users;
+CREATE TRIGGER on_auth_user_created_institution
+  AFTER INSERT ON auth.users
+  FOR EACH ROW EXECUTE PROCEDURE public.handle_new_institution_user();
+
+-- Function to automatically create student records on signup.
+CREATE OR REPLACE FUNCTION public.handle_new_student_user()
+RETURNS trigger AS $$
+BEGIN
+  IF new.raw_user_meta_data->>'role' = 'student' THEN
+    INSERT INTO public.students (auth_user_id, name, email)
+    VALUES (
+      new.id,
+      COALESCE(new.raw_user_meta_data->>'name', split_part(new.email, '@', 1)),
+      new.email
+    )
+    ON CONFLICT (email) DO UPDATE
+      SET auth_user_id = EXCLUDED.auth_user_id
+      WHERE public.students.auth_user_id IS NULL;
+  END IF;
+  RETURN new;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
+
+DROP TRIGGER IF EXISTS on_auth_user_created_student ON auth.users;
+CREATE TRIGGER on_auth_user_created_student
+  AFTER INSERT ON auth.users
+  FOR EACH ROW EXECUTE PROCEDURE public.handle_new_student_user();
+
 -- Credentials table
 CREATE TABLE credentials (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4 (),
@@ -115,78 +163,6 @@ ALTER TABLE credentials ENABLE ROW LEVEL SECURITY;
 
 ALTER TABLE verification_logs ENABLE ROW LEVEL SECURITY;
 
--- RLS Policies for Institutions
-CREATE POLICY "Institutions can view own data" ON institutions FOR
-SELECT USING (auth.uid () = auth_user_id);
-
-CREATE POLICY "Institutions can update own data" ON institutions FOR
-UPDATE USING (auth.uid () = auth_user_id);
-
-CREATE POLICY "Anyone can insert institutions" ON institutions FOR
-INSERT
-WITH
-    CHECK (true);
-
--- RLS Policies for Students
-CREATE POLICY "Students can view own data" ON students FOR
-SELECT USING (auth.uid () = auth_user_id);
-
-CREATE POLICY "Students can update own data" ON students FOR
-UPDATE USING (auth.uid () = auth_user_id);
-
-CREATE POLICY "Anyone can insert students" ON students FOR
-INSERT
-WITH
-    CHECK (true);
-
--- RLS Policies for Credentials
-CREATE POLICY "Students can view own credentials" ON credentials FOR
-SELECT USING (
-        student_id IN (
-            SELECT id
-            FROM students
-            WHERE
-                auth_user_id = auth.uid ()
-        )
-    );
-
-CREATE POLICY "Institutions can view issued credentials" ON credentials FOR
-SELECT USING (
-        institution_id IN (
-            SELECT id
-            FROM institutions
-            WHERE
-                auth_user_id = auth.uid ()
-        )
-    );
-
-CREATE POLICY "Institutions can insert credentials" ON credentials FOR
-INSERT
-WITH
-    CHECK (
-        institution_id IN (
-            SELECT id
-            FROM institutions
-            WHERE
-                auth_user_id = auth.uid ()
-        )
-    );
-
-CREATE POLICY "Institutions can update own credentials" ON credentials FOR
-UPDATE USING (
-    institution_id IN (
-        SELECT id
-        FROM institutions
-        WHERE
-            auth_user_id = auth.uid ()
-    )
-);
-
--- RLS Policies for Verification Logs (public read for verification portal)
-CREATE POLICY "Anyone can insert verification logs" ON verification_logs FOR
-INSERT
-WITH
-    CHECK (true);
-
-CREATE POLICY "Anyone can view verification logs" ON verification_logs FOR
-SELECT USING (true);
+-- Policies are intentionally defined in secure_rls_migration.sql.
+-- Keep this base schema policy-free so new deployments do not briefly
+-- create permissive public insert/read policies before hardening.

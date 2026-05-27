@@ -1,31 +1,12 @@
--- ========================================
--- ENABLE PUBLIC READ FOR ADMIN STATS API
--- ========================================
--- This allows the admin stats API to count records without authentication
-
--- Allow anyone to count institutions
-DROP POLICY IF EXISTS "Public can count institutions" ON institutions;
-CREATE POLICY "Public can count institutions"
-  ON institutions FOR SELECT
-  USING (true);
-
--- Allow anyone to count students  
-DROP POLICY IF EXISTS "Public can count students" ON students;
-CREATE POLICY "Public can count students"
-  ON students FOR SELECT
-  USING (true);
-
--- Note: credentials already has public read access from verification fix
-
--- Verify the policies are in place
-SELECT 
-    schemaname,
-    tablename, 
-    policyname, 
-    permissive,
-    roles,
-    cmd,
-    qual
-FROM pg_policies 
-WHERE tablename IN ('institutions', 'students', 'credentials')
-ORDER BY tablename, policyname;
+-- SUPERSEDED MIGRATION
+-- This legacy script created public read policies for admin statistics.
+-- Admin stats now use authenticated server-side admin API access, so public
+-- count policies are intentionally not part of the production RLS model.
+--
+-- Canonical order:
+--   1. frontend/sql/database_schema.sql
+--   2. frontend/sql/secure_rls_migration.sql
+--
+-- If you already ran this legacy script, re-run secure_rls_migration.sql to
+-- drop the public count policies.
+SELECT 'enable_admin_stats.sql is superseded; run secure_rls_migration.sql instead.' AS notice;

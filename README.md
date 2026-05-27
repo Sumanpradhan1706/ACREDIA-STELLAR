@@ -591,11 +591,16 @@ Run the following SQL scripts in your Supabase SQL Editor:
 ```sql
 -- Run these in order:
 1. frontend/sql/database_schema.sql
-2. frontend/sql/FIX_DATABASE_RLS.sql
-3. frontend/sql/enable_public_verification.sql
-4. frontend/sql/enable_admin_stats.sql
-5. frontend/sql/add_profiles_table.sql (Triggers automated auth.users sync)
+2. frontend/sql/secure_rls_migration.sql
 ```
+
+`database_schema.sql` creates tables, indexes, triggers, and enables RLS without
+opening broad public policies. `secure_rls_migration.sql` is the canonical
+production policy set and can be safely re-run after older deployments.
+
+The older one-off SQL repair scripts are retained only as compatibility notices:
+they point back to the canonical setup flow and should not be run for new
+deployments.
 
 ### Smart Contract Deployment
 
