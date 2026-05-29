@@ -48,6 +48,7 @@ DROP POLICY IF EXISTS "Public can count institutions" ON institutions;
 DROP POLICY IF EXISTS "Admin can view all institutions" ON institutions;
 DROP POLICY IF EXISTS "Admin can update institutions" ON institutions;
 DROP POLICY IF EXISTS "Institutions can insert own data" ON institutions;
+DROP POLICY IF EXISTS "Authenticated users can read institution names" ON institutions;
 
 DROP POLICY IF EXISTS "Students can view own data" ON students;
 DROP POLICY IF EXISTS "Students can update own data" ON students;
@@ -100,6 +101,10 @@ CREATE POLICY "Institutions can update own data"
 CREATE POLICY "Institutions can insert own data"
   ON institutions FOR INSERT
   WITH CHECK (auth.uid() = auth_user_id);
+
+CREATE POLICY "Authenticated users can read institution names"
+  ON institutions FOR SELECT
+  USING (auth.role() = 'authenticated');
 
 CREATE POLICY "Admin can view all institutions"
   ON institutions FOR SELECT
@@ -180,7 +185,7 @@ CREATE POLICY "Admin can view all credentials"
   USING (public.is_admin());
 
 -- ========================================
--- Verification logs policies (admin only)
+-- Verification logs policies
 -- ========================================
 CREATE POLICY "Admin can view verification logs"
   ON verification_logs FOR SELECT
@@ -189,5 +194,9 @@ CREATE POLICY "Admin can view verification logs"
 CREATE POLICY "Admin can insert verification logs"
   ON verification_logs FOR INSERT
   WITH CHECK (public.is_admin());
+
+CREATE POLICY "Anyone can insert verification logs"
+  ON verification_logs FOR INSERT
+  WITH CHECK (true);
 
 COMMIT;
