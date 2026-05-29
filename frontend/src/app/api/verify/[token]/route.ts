@@ -16,6 +16,9 @@ export const dynamic = 'force-dynamic';
 // Dummy read-only address — no funds needed for simulation
 const DUMMY_ADDRESS = 'GAAZI4TCR3TY5OJHCTJC2A4QSY6CJWJH5IAJTGKIN2ER7LBNVKOCCWN';
 
+// Sentinel to distinguish "credential absent from chain" from infrastructure errors
+const NOT_FOUND_ON_CHAIN = Symbol('NOT_FOUND_ON_CHAIN');
+
 async function simulateContractRead(method: string, args: any[]): Promise<any> {
     const contractId = getContractAddress('CREDENTIAL_NFT');
     if (!contractId) {
@@ -33,11 +36,21 @@ async function simulateContractRead(method: string, args: any[]): Promise<any> {
         .setTimeout(TimeoutInfinite)
         .build();
 
+    // Network/RPC errors propagate as thrown exceptions (caller maps to 503)
     const sim = await sorobanServer.simulateTransaction(tx as any);
-    if ('error' in sim) return null;
+
+    if ('error' in sim) {
+        const errStr = String((sim as any).error);
+        // Contract returning "not found" / missing entry is a known absence, not an infra error
+        if (errStr.includes('not found') || errStr.includes('MissingValue') || errStr.includes('KeyNotFound')) {
+            return NOT_FOUND_ON_CHAIN;
+        }
+        throw new Error(`Contract simulation error: ${errStr}`);
+    }
 
     const retval = (sim as any).result?.retval;
-    if (!retval) return null;
+    // No retval on a successful sim means the entry doesn't exist (e.g. Option::None)
+    if (!retval) return NOT_FOUND_ON_CHAIN;
 
     try {
         if (typeof retval === 'string') {
@@ -49,7 +62,8 @@ async function simulateContractRead(method: string, args: any[]): Promise<any> {
         }
         return scValToNative(retval);
     } catch {
-        return null;
+        // Parse failure is an infrastructure problem, not a missing credential
+        throw new Error('Failed to decode contract response');
     }
 }
 
@@ -113,7 +127,7 @@ export async function GET(
         const onChainCredential = await simulateContractRead('get_credential', [tokenIdArg]);
 
         // If the contract has no record for this token, the DB row cannot be trusted
-        if (onChainCredential === null) {
+        if (onChainCredential === NOT_FOUND_ON_CHAIN) {
             return NextResponse.json(
                 { success: false, error: 'Credential not found on blockchain' },
                 { status: 404 }
@@ -138,7 +152,7 @@ export async function GET(
             tokenId: data.token_id,
             issuedAt: data.issued_at,
             revoked: isRevoked,
-            revokedAt: data.revoked_at,
+            revokedAt: isRevoked ? data.revoked_at : null,
             institutionName: institution?.name ?? credentialData.institutionName ?? null,
             credentialType: credentialData.credentialType ?? null,
             degree: credentialData.degree ?? null,
@@ -156,6 +170,12 @@ export async function GET(
             return NextResponse.json(
                 { success: false, error: 'Server configuration error' },
                 { status: 500 }
+            );
+        }
+        if (err?.message?.startsWith('Contract simulation error') || err?.message?.startsWith('Failed to decode')) {
+            return NextResponse.json(
+                { success: false, error: 'Blockchain verification unavailable' },
+                { status: 503 }
             );
         }
         return NextResponse.json(
