@@ -320,11 +320,11 @@ mod tests {
         let client = AcrediaCredentialClient::new(&env, &contract_id);
         let owner = Address::generate(&env);
 
+        env.mock_all_auths();
         client.initialize(&owner);
 
-        let stored_owner = client.get_owner();
-        assert_eq!(stored_owner, owner);
-        assert_eq!(pending_owner, None);
+        assert_eq!(client.get_owner(), owner);
+        assert_eq!(client.get_pending_owner(), None);
     }
 
     #[test]
