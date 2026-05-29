@@ -1,0 +1,12 @@
+title = "Acredia Gitleaks Configuration"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Allow documentation-only placeholder values while still blocking real secrets."
+regexes = [
+  '''your_[A-Za-z0-9_]+''',
+  '''placeholder[-A-Za-z0-9_]*''',
+  '''eyJhbGci\.\.\.''',
+]

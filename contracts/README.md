@@ -17,7 +17,11 @@ Single unified contract combining credential issuance, registry, and verificatio
 4. **Management**: Revocation and issuer authorization control
 
 **Key Functions**:
-- `initialize(owner)` - Initialize contract with owner
+- `initialize(owner)` - Initialize contract once with owner authorization
+- `get_owner()` - Read the current contract owner
+- `get_pending_owner()` - Read the pending owner awaiting acceptance
+- `transfer_owner(new_owner)` - Propose a two-step ownership transfer
+- `accept_owner()` - Accept a pending ownership transfer
 - `authorize_issuer(issuer)` - Authorize an institution to issue
 - `revoke_issuer(issuer)` - Revoke institution authorization
 - `is_authorized_issuer(issuer)` - Check authorization status
@@ -131,6 +135,35 @@ soroban contract invoke \
   -- \
   initialize \
   --owner $ADMIN_ADDR
+```
+
+Initialization is one-time only. Any later call to `initialize` will fail and cannot overwrite the owner or reset token sequencing.
+
+### Step 4b: Transfer Ownership Safely (Optional)
+
+Ownership transfers use a two-step flow:
+
+1. Current owner proposes a new owner:
+
+```bash
+soroban contract invoke \
+  --id <CONTRACT_ID> \
+  --source admin \
+  --network testnet \
+  -- \
+  transfer_owner \
+  --new_owner <NEW_OWNER_ADDRESS>
+```
+
+2. Pending owner accepts ownership:
+
+```bash
+soroban contract invoke \
+  --id <CONTRACT_ID> \
+  --source <NEW_OWNER_IDENTITY> \
+  --network testnet \
+  -- \
+  accept_owner
 ```
 
 ### Step 5: Configure Frontend

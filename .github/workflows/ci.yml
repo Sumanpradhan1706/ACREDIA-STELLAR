@@ -1,4 +1,4 @@
-name: Acredia CI/CD Pipeline
+name: CI
 
 on:
   push:
@@ -6,12 +6,16 @@ on:
   pull_request:
     branches: [ "main", "master" ]
 
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  # ---------------------------------------------------------
-  # Job 1: Soroban Smart Contract Pipeline (Rust)
-  # ---------------------------------------------------------
   smart-contracts:
-    name: Build Smart Contracts
+    name: Soroban Contract Checks
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -19,19 +23,16 @@ jobs:
 
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup Rust Toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: stable
-          target: wasm32-unknown-unknown
-          override: true
-          components: rustfmt, clippy
+        run: |
+          rustup toolchain install stable --profile minimal --component rustfmt --component clippy
+          rustup default stable
+          rustup target add wasm32-unknown-unknown
 
       - name: Cache Cargo Dependencies
-        uses: actions/cache@v3
+        uses: actions/cache@v5
         with:
           path: |
             ~/.cargo/bin/
@@ -39,21 +40,21 @@ jobs:
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
             contracts/target/
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          key: ${{ runner.os }}-cargo-${{ hashFiles('contracts/Cargo.toml', 'contracts/Cargo.lock') }}
           restore-keys: ${{ runner.os }}-cargo-
 
       - name: Check Formatting
         run: cargo fmt -- --check
 
+      - name: Run Contract Tests
+        run: cargo test --lib
+
       - name: Run Clippy Linter
-        run: cargo clippy --target wasm32-unknown-unknown -- -A warnings
+        run: cargo clippy --target wasm32-unknown-unknown
 
       - name: Compile to optimized WASM
         run: cargo build --target wasm32-unknown-unknown --release
 
-  # ---------------------------------------------------------
-  # Job 2: Next.js Frontend Pipeline (TypeScript/Vitest)
-  # ---------------------------------------------------------
   frontend:
     name: Frontend Tests & Build
     runs-on: ubuntu-latest
@@ -63,20 +64,14 @@ jobs:
 
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: '20'
-
-      - name: Cache npm dependencies
-        uses: actions/cache@v3
-        with:
-          path: ~/.npm
-          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node-
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
 
       - name: Install Dependencies
         run: npm ci
@@ -84,13 +79,19 @@ jobs:
       - name: Run Vitest Unit Tests
         run: npm test
 
-      - name: Run Next.js Build (Check Types & Production Build)
+      - name: Run Next.js Build
         run: npm run build
         env:
-          # Mock variables necessary for the Next.js build step to pass successfully
           NEXT_PUBLIC_SUPABASE_URL: "https://placeholder.supabase.co"
           NEXT_PUBLIC_SUPABASE_ANON_KEY: "placeholder"
-          NEXT_PUBLIC_CREDENTIAL_NFT_CONTRACT: "CAESO2QQ4SJ42W2CESTYD3BP52V57WWIMB2MMMRD2WJJ4TY26UFGGZFZ"
+          SUPABASE_SERVICE_ROLE_KEY: "placeholder-service-role-key"
+          NEXT_PUBLIC_CREDENTIAL_NFT_CONTRACT: "CCGDFDLPELTOWG5H5OA4MBR5OZWDP4XJI3S3TQZVZ7XTVP77EKOFORYF"
+          NEXT_PUBLIC_CREDENTIAL_REGISTRY_CONTRACT: "CCGDFDLPELTOWG5H5OA4MBR5OZWDP4XJI3S3TQZVZ7XTVP77EKOFORYF"
+          NEXT_PUBLIC_CHAIN_ID: "testnet"
+          NEXT_PUBLIC_NETWORK_NAME: "testnet"
           NEXT_PUBLIC_HORIZON_URL: "https://horizon-testnet.stellar.org"
           NEXT_PUBLIC_SOROBAN_RPC_URL: "https://soroban-testnet.stellar.org"
           NEXT_PUBLIC_NETWORK_PASSPHRASE: "Test SDF Network ; September 2015"
+          NEXT_PUBLIC_PINATA_JWT: "placeholder-pinata-jwt"
+          NEXT_PUBLIC_PINATA_GATEWAY: "https://gateway.pinata.cloud"
+          NEXT_PUBLIC_ENABLE_DEBUG_LOGS: "false"
