@@ -1,4 +1,5 @@
 import { rpc } from "@stellar/stellar-sdk";
+import { debugWarn } from "./debug";
 
 // Contract addresses (Stellar contract addresses)
 export const CONTRACTS = {
@@ -9,7 +10,7 @@ export const CONTRACTS = {
 export function getContractAddress(contractName: keyof typeof CONTRACTS) {
     const address = CONTRACTS[contractName];
     if (!address) {
-        console.warn(`Contract address for ${contractName} not set`);
+        debugWarn(`Contract address for ${contractName} not set`);
     }
     return address;
 }

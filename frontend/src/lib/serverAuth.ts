@@ -4,6 +4,23 @@ import type { NextRequest } from 'next/server';
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const adminEmailAllowlist = process.env.ADMIN_EMAIL_ALLOWLIST;
+
+export function isTrustedAdminEmail(
+    email: string,
+    allowlist = adminEmailAllowlist || ''
+): boolean {
+    const allowedEmails = allowlist
+        .split(',')
+        .map((value) => value.trim().toLowerCase())
+        .filter(Boolean);
+
+    if (allowedEmails.length === 0) {
+        return false;
+    }
+
+    return allowedEmails.includes(email.toLowerCase());
+}
 
 function getBearerToken(request: NextRequest): string | null {
     const authHeader = request.headers.get('authorization');
@@ -69,6 +86,26 @@ export async function requireAdminRequest(request: NextRequest): Promise<
     }
 
     const serviceClient = createServiceRoleClient();
+    const { data: authUser, error: userError } = await serviceClient.auth.admin.getUserById(
+        authCheck.userId
+    );
+
+    if (userError || !authUser.user?.email) {
+        return {
+            ok: false,
+            status: 401,
+            error: 'Invalid admin user',
+        };
+    }
+
+    if (!isTrustedAdminEmail(authUser.user.email)) {
+        return {
+            ok: false,
+            status: 403,
+            error: 'Admin account is not trusted for this deployment',
+        };
+    }
+
     const { data: profile, error: profileError } = await serviceClient
         .from('profiles')
         .select('role')

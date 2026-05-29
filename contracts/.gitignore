@@ -1,6 +1,5 @@
 # Rust/Cargo
 /target/
-Cargo.lock
 **/*.rs.bk
 *.pdb
 
@@ -32,4 +31,3 @@ build/
 # Editor backups
 *~
 *.bak
-

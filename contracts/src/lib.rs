@@ -1,10 +1,17 @@
 #![no_std]
-use soroban_sdk::{contract, contractimpl, contracttype, symbol_short, Address, Env, String};
 
-/// Storage key enum — avoids `format!` (unavailable in no_std)
+use soroban_sdk::{
+    contract, contracterror, contractimpl, contracttype, symbol_short, Address, Env, String,
+};
+
+#[cfg(test)]
+extern crate std;
+
 #[contracttype]
 pub enum DataKey {
+    Initialized,
     Owner,
+    PendingOwner,
     NextTokenId,
     Authorized(Address),
     Credential(u64),
@@ -12,7 +19,6 @@ pub enum DataKey {
     TotalCredentials,
 }
 
-/// Credential struct representing an issued credential
 #[contracttype]
 #[derive(Clone)]
 pub struct Credential {
@@ -25,28 +31,111 @@ pub struct Credential {
     pub revoked: bool,
 }
 
-/// AcrediaCredential Smart Contract for Stellar
-/// Combines CredentialNFT and CredentialRegistry functionality
-/// Manages credential issuance, verification, and authorization
+#[contracterror]
+#[derive(Copy, Clone, Debug, Eq, PartialEq, PartialOrd, Ord)]
+#[repr(u32)]
+pub enum ContractError {
+    AlreadyInitialized = 1,
+    NotInitialized = 2,
+    NoPendingOwner = 3,
+    SameOwner = 4,
+}
+
 #[contract]
 pub struct AcrediaCredential;
 
+fn require_initialized(env: &Env) {
+    let initialized = env
+        .storage()
+        .instance()
+        .get::<DataKey, bool>(&DataKey::Initialized)
+        .unwrap_or(false);
+
+    if !initialized {
+        panic!("ContractError({})", ContractError::NotInitialized as u32);
+    }
+}
+
+fn read_owner(env: &Env) -> Address {
+    require_initialized(env);
+    env.storage().instance().get(&DataKey::Owner).unwrap()
+}
+
 #[contractimpl]
 impl AcrediaCredential {
-    /// Initialize contract with owner
-    pub fn initialize(env: Env, owner: Address) {
+    pub fn initialize(env: Env, owner: Address) -> Result<(), ContractError> {
+        let initialized = env
+            .storage()
+            .instance()
+            .get::<DataKey, bool>(&DataKey::Initialized)
+            .unwrap_or(false);
+
+        if initialized {
+            return Err(ContractError::AlreadyInitialized);
+        }
+
+        owner.require_auth();
+
+        env.storage().instance().set(&DataKey::Initialized, &true);
         env.storage().instance().set(&DataKey::Owner, &owner);
         env.storage().instance().set(&DataKey::NextTokenId, &1u64);
+        env.storage().instance().remove(&DataKey::PendingOwner);
+
+        env.events().publish((symbol_short!("own_init"),), owner);
+
+        Ok(())
     }
 
-    /// Get contract owner
     pub fn get_owner(env: Env) -> Address {
-        env.storage().instance().get(&DataKey::Owner).unwrap()
+        read_owner(&env)
     }
 
-    /// Authorize an issuer (institution) to issue credentials
+    pub fn get_pending_owner(env: Env) -> Option<Address> {
+        require_initialized(&env);
+        env.storage().instance().get(&DataKey::PendingOwner)
+    }
+
+    pub fn transfer_owner(env: Env, new_owner: Address) -> Result<(), ContractError> {
+        let owner = read_owner(&env);
+        owner.require_auth();
+
+        if owner == new_owner {
+            return Err(ContractError::SameOwner);
+        }
+
+        env.storage()
+            .instance()
+            .set(&DataKey::PendingOwner, &new_owner.clone());
+
+        env.events()
+            .publish((symbol_short!("own_xfer"), owner), new_owner);
+
+        Ok(())
+    }
+
+    pub fn accept_owner(env: Env) -> Result<(), ContractError> {
+        let previous_owner = read_owner(&env);
+        let pending_owner: Address = env
+            .storage()
+            .instance()
+            .get(&DataKey::PendingOwner)
+            .ok_or(ContractError::NoPendingOwner)?;
+
+        pending_owner.require_auth();
+
+        env.storage()
+            .instance()
+            .set(&DataKey::Owner, &pending_owner.clone());
+        env.storage().instance().remove(&DataKey::PendingOwner);
+
+        env.events()
+            .publish((symbol_short!("own_acpt"), previous_owner), pending_owner);
+
+        Ok(())
+    }
+
     pub fn authorize_issuer(env: Env, issuer: Address) {
-        let owner: Address = env.storage().instance().get(&DataKey::Owner).unwrap();
+        let owner = read_owner(&env);
         owner.require_auth();
 
         env.storage()
@@ -56,9 +145,8 @@ impl AcrediaCredential {
         env.events().publish((symbol_short!("auth_ok"),), issuer);
     }
 
-    /// Revoke issuer authorization
     pub fn revoke_issuer(env: Env, issuer: Address) {
-        let owner: Address = env.storage().instance().get(&DataKey::Owner).unwrap();
+        let owner = read_owner(&env);
         owner.require_auth();
 
         env.storage()
@@ -68,15 +156,15 @@ impl AcrediaCredential {
         env.events().publish((symbol_short!("revoked"),), issuer);
     }
 
-    /// Check if an address is authorized to issue credentials
     pub fn is_authorized_issuer(env: Env, issuer: Address) -> bool {
+        require_initialized(&env);
+
         env.storage()
             .instance()
             .get(&DataKey::Authorized(issuer))
             .unwrap_or(false)
     }
 
-    /// Issue a new credential to a student
     pub fn issue_credential(
         env: Env,
         student: Address,
@@ -84,9 +172,9 @@ impl AcrediaCredential {
         credential_hash: String,
         ipfs_uri: String,
     ) -> u64 {
+        require_initialized(&env);
         issuer.require_auth();
 
-        // Check if issuer is authorized
         let is_authorized: bool = env
             .storage()
             .instance()
@@ -96,14 +184,12 @@ impl AcrediaCredential {
             panic!("Issuer not authorized");
         }
 
-        // Get next token ID
         let token_id: u64 = env
             .storage()
             .instance()
             .get(&DataKey::NextTokenId)
             .unwrap_or(1u64);
 
-        // Create and store credential
         let credential = Credential {
             token_id,
             student: student.clone(),
@@ -118,17 +204,14 @@ impl AcrediaCredential {
             .persistent()
             .set(&DataKey::Credential(token_id), &credential);
 
-        // Index by credential hash for verification
         env.storage()
             .persistent()
             .set(&DataKey::HashIndex(credential_hash.clone()), &token_id);
 
-        // Update next token ID
         env.storage()
             .instance()
             .set(&DataKey::NextTokenId, &(token_id + 1));
 
-        // Update total count
         let current: u64 = env
             .storage()
             .persistent()
@@ -138,7 +221,6 @@ impl AcrediaCredential {
             .persistent()
             .set(&DataKey::TotalCredentials, &(current + 1));
 
-        // Emit event
         env.events().publish(
             (symbol_short!("issued"), token_id, student, issuer),
             (credential_hash, ipfs_uri),
@@ -147,8 +229,8 @@ impl AcrediaCredential {
         token_id
     }
 
-    /// Revoke a credential
     pub fn revoke_credential(env: Env, token_id: u64, issuer: Address) {
+        require_initialized(&env);
         issuer.require_auth();
 
         let mut credential: Credential = env
@@ -173,16 +255,18 @@ impl AcrediaCredential {
             .publish((symbol_short!("cred_rev"), token_id), issuer);
     }
 
-    /// Get credential details by token ID
     pub fn get_credential(env: Env, token_id: u64) -> Credential {
+        require_initialized(&env);
+
         env.storage()
             .persistent()
             .get(&DataKey::Credential(token_id))
             .unwrap_or_else(|| panic!("Credential not found"))
     }
 
-    /// Verify credential by credential hash
     pub fn verify_credential(env: Env, credential_hash: String) -> Option<Credential> {
+        require_initialized(&env);
+
         if let Some(token_id) = env
             .storage()
             .persistent()
@@ -196,8 +280,9 @@ impl AcrediaCredential {
         None
     }
 
-    /// Check if credential is revoked
     pub fn is_revoked(env: Env, token_id: u64) -> bool {
+        require_initialized(&env);
+
         match env
             .storage()
             .persistent()
@@ -208,8 +293,9 @@ impl AcrediaCredential {
         }
     }
 
-    /// Get total credentials issued
     pub fn total_credentials(env: Env) -> u64 {
+        require_initialized(&env);
+
         env.storage()
             .persistent()
             .get(&DataKey::TotalCredentials)
@@ -222,43 +308,84 @@ mod tests {
     use super::*;
     use soroban_sdk::testutils::Address as _;
 
+    fn create_client(env: &Env) -> AcrediaCredentialClient<'_> {
+        let contract_id = env.register_contract(None, AcrediaCredential);
+        AcrediaCredentialClient::new(env, &contract_id)
+    }
+
     #[test]
     fn test_initialize() {
         let env = Env::default();
-        let owner = Address::random(&env);
+        let contract_id = env.register_contract(None, AcrediaCredential);
+        let client = AcrediaCredentialClient::new(&env, &contract_id);
+        let owner = Address::generate(&env);
 
-        AcrediaCredential::initialize(env.clone(), owner.clone());
+        env.mock_all_auths();
+        client.initialize(&owner);
 
-        let stored_owner = AcrediaCredential::get_owner(env);
-        assert_eq!(stored_owner, owner);
+        assert_eq!(client.get_owner(), owner);
+        assert_eq!(client.get_pending_owner(), None);
+    }
+
+    #[test]
+    fn test_initialize_fails_if_called_twice() {
+        let env = Env::default();
+        let owner = Address::generate(&env);
+        let attacker = Address::generate(&env);
+        let client = create_client(&env);
+
+        env.mock_all_auths();
+
+        client.initialize(&owner);
+        let result = client.try_initialize(&attacker);
+
+        assert_eq!(result, Err(Ok(ContractError::AlreadyInitialized)));
+        assert_eq!(client.get_owner(), owner);
+    }
+
+    #[test]
+    fn test_transfer_owner_requires_acceptance() {
+        let env = Env::default();
+        let owner = Address::generate(&env);
+        let next_owner = Address::generate(&env);
+        let client = create_client(&env);
+
+        env.mock_all_auths();
+
+        client.initialize(&owner);
+        client.transfer_owner(&next_owner);
+
+        assert_eq!(client.get_owner(), owner);
+        assert_eq!(client.get_pending_owner(), Some(next_owner.clone()));
+
+        client.accept_owner();
+
+        assert_eq!(client.get_owner(), next_owner);
+        assert_eq!(client.get_pending_owner(), None);
     }
 
     #[test]
     fn test_issue_and_verify() {
         let env = Env::default();
-        let owner = Address::random(&env);
-        let issuer = Address::random(&env);
-        let student = Address::random(&env);
+        let contract_id = env.register_contract(None, AcrediaCredential);
+        let client = AcrediaCredentialClient::new(&env, &contract_id);
+        let owner = Address::generate(&env);
+        let issuer = Address::generate(&env);
+        let student = Address::generate(&env);
 
         env.mock_all_auths();
 
-        AcrediaCredential::initialize(env.clone(), owner.clone());
-        AcrediaCredential::authorize_issuer(env.clone(), issuer.clone());
+        client.initialize(&owner);
+        client.authorize_issuer(&issuer);
 
         let hash = String::from_str(&env, "test_hash");
         let ipfs = String::from_str(&env, "ipfs_hash");
 
-        let token_id = AcrediaCredential::issue_credential(
-            env.clone(),
-            student.clone(),
-            issuer,
-            hash.clone(),
-            ipfs,
-        );
+        let token_id = client.issue_credential(&student, &issuer, &hash, &ipfs);
 
         assert_eq!(token_id, 1);
 
-        if let Some(cred) = AcrediaCredential::verify_credential(env, hash) {
+        if let Some(cred) = client.verify_credential(&hash) {
             assert_eq!(cred.token_id, 1);
             assert_eq!(cred.student, student);
         } else {

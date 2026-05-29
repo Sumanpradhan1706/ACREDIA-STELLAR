@@ -1,15 +1,16 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { CheckCircle2, Shield } from 'lucide-react';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useStellarAccount } from '@/contexts/StellarContext';
 import { authorizeIssuer, getContractOwner, isAuthorizedIssuer } from '@/lib/contracts';
-import { supabase, safeGetSession } from '@/lib/supabase';
-import { toast } from 'sonner';
-import { Shield, CheckCircle2 } from 'lucide-react';
+import { debugLog, debugWarn } from '@/lib/debug';
+import { safeGetSession } from '@/lib/supabase';
+import { useStellarAccount } from '@/contexts/StellarContext';
 
 export function AuthorizeIssuer() {
     const { address } = useStellarAccount();
@@ -17,12 +18,12 @@ export function AuthorizeIssuer() {
     const [isAuthorizing, setIsAuthorizing] = useState(false);
     const [isChecking, setIsChecking] = useState(false);
     const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
-    const [contractOwner, setContractOwner] = useState<string>('');
+    const [contractOwner, setContractOwner] = useState('');
 
-    // Load contract owner on mount
     useEffect(() => {
         const loadOwner = async () => {
             if (!address) return;
+
             try {
                 const owner = await getContractOwner(address);
                 setContractOwner(owner);
@@ -30,6 +31,7 @@ export function AuthorizeIssuer() {
                 console.error('Error loading contract owner:', error);
             }
         };
+
         if (address) {
             loadOwner();
         }
@@ -43,21 +45,21 @@ export function AuthorizeIssuer() {
 
         setIsChecking(true);
         try {
-            // Check if address is authorized
             const isInMapping = await isAuthorizedIssuer(addressToCheck, address || '');
             const isOwner = addressToCheck.toLowerCase() === contractOwner?.toLowerCase();
             const isAuthorizedResult = isInMapping || isOwner;
 
             setIsAuthorized(isAuthorizedResult);
 
-            if (isAuthorizedResult) {
-                if (isOwner) {
-                    toast.success('✅ Authorized as Contract Owner!');
-                } else {
-                    toast.success('✅ Wallet is authorized!');
-                }
+            if (!isAuthorizedResult) {
+                toast.warning('Wallet is not authorized');
+                return;
+            }
+
+            if (isOwner) {
+                toast.success('Authorized as Contract Owner');
             } else {
-                toast.warning('⚠️ Wallet is not authorized');
+                toast.success('Wallet is authorized');
             }
         } catch (error) {
             console.error('Error checking authorization:', error);
@@ -81,18 +83,16 @@ export function AuthorizeIssuer() {
         setIsAuthorizing(true);
         try {
             toast.loading('Preparing transaction...', { id: 'authorize' });
-            
+
             if (!contractOwner) {
-                toast.error('Contract owner not established');
+                toast.error('Contract owner not established', { id: 'authorize' });
                 return;
             }
 
             const hash = await authorizeIssuer(address, walletToAuthorize);
-
             toast.success('Wallet authorized successfully!', { id: 'authorize' });
             toast.success(`Transaction: ${hash.slice(0, 10)}...`);
 
-            // Update database to reflect authorization
             try {
                 const {
                     data: { session },
@@ -108,22 +108,20 @@ export function AuthorizeIssuer() {
                         'Content-Type': 'application/json',
                         Authorization: `Bearer ${session.access_token}`,
                     },
-                    body: JSON.stringify({ 
+                    body: JSON.stringify({
                         walletAddress: walletToAuthorize,
-                        transactionHash: hash
+                        transactionHash: hash,
                     }),
                 });
 
                 const data = await response.json();
                 if (data.success) {
-                    console.log('✅ Database updated:', data.message);
+                    debugLog('Issuer authorization synced to the database.');
                 }
-            } catch (dbError) {
-                console.warn('Failed to update database:', dbError);
-                // Don't show error to user as blockchain authorization succeeded
+            } catch (error) {
+                debugWarn('Failed to sync issuer authorization to the database.', error);
             }
 
-            // Check status after authorization
             await checkAuthorization(walletToAuthorize);
         } catch (error: any) {
             console.error('Error authorizing wallet:', error);
@@ -134,57 +132,59 @@ export function AuthorizeIssuer() {
     };
 
     const checkMyWallet = () => {
-        if (address) {
-            setWalletToAuthorize(address);
-            checkAuthorization(address);
+        if (!address) {
+            return;
         }
+
+        setWalletToAuthorize(address);
+        checkAuthorization(address);
     };
 
     return (
-        <Card className="p-6 bg-white border-gray-200 shadow-lg">
-            <div className="flex items-center space-x-3 mb-4">
+        <Card className="border-gray-200 bg-white p-6 shadow-lg">
+            <div className="mb-4 flex items-center space-x-3">
                 <Shield className="h-6 w-6 text-teal-600" />
                 <h2 className="text-2xl font-bold text-gray-900">Authorize Issuer</h2>
             </div>
 
-            <p className="text-gray-600 mb-6">
-                Only authorized wallets can issue credentials. Use the contract owner wallet to authorize other wallets.
+            <p className="mb-6 text-gray-600">
+                Only authorized wallets can issue credentials. Use the contract owner wallet to
+                authorize other wallets.
             </p>
 
-            {/* Contract Owner Info */}
             {contractOwner && (
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
-                    <p className="text-sm font-medium text-blue-900 mb-1">Contract Owner Address</p>
-                    <p className="text-xs font-mono text-blue-700 break-all">
-                        {contractOwner}
+                <div className="mb-4 rounded-lg border border-blue-200 bg-blue-50 p-4">
+                    <p className="mb-1 text-sm font-medium text-blue-900">
+                        Contract Owner Address
                     </p>
-                    <p className="text-xs text-blue-600 mt-2">
-                        ⚠️ Only this wallet can authorize other institutions
+                    <p className="break-all text-xs font-mono text-blue-700">{contractOwner}</p>
+                    <p className="mt-2 text-xs text-blue-600">
+                        Only this wallet can authorize other institutions
                     </p>
                 </div>
             )}
 
-            {/* Current Wallet Check */}
-            <div className="bg-teal-50 border border-teal-200 rounded-lg p-4 mb-6">
+            <div className="mb-6 rounded-lg border border-teal-200 bg-teal-50 p-4">
                 <div className="flex items-start justify-between">
                     <div className="flex-1">
-                        <p className="text-sm font-medium text-teal-900 mb-1">Your Connected Wallet</p>
-                        <p className="text-xs font-mono text-teal-700 break-all">
+                        <p className="mb-1 text-sm font-medium text-teal-900">
+                            Your Connected Wallet
+                        </p>
+                        <p className="break-all text-xs font-mono text-teal-700">
                             {address || 'Not connected'}
                         </p>
-                        {address && contractOwner &&
-                            address.toLowerCase() === contractOwner.toLowerCase() && (
-                                <p className="text-xs text-green-600 mt-2 font-medium">
-                                    👑 You are the Contract Owner - You can issue credentials and authorize others!
-                                </p>
-                            )}
+                        {address && contractOwner && address.toLowerCase() === contractOwner.toLowerCase() && (
+                            <p className="mt-2 text-xs font-medium text-green-600">
+                                You are the contract owner and can authorize other wallets.
+                            </p>
+                        )}
                     </div>
                     <Button
                         onClick={checkMyWallet}
                         variant="outline"
                         size="sm"
                         disabled={!address || isChecking}
-                        className="border-teal-600 text-teal-600 hover:bg-teal-50 ml-2"
+                        className="ml-2 border-teal-600 text-teal-600 hover:bg-teal-50"
                     >
                         {isChecking ? 'Checking...' : 'Check Status'}
                     </Button>
@@ -196,14 +196,14 @@ export function AuthorizeIssuer() {
                             <>
                                 <CheckCircle2 className="h-5 w-5 text-green-600" />
                                 <span className="text-sm font-medium text-green-700">
-                                    ✅ Authorized to issue credentials
+                                    Authorized to issue credentials
                                 </span>
                             </>
                         ) : (
                             <>
                                 <Shield className="h-5 w-5 text-orange-600" />
                                 <span className="text-sm font-medium text-orange-700">
-                                    ❌ Not authorized - needs authorization
+                                    Not authorized - approval required
                                 </span>
                             </>
                         )}
@@ -211,7 +211,6 @@ export function AuthorizeIssuer() {
                 )}
             </div>
 
-            {/* Authorization Form */}
             <div className="space-y-4">
                 <div>
                     <Label htmlFor="walletAddress">Wallet Address to Authorize</Label>
@@ -219,18 +218,24 @@ export function AuthorizeIssuer() {
                         id="walletAddress"
                         placeholder="G..."
                         value={walletToAuthorize}
-                        onChange={(e) => setWalletToAuthorize(e.target.value)}
+                        onChange={(event) => setWalletToAuthorize(event.target.value)}
                     />
-                    <p className="text-xs text-gray-500 mt-1">
-                        Enter the Stellar public key (`G...`) that should be authorized to issue credentials
+                    <p className="mt-1 text-xs text-gray-500">
+                        Enter the Stellar public key (`G...`) that should be authorized to issue
+                        credentials
                     </p>
                 </div>
 
                 <div className="flex space-x-3">
                     <Button
                         onClick={handleAuthorizeWallet}
-                        disabled={isAuthorizing || !walletToAuthorize || !address || address.toLowerCase() !== contractOwner?.toLowerCase()}
-                        className="flex-1 bg-linear-to-r from-teal-600 to-cyan-600 hover:from-teal-700 hover:to-cyan-700 text-white"
+                        disabled={
+                            isAuthorizing ||
+                            !walletToAuthorize ||
+                            !address ||
+                            address.toLowerCase() !== contractOwner?.toLowerCase()
+                        }
+                        className="flex-1 bg-linear-to-r from-teal-600 to-cyan-600 text-white hover:from-teal-700 hover:to-cyan-700"
                     >
                         {isAuthorizing ? 'Authorizing...' : 'Authorize Wallet'}
                     </Button>
@@ -246,12 +251,13 @@ export function AuthorizeIssuer() {
                 </div>
             </div>
 
-            {/* Instructions */}
-            <div className="mt-6 bg-gray-50 rounded-lg p-4">
-                <h3 className="text-sm font-semibold text-gray-900 mb-2">Important:</h3>
-                <ul className="text-xs text-gray-600 space-y-1 list-disc list-inside">
-                    <li>You must be the <strong>contract owner</strong> to authorize other wallets</li>
-                    <li>Contract owner: The wallet that deployed the CredentialNFT contract</li>
+            <div className="mt-6 rounded-lg bg-gray-50 p-4">
+                <h3 className="mb-2 text-sm font-semibold text-gray-900">Important:</h3>
+                <ul className="list-inside list-disc space-y-1 text-xs text-gray-600">
+                    <li>
+                        You must be the <strong>contract owner</strong> to authorize other wallets
+                    </li>
+                    <li>Contract owner: the wallet that deployed the CredentialNFT contract</li>
                     <li>After authorization, the wallet can issue credentials immediately</li>
                     <li>You can authorize multiple institution wallets</li>
                 </ul>
