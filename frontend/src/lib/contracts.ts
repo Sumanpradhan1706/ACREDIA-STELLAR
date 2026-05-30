@@ -307,7 +307,7 @@ export async function issueCredentialOnStellar(
 export async function revokeCredentialOnStellar(tokenId: string, issuerAddress: string): Promise<string> {
     console.log("🗑️ Revoking credential on Stellar Network...");
     const contractId = getContractAddress("CREDENTIAL_NFT");
-    const validatedTokenId = ensureValidTokenId(tokenId);
+    const validatedTokenId = normalizeTokenId(tokenId);
 
     const args = [
         nativeToScVal(Number(validatedTokenId), { type: "u64" }),

@@ -6,6 +6,7 @@ import { Card } from '@/components/ui/card';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { safeGetSession } from '@/lib/supabase';
+import { normalizePublicSignupRole } from '@/lib/adminAccess';
 import {
     Shield,
     Globe,
@@ -43,7 +44,7 @@ export default function AboutPage() {
             const { data: { session } } = await safeGetSession();
             setIsAuthenticated(!!session);
             if (session?.user) {
-                setUserRole(session.user.user_metadata?.role || null);
+                setUserRole(normalizePublicSignupRole(session.user.user_metadata?.role));
             }
         } catch {
             setIsAuthenticated(false);

@@ -1,11 +1,2 @@
 -- SUPERSEDED MIGRATION
--- This file previously created partial RLS fixes that conflict with the
--- production policy set. New deployments should not run it.
---
--- Canonical order:
---   1. frontend/sql/database_schema.sql
---   2. frontend/sql/secure_rls_migration.sql
---
--- If you already ran this legacy script, re-run secure_rls_migration.sql to
--- drop conflicting policies and apply the production-safe policy set.
-SELECT 'FIX_DATABASE_RLS.sql is superseded; run secure_rls_migration.sql instead.' AS notice;
+-- Use secure_rls_migration.sql for the current production RLS policy set.

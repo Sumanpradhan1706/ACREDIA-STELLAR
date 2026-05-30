@@ -7,6 +7,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { safeGetSession } from '@/lib/supabase';
+import { normalizePublicSignupRole } from '@/lib/adminAccess';
 import {
   Shield,
   CheckCircle,
@@ -47,7 +48,7 @@ export default function Home() {
       const { data: { session } } = await safeGetSession();
       setIsAuthenticated(!!session);
       if (session?.user) {
-        setUserRole(session.user.user_metadata?.role || null);
+        setUserRole(normalizePublicSignupRole(session.user.user_metadata?.role));
       }
     } catch {
       setIsAuthenticated(false);

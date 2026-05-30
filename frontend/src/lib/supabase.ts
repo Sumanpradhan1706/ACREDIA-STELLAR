@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { normalizePublicSignupRole, type PublicSignupRole } from './adminAccess';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
@@ -52,16 +53,29 @@ export async function safeGetSession() {
 }
 
 // Direct exports for easier imports
-export async function signUp(email: string, password: string, options?: { data?: any }) {
+type PublicSignupData = {
+    name?: string;
+    role?: unknown;
+    [key: string]: unknown;
+};
+
+export async function signUp(email: string, password: string, options?: { data?: PublicSignupData }) {
+    const signupData = options?.data
+        ? {
+            ...options.data,
+            role: normalizePublicSignupRole(options.data.role),
+        }
+        : undefined;
+
     const { data, error } = await supabase.auth.signUp({
         email,
         password,
-        options,
+        options: signupData ? { ...options, data: signupData } : options,
     });
 
     // Create student or institution record after successful signup
-    if (!error && data.user && options?.data) {
-        const { role, name } = options.data;
+    if (!error && data.user && signupData) {
+        const { role, name } = signupData;
         const userId = data.user.id;
         const email = data.user.email!;
 
@@ -94,13 +108,13 @@ export async function signOut() {
 
 // Helper functions for authentication
 export const authHelpers = {
-    async signUp(email: string, password: string, role: 'institution' | 'student') {
+    async signUp(email: string, password: string, role: PublicSignupRole) {
         const { data, error } = await supabase.auth.signUp({
             email,
             password,
             options: {
                 data: {
-                    role,
+                    role: normalizePublicSignupRole(role),
                 },
             },
         });
