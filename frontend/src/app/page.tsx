@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { motion } from 'framer-motion';
 import { safeGetSession } from '@/lib/supabase';
 import {
   Shield,
@@ -710,7 +711,13 @@ export default function Home() {
         <div className="container mx-auto px-4 relative z-10">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             {/* Left Content */}
-            <div className="max-w-2xl">
+            <motion.div
+              className="max-w-2xl"
+              initial={{ opacity: 0, x: -48 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true, amount: 0.25 }}
+              transition={{ duration: 0.7, ease: 'easeOut' }}
+            >
               <FileCheck className="w-16 h-16 mx-auto lg:mx-0 mb-6 text-gray-900" />
               <h2 className="text-4xl md:text-5xl font-bold mb-6 text-gray-900 text-center lg:text-left">
                 Fully Compliant & Standards-Based
@@ -738,17 +745,31 @@ export default function Home() {
                   <div className="text-sm text-gray-700 font-medium">Education Policy</div>
                 </div>
               </div>
-            </div>
+            </motion.div>
 
             {/* Right Video */}
-            <div className="relative">
-              <div className="rounded-2xl overflow-hidden shadow-2xl border-4 border-white/40 hover:border-white/60 transition-all">
+            <motion.div
+              className="relative"
+              initial={{ opacity: 0, x: 48, scale: 0.96 }}
+              whileInView={{ opacity: 1, x: 0, scale: 1 }}
+              viewport={{ once: true, amount: 0.25 }}
+              transition={{ duration: 0.7, ease: 'easeOut', delay: 0.15 }}
+            >
+              <motion.div
+                className="rounded-2xl overflow-hidden shadow-2xl border-4 border-white/40 transition-colors cursor-pointer"
+                whileHover={{
+                  y: -10,
+                  scale: 1.03,
+                  boxShadow: '0 28px 70px rgba(12, 139, 140, 0.35)',
+                }}
+                transition={{ type: 'spring', stiffness: 260, damping: 22 }}
+              >
                 <video
                   autoPlay
                   loop
                   muted
                   playsInline
-                  className="w-full h-auto"
+                  className="w-full h-auto transition-transform duration-500 hover:scale-105 hover:saturate-125"
                 >
                   <source
                     src="https://res.cloudinary.com/dmys4qhqv/video/upload/v1763193319/Image_Recreation_To_Video_Generation_tovxfr.mp4"
@@ -756,8 +777,8 @@ export default function Home() {
                   />
                   Your browser does not support the video tag.
                 </video>
-              </div>
-            </div>
+              </motion.div>
+            </motion.div>
           </div>
         </div>
       </section>
