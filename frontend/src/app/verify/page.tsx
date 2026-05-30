@@ -1,13 +1,14 @@
 'use client';
 
-import { useEffect, useState, Suspense } from 'react';
+import { useCallback, useEffect, useRef, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { CheckCircle, XCircle, AlertCircle, ExternalLink, Shield, Calendar, User, Building2, FileText, Hash, Home, Info, Award, Lock } from 'lucide-react';
+import { CheckCircle, XCircle, AlertCircle, ExternalLink, Shield, Calendar, User, Building2, FileText, Hash, Home, Info, Award, Lock, Camera, ScanLine, RotateCcw } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { extractTokenFromQrPayload } from '@/lib/verification';
 
 interface CredentialData {
     token_id: string;
@@ -40,15 +41,23 @@ interface CredentialData {
     } | null;
 }
 
+type ScanState = 'idle' | 'requesting' | 'scanning' | 'success' | 'permission-denied' | 'no-camera' | 'invalid' | 'unsupported' | 'error';
+
+const QR_READER_ID = 'credential-qr-reader';
+
 function VerifyContent() {
     const searchParams = useSearchParams();
     const tokenId = searchParams.get('token');
+    const scannerRef = useRef<any>(null);
 
     const [loading, setLoading] = useState(true);
     const [credential, setCredential] = useState<CredentialData | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [verificationStatus, setVerificationStatus] = useState<'valid' | 'invalid' | 'revoked' | null>(null);
     const [manualToken, setManualToken] = useState('');
+    const [scanMode, setScanMode] = useState(false);
+    const [scanState, setScanState] = useState<ScanState>('idle');
+    const [scanMessage, setScanMessage] = useState('Scan the credential QR code to verify it instantly.');
 
     useEffect(() => {
         if (tokenId) {
@@ -57,6 +66,44 @@ function VerifyContent() {
             setLoading(false);
         }
     }, [tokenId]);
+
+    const stopScanner = useCallback(async () => {
+        const scanner = scannerRef.current;
+
+        if (!scanner) {
+            return;
+        }
+
+        try {
+            if (scanner.isScanning) {
+                await scanner.stop();
+            }
+        } catch (err) {
+            console.warn('Unable to stop QR scanner:', err);
+        }
+
+        try {
+            await scanner.clear();
+        } catch (err) {
+            console.warn('Unable to clear QR scanner:', err);
+        }
+
+        scannerRef.current = null;
+    }, []);
+
+    useEffect(() => {
+        return () => {
+            void stopScanner();
+        };
+    }, [stopScanner]);
+
+    useEffect(() => {
+        if (!scanMode) {
+            void stopScanner();
+            setScanState('idle');
+            setScanMessage('Scan the credential QR code to verify it instantly.');
+        }
+    }, [scanMode, stopScanner]);
 
     const verifyCredential = async (token: string) => {
         try {
@@ -105,6 +152,17 @@ function VerifyContent() {
         }
     };
 
+    const verifyToken = useCallback((token: string) => {
+        const cleanedToken = token.trim();
+
+        if (!cleanedToken) {
+            return;
+        }
+
+        window.history.pushState({}, '', `/verify?token=${encodeURIComponent(cleanedToken)}`);
+        verifyCredential(cleanedToken);
+    }, []);
+
     const formatDate = (dateString: string) => {
         return new Date(dateString).toLocaleDateString('en-US', {
             year: 'numeric',
@@ -121,9 +179,99 @@ function VerifyContent() {
 
     const handleManualVerify = () => {
         if (manualToken.trim()) {
-            // Update URL with token
-            window.history.pushState({}, '', `/verify?token=${manualToken.trim()}`);
-            verifyCredential(manualToken.trim());
+            verifyToken(manualToken);
+        }
+    };
+
+    const startScanner = async () => {
+        if (!scanMode) {
+            setScanMode(true);
+            await new Promise<void>((resolve) => {
+                requestAnimationFrame(() => resolve());
+            });
+        }
+
+        if (!navigator.mediaDevices?.getUserMedia) {
+            setScanState('unsupported');
+            setScanMessage('This browser does not support camera scanning. Enter the token ID manually.');
+            return;
+        }
+
+        setScanState('requesting');
+        setScanMessage('Waiting for camera permission...');
+        await stopScanner();
+
+        try {
+            const { Html5Qrcode } = await import('html5-qrcode');
+            const cameras = await Html5Qrcode.getCameras();
+
+            if (!cameras.length) {
+                setScanState('no-camera');
+                setScanMessage('No camera was found on this device. Enter the token ID manually.');
+                return;
+            }
+
+            const readerElement = document.getElementById(QR_READER_ID);
+
+            if (!readerElement) {
+                setScanState('error');
+                setScanMessage('The scanner could not be initialized. Please try again.');
+                return;
+            }
+
+            const preferredCamera = cameras.find((camera) =>
+                /back|rear|environment/i.test(camera.label)
+            ) || cameras[0];
+            const scanner = new Html5Qrcode(QR_READER_ID, false);
+            scannerRef.current = scanner;
+            setScanState('scanning');
+            setScanMessage('Point your camera at the credential QR code.');
+
+            await scanner.start(
+                preferredCamera.id,
+                {
+                    fps: 10,
+                    qrbox: (viewfinderWidth: number, viewfinderHeight: number) => {
+                        const minEdge = Math.min(viewfinderWidth, viewfinderHeight);
+                        const qrboxSize = Math.floor(minEdge * 0.72);
+                        return { width: qrboxSize, height: qrboxSize };
+                    },
+                    aspectRatio: 1,
+                },
+                async (decodedText: string) => {
+                    const scannedToken = extractTokenFromQrPayload(decodedText);
+
+                    if (!scannedToken) {
+                        setScanState('invalid');
+                        setScanMessage('This QR code does not contain a valid Acredia verification URL or token ID.');
+                        return;
+                    }
+
+                    setScanState('success');
+                    setScanMessage('QR code found. Loading the verification report...');
+                    await stopScanner();
+                    verifyToken(scannedToken);
+                },
+                () => undefined
+            );
+        } catch (err: any) {
+            const errorName = err?.name || '';
+            const errorMessage = String(err?.message || err || '');
+
+            if (errorName === 'NotAllowedError' || errorMessage.toLowerCase().includes('permission')) {
+                setScanState('permission-denied');
+                setScanMessage('Camera permission was denied. Allow camera access in your browser settings or enter the token ID manually.');
+                return;
+            }
+
+            if (errorName === 'NotFoundError' || errorMessage.toLowerCase().includes('not found')) {
+                setScanState('no-camera');
+                setScanMessage('No camera was found on this device. Enter the token ID manually.');
+                return;
+            }
+
+            setScanState('error');
+            setScanMessage('The camera scanner could not start. Check browser permissions and try again.');
         }
     };
 
@@ -232,7 +380,7 @@ function VerifyContent() {
                                             type="text"
                                             value={manualToken}
                                             onChange={(e) => setManualToken(e.target.value)}
-                                            onKeyPress={(e) => e.key === 'Enter' && handleManualVerify()}
+                                            onKeyDown={(e) => e.key === 'Enter' && handleManualVerify()}
                                             placeholder="Enter token ID (e.g., 1, 2, 3...)"
                                             className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
                                         />
@@ -259,6 +407,95 @@ function VerifyContent() {
                                     <p className="text-sm text-gray-600">
                                         📱 Scan a QR code to verify automatically
                                     </p>
+                                </div>
+
+                                <div className="w-full max-w-xl rounded-xl border border-blue-100 bg-blue-50/60 p-3 sm:p-4">
+                                    {!scanMode ? (
+                                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                                            <div className="flex items-start gap-3">
+                                                <div className="rounded-full bg-white p-3 text-blue-600 shadow-sm">
+                                                    <Camera className="h-5 w-5" />
+                                                </div>
+                                                <div>
+                                                    <p className="font-semibold text-gray-900">Camera QR scan</p>
+                                                    <p className="text-sm text-gray-600">
+                                                        Camera permission is requested only when you start scanning.
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <Button
+                                                onClick={startScanner}
+                                                className="w-full bg-blue-600 hover:bg-blue-700 sm:w-auto"
+                                            >
+                                                <ScanLine className="mr-2 h-4 w-4" />
+                                                Start Scan
+                                            </Button>
+                                        </div>
+                                    ) : (
+                                        <div className="space-y-4">
+                                            <div className="flex items-center justify-between gap-3">
+                                                <div>
+                                                    <p className="font-semibold text-gray-900">Scan credential QR</p>
+                                                    <p className="text-sm text-gray-600">{scanMessage}</p>
+                                                </div>
+                                                <Button
+                                                    onClick={() => setScanMode(false)}
+                                                    variant="outline"
+                                                    size="sm"
+                                                    className="shrink-0"
+                                                >
+                                                    Stop
+                                                </Button>
+                                            </div>
+
+                                            <div className="relative overflow-hidden rounded-lg border border-blue-200 bg-gray-950">
+                                                <div id={QR_READER_ID} className="min-h-[280px] w-full sm:min-h-[340px]" />
+                                                {(scanState === 'requesting' || scanState === 'scanning') && (
+                                                    <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+                                                        <div className="h-52 w-52 rounded-2xl border-2 border-white/80 shadow-[0_0_0_999px_rgba(0,0,0,0.28)]" />
+                                                    </div>
+                                                )}
+                                                {scanState === 'requesting' && (
+                                                    <div className="absolute inset-x-0 bottom-0 bg-black/70 px-4 py-3 text-center text-sm font-medium text-white">
+                                                        Requesting camera access...
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            <div
+                                                className={`rounded-lg border px-4 py-3 text-sm ${
+                                                    scanState === 'permission-denied' || scanState === 'no-camera' || scanState === 'invalid' || scanState === 'unsupported' || scanState === 'error'
+                                                        ? 'border-red-200 bg-red-50 text-red-800'
+                                                        : scanState === 'success'
+                                                            ? 'border-green-200 bg-green-50 text-green-800'
+                                                            : 'border-blue-200 bg-white text-gray-700'
+                                                }`}
+                                                role="status"
+                                            >
+                                                <div className="flex items-start gap-2">
+                                                    {scanState === 'success' ? (
+                                                        <CheckCircle className="mt-0.5 h-4 w-4 shrink-0" />
+                                                    ) : scanState === 'permission-denied' || scanState === 'no-camera' || scanState === 'invalid' || scanState === 'unsupported' || scanState === 'error' ? (
+                                                        <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+                                                    ) : (
+                                                        <ScanLine className="mt-0.5 h-4 w-4 shrink-0" />
+                                                    )}
+                                                    <span>{scanMessage}</span>
+                                                </div>
+                                            </div>
+
+                                            {(scanState === 'permission-denied' || scanState === 'no-camera' || scanState === 'invalid' || scanState === 'unsupported' || scanState === 'error') && (
+                                                <Button
+                                                    onClick={startScanner}
+                                                    variant="outline"
+                                                    className="w-full"
+                                                >
+                                                    <RotateCcw className="mr-2 h-4 w-4" />
+                                                    Try Scanner Again
+                                                </Button>
+                                            )}
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </Card>
