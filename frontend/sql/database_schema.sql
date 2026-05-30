@@ -11,6 +11,7 @@ CREATE TABLE profiles (
 );
 
 -- Function to handle new user signups and mirror to profiles table
+-- Client signup metadata is not trusted for admin provisioning.
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS trigger AS $$
 BEGIN
@@ -18,12 +19,31 @@ BEGIN
   VALUES (
     new.id, 
     new.email, 
-    COALESCE(new.raw_user_meta_data->>'role', 'student'),
+    CASE
+      WHEN new.raw_user_meta_data->>'role' = 'institution' THEN 'institution'
+      ELSE 'student'
+    END,
     new.raw_user_meta_data->>'name'
   );
   RETURN new;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Keep role changes on a trusted server-side path only.
+CREATE OR REPLACE FUNCTION public.prevent_profile_role_escalation()
+RETURNS trigger AS $$
+BEGIN
+  IF old.role IS DISTINCT FROM new.role AND auth.role() <> 'service_role' THEN
+    RAISE EXCEPTION 'Profile roles can only be changed by a trusted server-side admin process';
+  END IF;
+  RETURN new;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+DROP TRIGGER IF EXISTS prevent_profile_role_escalation ON public.profiles;
+CREATE TRIGGER prevent_profile_role_escalation
+  BEFORE UPDATE ON public.profiles
+  FOR EACH ROW EXECUTE PROCEDURE public.prevent_profile_role_escalation();
 
 -- Trigger for new users
 DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
@@ -56,6 +76,54 @@ CREATE TABLE students (
     WITH
         TIME ZONE DEFAULT NOW()
 );
+
+-- Function to automatically create institution records on signup.
+CREATE OR REPLACE FUNCTION public.handle_new_institution_user()
+RETURNS trigger AS $$
+BEGIN
+  IF new.raw_user_meta_data->>'role' = 'institution' THEN
+    INSERT INTO public.institutions (auth_user_id, name, email)
+    VALUES (
+      new.id,
+      COALESCE(new.raw_user_meta_data->>'name', split_part(new.email, '@', 1)),
+      new.email
+    )
+    ON CONFLICT (email) DO UPDATE
+      SET auth_user_id = EXCLUDED.auth_user_id
+      WHERE public.institutions.auth_user_id IS NULL;
+  END IF;
+  RETURN new;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
+
+DROP TRIGGER IF EXISTS on_auth_user_created_institution ON auth.users;
+CREATE TRIGGER on_auth_user_created_institution
+  AFTER INSERT ON auth.users
+  FOR EACH ROW EXECUTE PROCEDURE public.handle_new_institution_user();
+
+-- Function to automatically create student records on signup.
+CREATE OR REPLACE FUNCTION public.handle_new_student_user()
+RETURNS trigger AS $$
+BEGIN
+  IF new.raw_user_meta_data->>'role' = 'student' THEN
+    INSERT INTO public.students (auth_user_id, name, email)
+    VALUES (
+      new.id,
+      COALESCE(new.raw_user_meta_data->>'name', split_part(new.email, '@', 1)),
+      new.email
+    )
+    ON CONFLICT (email) DO UPDATE
+      SET auth_user_id = EXCLUDED.auth_user_id
+      WHERE public.students.auth_user_id IS NULL;
+  END IF;
+  RETURN new;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
+
+DROP TRIGGER IF EXISTS on_auth_user_created_student ON auth.users;
+CREATE TRIGGER on_auth_user_created_student
+  AFTER INSERT ON auth.users
+  FOR EACH ROW EXECUTE PROCEDURE public.handle_new_student_user();
 
 -- Credentials table
 CREATE TABLE credentials (

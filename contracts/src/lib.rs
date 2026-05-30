@@ -18,7 +18,9 @@ pub enum ContractError {
 
 #[contracttype]
 pub enum DataKey {
+    Initialized,
     Owner,
+    PendingOwner,
     NextTokenId,
     Authorized(Address),
     Credential(u64),
@@ -41,6 +43,23 @@ pub struct Credential {
 #[contract]
 pub struct AcrediaCredential;
 
+fn require_initialized(env: &Env) {
+    let initialized = env
+        .storage()
+        .instance()
+        .get::<DataKey, bool>(&DataKey::Initialized)
+        .unwrap_or(false);
+
+    if !initialized {
+        panic!("ContractError({})", ContractError::NotInitialized as u32);
+    }
+}
+
+fn read_owner(env: &Env) -> Address {
+    require_initialized(env);
+    env.storage().instance().get(&DataKey::Owner).unwrap()
+}
+
 #[contractimpl]
 impl AcrediaCredential {
     pub fn initialize(env: Env, owner: Address) -> Result<(), ContractError> {
@@ -53,11 +72,55 @@ impl AcrediaCredential {
     }
 
     pub fn get_owner(env: Env) -> Address {
-        env.storage().instance().get(&DataKey::Owner).unwrap()
+        read_owner(&env)
+    }
+
+    pub fn get_pending_owner(env: Env) -> Option<Address> {
+        require_initialized(&env);
+        env.storage().instance().get(&DataKey::PendingOwner)
+    }
+
+    pub fn transfer_owner(env: Env, new_owner: Address) -> Result<(), ContractError> {
+        let owner = read_owner(&env);
+        owner.require_auth();
+
+        if owner == new_owner {
+            return Err(ContractError::SameOwner);
+        }
+
+        env.storage()
+            .instance()
+            .set(&DataKey::PendingOwner, &new_owner.clone());
+
+        env.events()
+            .publish((symbol_short!("own_xfer"), owner), new_owner);
+
+        Ok(())
+    }
+
+    pub fn accept_owner(env: Env) -> Result<(), ContractError> {
+        let previous_owner = read_owner(&env);
+        let pending_owner: Address = env
+            .storage()
+            .instance()
+            .get(&DataKey::PendingOwner)
+            .ok_or(ContractError::NoPendingOwner)?;
+
+        pending_owner.require_auth();
+
+        env.storage()
+            .instance()
+            .set(&DataKey::Owner, &pending_owner.clone());
+        env.storage().instance().remove(&DataKey::PendingOwner);
+
+        env.events()
+            .publish((symbol_short!("own_acpt"), previous_owner), pending_owner);
+
+        Ok(())
     }
 
     pub fn authorize_issuer(env: Env, issuer: Address) {
-        let owner: Address = env.storage().instance().get(&DataKey::Owner).unwrap();
+        let owner = read_owner(&env);
         owner.require_auth();
         env.storage()
             .instance()
@@ -67,7 +130,7 @@ impl AcrediaCredential {
     }
 
     pub fn revoke_issuer(env: Env, issuer: Address) {
-        let owner: Address = env.storage().instance().get(&DataKey::Owner).unwrap();
+        let owner = read_owner(&env);
         owner.require_auth();
         env.storage()
             .instance()
@@ -77,6 +140,8 @@ impl AcrediaCredential {
     }
 
     pub fn is_authorized_issuer(env: Env, issuer: Address) -> bool {
+        require_initialized(&env);
+
         env.storage()
             .instance()
             .get(&DataKey::Authorized(issuer))
@@ -213,6 +278,8 @@ impl AcrediaCredential {
     }
 
     pub fn total_credentials(env: Env) -> u64 {
+        require_initialized(&env);
+
         env.storage()
             .persistent()
             .get(&DataKey::TotalCredentials)

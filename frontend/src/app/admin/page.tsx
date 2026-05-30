@@ -1,20 +1,20 @@
 'use client';
 
-import { useAuth, ProtectedRoute } from '@/contexts/AuthContext';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { AuthorizeIssuer } from '@/components/institution/AuthorizeIssuer';
+import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { LogOut, Shield, Users, CheckCircle2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useState, useEffect } from 'react';
-import { useStellarAccount } from '@/contexts/StellarContext';
-import { ConnectWallet } from '@/components/ui/ConnectWallet';
-import { getContractAddress } from '@/lib/stellar';
-import { getContractOwner } from '@/lib/contracts';
-import { supabase, safeGetSession } from '@/lib/supabase';
+import { CheckCircle2, LogOut, Shield, Users } from 'lucide-react';
 import { toast } from 'sonner';
+import { AuthorizeIssuer } from '@/components/institution/AuthorizeIssuer';
+import { ConnectWallet } from '@/components/ui/ConnectWallet';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { getContractOwner } from '@/lib/contracts';
+import { debugLog, debugWarn } from '@/lib/debug';
+import { safeGetSession } from '@/lib/supabase';
+import { useStellarAccount } from '@/contexts/StellarContext';
+import { ProtectedRoute, useAuth } from '@/contexts/AuthContext';
 
 interface AdminStats {
     totalInstitutions: number;
@@ -28,7 +28,7 @@ function AdminDashboardContent() {
     const { user, signOut } = useAuth();
     const router = useRouter();
     const { address } = useStellarAccount();
-    const [contractOwner, setContractOwner] = useState<string>('');
+    const [contractOwner, setContractOwner] = useState('');
     const [isOwner, setIsOwner] = useState(false);
     const [isChecking, setIsChecking] = useState(true);
     const [stats, setStats] = useState<AdminStats>({
@@ -49,20 +49,18 @@ function AdminDashboardContent() {
 
             try {
                 const owner = await getContractOwner(address);
+                const ownerCheck = address.toLowerCase() === owner.toLowerCase();
 
                 setContractOwner(owner);
-                const ownerCheck = address.toLowerCase() === owner.toLowerCase();
                 setIsOwner(ownerCheck);
 
                 if (!ownerCheck) {
-                    console.log('❌ Wallet verification failed:');
-                    console.log('Your wallet:', address);
-                    console.log('Contract owner:', owner);
-                    toast.error('⚠️ This wallet is not the contract owner');
+                    debugWarn('Connected wallet is not the contract owner.');
+                    toast.error('This wallet is not the contract owner');
                     toast.info('Connect the wallet that deployed the contracts');
                 } else {
-                    console.log('✅ Wallet verified as contract owner');
-                    toast.success('✅ Verified as Contract Owner!');
+                    debugLog('Connected wallet verified as contract owner.');
+                    toast.success('Verified as Contract Owner');
                 }
             } catch (error) {
                 console.error('Error checking ownership:', error);
@@ -73,9 +71,8 @@ function AdminDashboardContent() {
         };
 
         checkOwnership();
-    }, [address, router]);
+    }, [address]);
 
-    // Fetch admin statistics
     useEffect(() => {
         const fetchStats = async () => {
             try {
@@ -99,11 +96,12 @@ function AdminDashboardContent() {
 
                 if (data.success) {
                     setStats(data.stats);
-                    console.log('📊 Admin stats loaded:', data.stats);
-                } else {
-                    console.error('Failed to fetch stats:', data.error);
-                    toast.error('Failed to load statistics');
+                    debugLog('Admin statistics loaded.');
+                    return;
                 }
+
+                console.error('Failed to fetch stats:', data.error);
+                toast.error('Failed to load statistics');
             } catch (error) {
                 console.error('Error fetching stats:', error);
                 toast.error('Failed to load statistics');
@@ -112,12 +110,13 @@ function AdminDashboardContent() {
             }
         };
 
-        if (isOwner) {
-            fetchStats();
-            // Refresh stats every 30 seconds
-            const interval = setInterval(fetchStats, 30000);
-            return () => clearInterval(interval);
+        if (!isOwner) {
+            return;
         }
+
+        fetchStats();
+        const interval = setInterval(fetchStats, 30000);
+        return () => clearInterval(interval);
     }, [isOwner]);
 
     const handleSignOut = async () => {
@@ -125,13 +124,12 @@ function AdminDashboardContent() {
         router.push('/');
     };
 
-    // Prevent rendering if not owner
     if (isChecking) {
         return (
-            <div className="min-h-screen bg-linear-to-br from-gray-50 via-teal-50 to-cyan-50 flex items-center justify-center">
+            <div className="flex min-h-screen items-center justify-center bg-linear-to-br from-gray-50 via-teal-50 to-cyan-50">
                 <Card className="p-8">
                     <div className="flex flex-col items-center space-y-4">
-                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-600"></div>
+                        <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-teal-600"></div>
                         <p className="text-gray-600">Verifying admin access...</p>
                     </div>
                 </Card>
@@ -141,13 +139,13 @@ function AdminDashboardContent() {
 
     if (!address) {
         return (
-            <div className="min-h-screen bg-linear-to-br from-gray-50 via-teal-50 to-cyan-50 flex items-center justify-center">
-                <Card className="p-8 max-w-md">
-                    <Shield className="h-16 w-16 text-orange-600 mx-auto mb-4" />
-                    <h2 className="text-2xl font-bold text-gray-900 text-center mb-4">
+            <div className="flex min-h-screen items-center justify-center bg-linear-to-br from-gray-50 via-teal-50 to-cyan-50">
+                <Card className="max-w-md p-8">
+                    <Shield className="mx-auto mb-4 h-16 w-16 text-orange-600" />
+                    <h2 className="mb-4 text-center text-2xl font-bold text-gray-900">
                         Admin Access Required
                     </h2>
-                    <p className="text-gray-600 text-center mb-6">
+                    <p className="mb-6 text-center text-gray-600">
                         Please connect your wallet to access the admin dashboard
                     </p>
                     <div className="flex justify-center">
@@ -158,12 +156,9 @@ function AdminDashboardContent() {
         );
     }
 
-
-
     return (
         <div className="min-h-screen bg-linear-to-br from-gray-50 via-teal-50 to-cyan-50">
-            {/* Navigation */}
-            <nav className="border-b border-gray-200 bg-white/90 backdrop-blur-lg sticky top-0 z-50 shadow-sm">
+            <nav className="sticky top-0 z-50 border-b border-gray-200 bg-white/90 shadow-sm backdrop-blur-lg">
                 <div className="container mx-auto px-4 py-4">
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                         <Link href="/" className="flex items-center space-x-3">
@@ -175,10 +170,10 @@ function AdminDashboardContent() {
                                 className="rounded-lg"
                             />
                             <div>
-                                <span className="text-xl sm:text-2xl font-bold bg-linear-to-r from-teal-600 to-cyan-600 bg-clip-text text-transparent">
+                                <span className="bg-linear-to-r from-teal-600 to-cyan-600 bg-clip-text text-xl font-bold text-transparent sm:text-2xl">
                                     ACREDIA
                                 </span>
-                                <span className="ml-2 text-xs bg-red-600 text-white px-2 py-1 rounded-full font-semibold">
+                                <span className="ml-2 rounded-full bg-red-600 px-2 py-1 text-xs font-semibold text-white">
                                     ADMIN
                                 </span>
                             </div>
@@ -188,9 +183,9 @@ function AdminDashboardContent() {
                             <Button
                                 onClick={handleSignOut}
                                 variant="ghost"
-                                className="text-gray-700 hover:text-red-600 text-sm sm:text-base px-3 sm:px-4"
+                                className="px-3 text-sm text-gray-700 hover:text-red-600 sm:px-4 sm:text-base"
                             >
-                                <LogOut className="h-5 w-5 mr-2" />
+                                <LogOut className="mr-2 h-5 w-5" />
                                 <span className="hidden sm:inline">Sign Out</span>
                             </Button>
                         </div>
@@ -198,60 +193,66 @@ function AdminDashboardContent() {
                 </div>
             </nav>
 
-            {/* Admin Dashboard Content */}
             <div className="container mx-auto px-4 py-8">
                 <div className="mb-8">
-                    <div className="flex items-center space-x-3 mb-2">
+                    <div className="mb-2 flex items-center space-x-3">
                         <Shield className="h-10 w-10 text-red-600" />
-                        <h1 className="text-3xl sm:text-4xl font-bold text-gray-900">
+                        <h1 className="text-3xl font-bold text-gray-900 sm:text-4xl">
                             Admin Dashboard
                         </h1>
                     </div>
-                    <p className="text-gray-600 text-lg">
+                    <p className="text-lg text-gray-600">
                         Manage institution authorizations and system settings
                     </p>
                 </div>
 
                 {!isOwner && (
-                    <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+                    <div className="mb-6 rounded-lg border border-red-200 bg-red-50 p-4">
                         <div className="flex items-start space-x-3">
-                            <Shield className="h-6 w-6 text-red-600 mt-0.5" />
+                            <Shield className="mt-0.5 h-6 w-6 text-red-600" />
                             <div>
-                                <h3 className="text-sm font-bold text-red-900 mb-1">
+                                <h3 className="mb-1 text-sm font-bold text-red-900">
                                     Read-Only Mode: Not Contract Owner
                                 </h3>
-                                <p className="text-xs text-red-700 mt-1">
-                                    You are viewing the dashboard, but you cannot authorize new institutions because your currently connected wallet ({address?.slice(0, 6)}...{address?.slice(-4)}) is not the contract owner.
+                                <p className="mt-1 text-xs text-red-700">
+                                    You are viewing the dashboard, but you cannot authorize new
+                                    institutions because your currently connected wallet (
+                                    {address.slice(0, 6)}...{address.slice(-4)}) is not the contract
+                                    owner.
                                     <br />
-                                    Actual Owner: <span className="font-mono bg-red-100 px-1 rounded">{contractOwner || 'Could not fetch'}</span>
+                                    Actual Owner:{' '}
+                                    <span className="rounded bg-red-100 px-1 font-mono">
+                                        {contractOwner || 'Could not fetch'}
+                                    </span>
                                 </p>
                             </div>
                         </div>
                     </div>
                 )}
 
-                {/* Admin Info Card */}
-                <Card className="border-red-200 bg-red-50 p-6 mb-6">
+                <Card className="mb-6 border-red-200 bg-red-50 p-6">
                     <div className="flex items-start space-x-4">
-                        <CheckCircle2 className="h-6 w-6 text-red-600 mt-1" />
+                        <CheckCircle2 className="mt-1 h-6 w-6 text-red-600" />
                         <div className="flex-1">
-                            <h3 className="text-lg font-bold text-red-900 mb-2">
+                            <h3 className="mb-2 text-lg font-bold text-red-900">
                                 Contract Owner (Admin)
                             </h3>
                             <div className="space-y-2">
                                 <div>
-                                    <p className="text-sm text-red-700 font-medium">Email:</p>
+                                    <p className="text-sm font-medium text-red-700">Email:</p>
                                     <p className="text-sm text-red-800">{user?.email}</p>
                                 </div>
                                 <div>
-                                    <p className="text-sm text-red-700 font-medium">Wallet Address:</p>
-                                    <p className="text-xs font-mono text-red-800 break-all">
+                                    <p className="text-sm font-medium text-red-700">Wallet Address:</p>
+                                    <p className="break-all text-xs font-mono text-red-800">
                                         {address}
                                     </p>
                                 </div>
                                 <div>
-                                    <p className="text-sm text-red-700 font-medium">Contract Address:</p>
-                                    <p className="text-xs font-mono text-red-800 break-all">
+                                    <p className="text-sm font-medium text-red-700">
+                                        Contract Address:
+                                    </p>
+                                    <p className="break-all text-xs font-mono text-red-800">
                                         {process.env.NEXT_PUBLIC_CREDENTIAL_NFT_CONTRACT}
                                     </p>
                                 </div>
@@ -260,10 +261,9 @@ function AdminDashboardContent() {
                     </div>
                 </Card>
 
-                {/* Stats Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                    <Card className="p-6 bg-white border-gray-200 shadow-lg">
-                        <div className="flex items-center space-x-3 mb-2">
+                <div className="mb-8 grid grid-cols-1 gap-6 md:grid-cols-3">
+                    <Card className="border-gray-200 bg-white p-6 shadow-lg">
+                        <div className="mb-2 flex items-center space-x-3">
                             <Users className="h-8 w-8 text-teal-600" />
                             <h3 className="text-lg font-semibold text-gray-900">
                                 Total Institutions
@@ -271,41 +271,41 @@ function AdminDashboardContent() {
                         </div>
                         {loadingStats ? (
                             <div className="animate-pulse">
-                                <div className="h-10 bg-gray-200 rounded w-16 mb-2"></div>
+                                <div className="mb-2 h-10 w-16 rounded bg-gray-200"></div>
                             </div>
                         ) : (
                             <>
                                 <p className="text-3xl font-bold text-teal-600">
                                     {stats.totalInstitutions}
                                 </p>
-                                <p className="text-sm text-gray-500 mt-1">Registered institutions</p>
+                                <p className="mt-1 text-sm text-gray-500">
+                                    Registered institutions
+                                </p>
                             </>
                         )}
                     </Card>
 
-                    <Card className="p-6 bg-white border-gray-200 shadow-lg">
-                        <div className="flex items-center space-x-3 mb-2">
+                    <Card className="border-gray-200 bg-white p-6 shadow-lg">
+                        <div className="mb-2 flex items-center space-x-3">
                             <CheckCircle2 className="h-8 w-8 text-green-600" />
-                            <h3 className="text-lg font-semibold text-gray-900">
-                                Authorized
-                            </h3>
+                            <h3 className="text-lg font-semibold text-gray-900">Authorized</h3>
                         </div>
                         {loadingStats ? (
                             <div className="animate-pulse">
-                                <div className="h-10 bg-gray-200 rounded w-16 mb-2"></div>
+                                <div className="mb-2 h-10 w-16 rounded bg-gray-200"></div>
                             </div>
                         ) : (
                             <>
                                 <p className="text-3xl font-bold text-green-600">
                                     {stats.authorizedInstitutions}
                                 </p>
-                                <p className="text-sm text-gray-500 mt-1">Authorized to issue</p>
+                                <p className="mt-1 text-sm text-gray-500">Authorized to issue</p>
                             </>
                         )}
                     </Card>
 
-                    <Card className="p-6 bg-white border-gray-200 shadow-lg">
-                        <div className="flex items-center space-x-3 mb-2">
+                    <Card className="border-gray-200 bg-white p-6 shadow-lg">
+                        <div className="mb-2 flex items-center space-x-3">
                             <Shield className="h-8 w-8 text-blue-600" />
                             <h3 className="text-lg font-semibold text-gray-900">
                                 Total Credentials
@@ -313,22 +313,22 @@ function AdminDashboardContent() {
                         </div>
                         {loadingStats ? (
                             <div className="animate-pulse">
-                                <div className="h-10 bg-gray-200 rounded w-16 mb-2"></div>
+                                <div className="mb-2 h-10 w-16 rounded bg-gray-200"></div>
                             </div>
                         ) : (
                             <>
                                 <p className="text-3xl font-bold text-blue-600">
                                     {stats.totalCredentials}
                                 </p>
-                                <p className="text-sm text-gray-500 mt-1">
-                                    {stats.activeCredentials} active, {stats.totalCredentials - stats.activeCredentials} revoked
+                                <p className="mt-1 text-sm text-gray-500">
+                                    {stats.activeCredentials} active,{' '}
+                                    {stats.totalCredentials - stats.activeCredentials} revoked
                                 </p>
                             </>
                         )}
                     </Card>
                 </div>
 
-                {/* Authorization Management */}
                 <AuthorizeIssuer />
             </div>
         </div>
@@ -337,7 +337,7 @@ function AdminDashboardContent() {
 
 export default function AdminDashboardPage() {
     return (
-        <ProtectedRoute>
+        <ProtectedRoute allowedRoles={['admin']}>
             <AdminDashboardContent />
         </ProtectedRoute>
     );

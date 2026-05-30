@@ -139,7 +139,19 @@ export async function GET(
                     : null,
             },
         });
-    } catch {
+    } catch (err: any) {
+        if (err?.message?.startsWith('Missing contract configuration')) {
+            return NextResponse.json(
+                { success: false, error: 'Server configuration error' },
+                { status: 500 }
+            );
+        }
+        if (err?.message?.startsWith('Contract simulation error') || err?.message?.startsWith('Failed to decode')) {
+            return NextResponse.json(
+                { success: false, error: 'Blockchain verification unavailable' },
+                { status: 503 }
+            );
+        }
         return NextResponse.json(
             { success: false, error: 'Internal server error' },
             { status: 500 }

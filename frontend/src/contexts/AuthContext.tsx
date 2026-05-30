@@ -4,6 +4,7 @@ import { createContext, useContext, useEffect, useState } from 'react';
 import { User } from '@supabase/supabase-js';
 import { supabase, signOut, safeGetSession } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
+import { normalizePublicSignupRole } from '@/lib/adminAccess';
 
 interface AuthContextType {
     user: User | null;
@@ -30,9 +31,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             return;
         }
 
-        const metadataRole = nextUser.user_metadata?.role as 'institution' | 'student' | 'admin' | undefined;
+        const metadataRole = nextUser.user_metadata?.role;
         if (metadataRole) {
-            setUserRole(metadataRole);
+            setUserRole(normalizePublicSignupRole(metadataRole));
             return;
         }
 
@@ -79,7 +80,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         safeGetSession().then(({ data: { session } }) => {
             const nextUser = session?.user ?? null;
             setUser(nextUser);
-            resolveUserRole(nextUser).catch(() => setUserRole(nextUser?.user_metadata?.role ?? 'student'));
+            resolveUserRole(nextUser).catch(() => setUserRole(nextUser ? 'student' : null));
             setLoading(false);
         }).catch(() => {
             setUser(null);
@@ -93,7 +94,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         } = supabase.auth.onAuthStateChange((_event, session) => {
             const nextUser = session?.user ?? null;
             setUser(nextUser);
-            resolveUserRole(nextUser).catch(() => setUserRole(nextUser?.user_metadata?.role ?? 'student'));
+            resolveUserRole(nextUser).catch(() => setUserRole(nextUser ? 'student' : null));
             setLoading(false);
         });
 
