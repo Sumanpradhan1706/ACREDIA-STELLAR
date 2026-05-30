@@ -1,11 +1,2 @@
 -- SUPERSEDED MIGRATION
--- Student/institution trigger creation and production RLS policies are now
--- consolidated in the canonical database setup flow.
---
--- Canonical order:
---   1. frontend/sql/database_schema.sql
---   2. frontend/sql/secure_rls_migration.sql
---
--- If you already ran this legacy script, re-run secure_rls_migration.sql to
--- replace conflicting policies with the production-safe policy set.
-SELECT 'STUDENT_DASHBOARD_FIX.sql is superseded; run secure_rls_migration.sql instead.' AS notice;
+-- Use secure_rls_migration.sql for the current production RLS policy set.

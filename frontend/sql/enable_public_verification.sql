@@ -1,12 +1,2 @@
 -- SUPERSEDED MIGRATION
--- Public verification is served through /api/verify/[token] with the server
--- service-role client. The production RLS policy set no longer exposes the
--- credentials table directly to anonymous SELECT.
---
--- Canonical order:
---   1. frontend/sql/database_schema.sql
---   2. frontend/sql/secure_rls_migration.sql
---
--- If you already ran this legacy script, re-run secure_rls_migration.sql to
--- drop the public credentials SELECT policy.
-SELECT 'enable_public_verification.sql is superseded; run secure_rls_migration.sql instead.' AS notice;
+-- Use secure_rls_migration.sql for the current production RLS policy set.

@@ -190,10 +190,10 @@ SELECT USING (auth.uid () = auth_user_id);
 CREATE POLICY "Institutions can update own data" ON institutions FOR
 UPDATE USING (auth.uid () = auth_user_id);
 
-CREATE POLICY "Anyone can insert institutions" ON institutions FOR
+CREATE POLICY "Institutions can insert own data" ON institutions FOR
 INSERT
 WITH
-    CHECK (true);
+    CHECK (auth.uid () = auth_user_id);
 
 -- RLS Policies for Students
 CREATE POLICY "Students can view own data" ON students FOR
@@ -202,10 +202,10 @@ SELECT USING (auth.uid () = auth_user_id);
 CREATE POLICY "Students can update own data" ON students FOR
 UPDATE USING (auth.uid () = auth_user_id);
 
-CREATE POLICY "Anyone can insert students" ON students FOR
+CREATE POLICY "Students can insert own data" ON students FOR
 INSERT
 WITH
-    CHECK (true);
+    CHECK (auth.uid () = auth_user_id);
 
 -- RLS Policies for Credentials
 CREATE POLICY "Students can view own credentials" ON credentials FOR
@@ -250,11 +250,4 @@ UPDATE USING (
     )
 );
 
--- RLS Policies for Verification Logs (public read for verification portal)
-CREATE POLICY "Anyone can insert verification logs" ON verification_logs FOR
-INSERT
-WITH
-    CHECK (true);
-
-CREATE POLICY "Anyone can view verification logs" ON verification_logs FOR
-SELECT USING (true);
+-- Verification logs are written and read through trusted server-side flows.
