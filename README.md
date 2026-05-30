@@ -571,8 +571,8 @@ SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
 # Admin accounts must be provisioned by a trusted Supabase/service-role process.
 ADMIN_EMAIL_ALLOWLIST=admin@example.com
 
-# Pinata IPFS (get free JWT at https://pinata.cloud)
-NEXT_PUBLIC_PINATA_JWT=your_pinata_jwt_token
+# Pinata IPFS (server-side only; set this in the frontend app environment)
+PINATA_JWT=your_pinata_jwt_token
 # Optional: custom Pinata gateway domain
 # NEXT_PUBLIC_PINATA_GATEWAY=https://your-gateway.mypinata.cloud
 ```
@@ -692,10 +692,7 @@ pnpm start
 2. Go to **API Keys** → **New Key**
 3. Enable `pinFileToIPFS` and `pinJSONToIPFS` permissions
 4. Copy the **JWT** token
-5. Add to your `.env.local`:
-   ```env
-   NEXT_PUBLIC_PINATA_JWT=eyJhbGci...
-   ```
+5. Add it to your frontend `.env.local` as `PINATA_JWT=...` so only the server routes can use it.
 
 > **Free tier**: 1 GB storage, unlimited pins — more than enough for development and testing.
 
@@ -1127,7 +1124,7 @@ pnpm test
 
 **Problem: IPFS upload timeout / failed**
 
-- Ensure `NEXT_PUBLIC_PINATA_JWT` is set in your `.env.local`
+- Ensure `PINATA_JWT` is set in your frontend `.env.local`
 - Verify the JWT is valid at [app.pinata.cloud](https://app.pinata.cloud)
 - Check your internet connection and try again
 - Free tier is limited to 1 GB — check your Pinata dashboard usage
