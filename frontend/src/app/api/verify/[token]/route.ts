@@ -1,70 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { createHash } from 'crypto';
 import { getServiceRoleClient } from '@/lib/serverAuth';
-import { activeNetwork, getContractAddress, sorobanServer } from '@/lib/stellar';
-import {
-    Account,
-    Contract,
-    TransactionBuilder,
-    TimeoutInfinite,
-    nativeToScVal,
-    scValToNative,
-    xdr,
-} from '@stellar/stellar-sdk';
+import { getCredential, isRevoked } from '@/lib/contractReads';
 
 export const dynamic = 'force-dynamic';
 
-// Dummy read-only address — no funds needed for simulation
-const DUMMY_ADDRESS = 'GAAZI4TCR3TY5OJHCTJC2A4QSY6CJWJH5IAJTGKIN2ER7LBNVKOCCWN';
-
-// Sentinel to distinguish "credential absent from chain" from infrastructure errors
-const NOT_FOUND_ON_CHAIN = Symbol('NOT_FOUND_ON_CHAIN');
-
-async function simulateContractRead(method: string, args: any[]): Promise<any> {
-    const contractId = getContractAddress('CREDENTIAL_NFT');
-    if (!contractId) {
-        throw new Error('Missing contract configuration for CREDENTIAL_NFT');
-    }
-
-    const contract = new Contract(contractId);
-    const sourceAccount = new Account(DUMMY_ADDRESS, '0');
-
-    const tx = new TransactionBuilder(sourceAccount, {
-        fee: '100',
-        networkPassphrase: activeNetwork.networkPassphrase,
-    })
-        .addOperation(contract.call(method, ...args))
-        .setTimeout(TimeoutInfinite)
-        .build();
-
-    // Network/RPC errors propagate as thrown exceptions (caller maps to 503)
-    const sim = await sorobanServer.simulateTransaction(tx as any);
-
-    if ('error' in sim) {
-        const errStr = String((sim as any).error);
-        // Contract returning "not found" / missing entry is a known absence, not an infra error
-        if (errStr.includes('not found') || errStr.includes('MissingValue') || errStr.includes('KeyNotFound')) {
-            return NOT_FOUND_ON_CHAIN;
-        }
-        throw new Error(`Contract simulation error: ${errStr}`);
-    }
-
-    const retval = (sim as any).result?.retval;
-    // No retval on a successful sim means the entry doesn't exist (e.g. Option::None)
-    if (!retval) return NOT_FOUND_ON_CHAIN;
-
-    try {
-        if (typeof retval === 'string') {
-            return scValToNative(xdr.ScVal.fromXDR(retval, 'base64'));
-        }
-        // Failsafe for boolean ScVal objects where SDK swallowed the prototype
-        if (typeof retval === 'object' && !retval.switch && retval._switch?.name === 'scvBool') {
-            return retval._value;
-        }
-        return scValToNative(retval);
-    } catch {
-        // Parse failure is an infrastructure problem, not a missing credential
-        throw new Error('Failed to decode contract response');
-    }
+/** Re-derive the credential hash from stored metadata (server-side, Node crypto). */
+function deriveCredentialHash(metadata: unknown): string {
+    return createHash('sha256')
+        .update(JSON.stringify(metadata))
+        .digest('hex');
 }
 
 export async function GET(
@@ -82,14 +27,7 @@ export async function GET(
             );
         }
 
-        // Validate token is a safe non-negative integer before passing to contract
-        if (!/^\d+$/.test(token) || Number(token) > Number.MAX_SAFE_INTEGER) {
-            return NextResponse.json(
-                { success: false, error: 'Invalid token ID' },
-                { status: 400 }
-            );
-        }
-
+        // ── 1. Fetch from Supabase ────────────────────────────────────────────
         const supabase = getServiceRoleClient();
         const { data, error } = await supabase
             .from('credentials')
@@ -100,6 +38,9 @@ export async function GET(
                 revoked,
                 revoked_at,
                 metadata,
+                ipfs_hash,
+                student_wallet_address,
+                issuer_wallet_address,
                 institution:institutions!credentials_institution_id_fkey (
                     name
                 )
@@ -109,7 +50,7 @@ export async function GET(
 
         if (error) {
             return NextResponse.json(
-                { success: false, error: 'Failed to verify credential' },
+                { success: false, error: 'Failed to query credential' },
                 { status: 500 }
             );
         }
@@ -121,49 +62,82 @@ export async function GET(
             );
         }
 
-        // --- On-chain verification ---
-        // get_credential returns the full struct including revoked; no need for a separate is_revoked call
-        const tokenIdArg = nativeToScVal(Number(token), { type: 'u64' });
-        const onChainCredential = await simulateContractRead('get_credential', [tokenIdArg]);
+        // ── 2. Fetch from Soroban contract ────────────────────────────────────
+        const [onChain, onChainRevoked] = await Promise.all([
+            getCredential(data.token_id),
+            isRevoked(data.token_id),
+        ]);
 
-        // If the contract has no record for this token, the DB row cannot be trusted
-        if (onChainCredential === NOT_FOUND_ON_CHAIN) {
-            return NextResponse.json(
-                { success: false, error: 'Credential not found on blockchain' },
-                { status: 404 }
-            );
-        }
+        // ── 3. Cross-check ────────────────────────────────────────────────────
+        const dbHash = data.metadata ? deriveCredentialHash(data.metadata) : null;
+        const expectedUri = data.ipfs_hash ? `ipfs://${data.ipfs_hash}` : null;
 
-        // On-chain revocation is authoritative — if the chain result is unreadable, fail safe
-        if (typeof onChainCredential.revoked !== 'boolean') {
-            return NextResponse.json(
-                { success: false, error: 'Unable to determine revocation status from blockchain' },
-                { status: 503 }
-            );
-        }
-        const isRevoked = onChainCredential.revoked === true;
+        const onChainMatch = onChain !== null && (() => {
+            const issuerMatch =
+                data.issuer_wallet_address &&
+                onChain.issuer.toLowerCase() === data.issuer_wallet_address.toLowerCase();
 
+            const studentMatch =
+                data.student_wallet_address &&
+                onChain.student.toLowerCase() === data.student_wallet_address.toLowerCase();
+
+            const hashMatch = dbHash && onChain.hash === dbHash;
+
+            const uriMatch = expectedUri && onChain.uri === expectedUri;
+
+            return Boolean(issuerMatch && studentMatch && hashMatch && uriMatch);
+        })();
+
+        // Revocation: trust the chain over the DB (chain is authoritative)
+        const revoked = onChainRevoked || data.revoked;
+
+        const verified = onChain !== null && onChainMatch === true && !revoked;
+
+        // ── 4. Build response ─────────────────────────────────────────────────
         const institution = Array.isArray(data.institution)
             ? data.institution[0]
             : data.institution;
 
         const credentialData = data.metadata?.credentialData ?? {};
-        const safeCredential = {
-            tokenId: data.token_id,
-            issuedAt: data.issued_at,
-            revoked: isRevoked,
-            revokedAt: isRevoked ? data.revoked_at : null,
-            institutionName: institution?.name ?? credentialData.institutionName ?? null,
-            credentialType: credentialData.credentialType ?? null,
-            degree: credentialData.degree ?? null,
-            major: credentialData.major ?? null,
-            issueDate: credentialData.issueDate ?? null,
-            onChainVerified: true,
-        };
 
         return NextResponse.json({
             success: true,
-            credential: safeCredential,
+            credential: {
+                tokenId: data.token_id,
+                issuedAt: data.issued_at,
+                revoked,
+                revokedAt: data.revoked_at,
+                institutionName: institution?.name ?? credentialData.institutionName ?? null,
+                credentialType: credentialData.credentialType ?? null,
+                degree: credentialData.degree ?? null,
+                major: credentialData.major ?? null,
+                issueDate: credentialData.issueDate ?? null,
+            },
+            verification: {
+                verified,
+                revoked,
+                databaseMatch: data !== null,
+                onChainMatch: onChainMatch === true,
+                onChainFound: onChain !== null,
+                // Granular mismatch details (useful for debugging / UI)
+                checks: onChain
+                    ? {
+                          issuerMatch:
+                              data.issuer_wallet_address
+                                  ? onChain.issuer.toLowerCase() ===
+                                    data.issuer_wallet_address.toLowerCase()
+                                  : null,
+                          studentMatch:
+                              data.student_wallet_address
+                                  ? onChain.student.toLowerCase() ===
+                                    data.student_wallet_address.toLowerCase()
+                                  : null,
+                          hashMatch: dbHash ? onChain.hash === dbHash : null,
+                          uriMatch: expectedUri ? onChain.uri === expectedUri : null,
+                          notRevoked: !onChainRevoked,
+                      }
+                    : null,
+            },
         });
     } catch (err: any) {
         if (err?.message?.startsWith('Missing contract configuration')) {
