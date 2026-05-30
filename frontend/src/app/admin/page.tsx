@@ -1,14 +1,12 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Image from 'next/image';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { CheckCircle2, LogOut, Shield, Users } from 'lucide-react';
+import { CheckCircle2, Shield, Users } from 'lucide-react';
 import { toast } from 'sonner';
+import { DashboardShell } from '@/components/dashboard/DashboardShell';
 import { AuthorizeIssuer } from '@/components/institution/AuthorizeIssuer';
 import { ConnectWallet } from '@/components/ui/ConnectWallet';
-import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { getContractOwner } from '@/lib/contracts';
 import { debugLog, debugWarn } from '@/lib/debug';
@@ -157,55 +155,13 @@ function AdminDashboardContent() {
     }
 
     return (
-        <div className="min-h-screen bg-linear-to-br from-gray-50 via-teal-50 to-cyan-50">
-            <nav className="sticky top-0 z-50 border-b border-gray-200 bg-white/90 shadow-sm backdrop-blur-lg">
-                <div className="container mx-auto px-4 py-4">
-                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                        <Link href="/" className="flex items-center space-x-3">
-                            <Image
-                                src="/logo.png"
-                                alt="Acredia Logo"
-                                width={40}
-                                height={40}
-                                className="rounded-lg"
-                            />
-                            <div>
-                                <span className="bg-linear-to-r from-teal-600 to-cyan-600 bg-clip-text text-xl font-bold text-transparent sm:text-2xl">
-                                    ACREDIA
-                                </span>
-                                <span className="ml-2 rounded-full bg-red-600 px-2 py-1 text-xs font-semibold text-white">
-                                    ADMIN
-                                </span>
-                            </div>
-                        </Link>
-                        <div className="flex w-full flex-wrap items-center justify-end gap-2 sm:w-auto sm:flex-nowrap sm:space-x-4">
-                            <ConnectWallet />
-                            <Button
-                                onClick={handleSignOut}
-                                variant="ghost"
-                                className="px-3 text-sm text-gray-700 hover:text-red-600 sm:px-4 sm:text-base"
-                            >
-                                <LogOut className="mr-2 h-5 w-5" />
-                                <span className="hidden sm:inline">Sign Out</span>
-                            </Button>
-                        </div>
-                    </div>
-                </div>
-            </nav>
-
-            <div className="container mx-auto px-4 py-8">
-                <div className="mb-8">
-                    <div className="mb-2 flex items-center space-x-3">
-                        <Shield className="h-10 w-10 text-red-600" />
-                        <h1 className="text-3xl font-bold text-gray-900 sm:text-4xl">
-                            Admin Dashboard
-                        </h1>
-                    </div>
-                    <p className="text-lg text-gray-600">
-                        Manage institution authorizations and system settings
-                    </p>
-                </div>
-
+        <DashboardShell
+            title="Admin Dashboard"
+            subtitle="Manage institution authorizations and system settings"
+            icon={<Shield className="h-10 w-10 text-red-600" />}
+            brandBadge="ADMIN"
+            onSignOut={handleSignOut}
+        >
                 {!isOwner && (
                     <div className="mb-6 rounded-lg border border-red-200 bg-red-50 p-4">
                         <div className="flex items-start space-x-3">
@@ -330,8 +286,7 @@ function AdminDashboardContent() {
                 </div>
 
                 <AuthorizeIssuer />
-            </div>
-        </div>
+        </DashboardShell>
     );
 }
 
