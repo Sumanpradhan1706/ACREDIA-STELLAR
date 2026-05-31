@@ -21,7 +21,7 @@ Academic credential operations rely heavily on decentralized components (Stellar
 ---
 
 ## 🧪 Verified Testing Scenarios
-Located in [e2e.lifecycle.test.ts](file:///C:/Users/sayan/ACREDIA-STELLAR/frontend/tests/e2e.lifecycle.test.ts):
+Located in [e2e.lifecycle.test.ts](./e2e.lifecycle.test.ts):
 
 ### 1. Successful Credential Issuance Lifecycle
 * **Strategy**: Mock IPFS file and metadata storage, simulate a successful transaction sign and broadcast on the Stellar network (obtaining a valid token ID), and assert that the Supabase client inserts the exact metadata payload, mapping the token correctly.

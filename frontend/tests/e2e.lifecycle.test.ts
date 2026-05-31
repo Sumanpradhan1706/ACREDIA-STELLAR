@@ -66,6 +66,7 @@ vi.mock('../src/lib/supabase', () => ({
 // Import target services after mocks are established
 import { issueCredential, type CredentialData } from '../src/lib/credentialService';
 import { GET } from '../src/app/api/verify/[token]/route';
+import { GET as adminStatsGET } from '../src/app/api/admin/stats/route';
 
 // Helper to derive SHA-256 hash exactly like route.ts does
 function deriveCredentialHash(metadata: unknown): string {
@@ -364,20 +365,46 @@ describe('Academic Credential E2E Integration / Lifecycle', () => {
 
   // ── 7. ROLE-BASED ROUTE ACCESS ────────────────────────────────────────────
   it('covers role-based route access validation', async () => {
-    // Assert route guard integrates with requireAdminRequest helper
-    const req = new NextRequest('http://localhost:3000/api/admin/setup');
-    
-    // Simulating authorized admin
-    mockRequireAdminRequest.mockResolvedValue({ ok: true, userId: 'admin-user-007' });
-    const authSuccess = await mockRequireAdminRequest(req);
-    expect(authSuccess.ok).toBe(true);
-    expect(authSuccess.userId).toBe('admin-user-007');
+    // Assert route guard integrates with requireAdminRequest helper via actual GET handler
 
-    // Simulating unauthorized/non-admin requester
+    // 1. Simulating unauthorized/non-admin requester
     mockRequireAdminRequest.mockResolvedValue({ ok: false, status: 403, error: 'Admin access required' });
-    const authFailed = await mockRequireAdminRequest(req);
-    expect(authFailed.ok).toBe(false);
-    expect(authFailed.status).toBe(403);
-    expect(authFailed.error).toBe('Admin access required');
+    const reqFailed = new NextRequest('http://localhost:3000/api/admin/stats');
+    const responseFailed = await adminStatsGET(reqFailed);
+    
+    expect(responseFailed.status).toBe(403);
+    const bodyFailed = await responseFailed.json();
+    expect(bodyFailed.success).toBe(false);
+    expect(bodyFailed.error).toBe('Admin access required');
+
+    // 2. Simulating authorized admin
+    mockRequireAdminRequest.mockResolvedValue({ ok: true, userId: 'admin-user-007' });
+    
+    // Mock the database client to successfully return some simple count/data for all queries in stats route
+    const mockDbChain = {
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      not: vi.fn().mockReturnThis(),
+      then: vi.fn().mockImplementation((resolve) => {
+        resolve({ count: 5, data: [], error: null });
+      }),
+    };
+    mockGetServiceRoleClient.mockReturnValue({
+      from: vi.fn().mockReturnValue(mockDbChain),
+    });
+
+    const reqSuccess = new NextRequest('http://localhost:3000/api/admin/stats');
+    const responseSuccess = await adminStatsGET(reqSuccess);
+    
+    expect(responseSuccess.status).toBe(200);
+    const bodySuccess = await responseSuccess.json();
+    expect(bodySuccess.success).toBe(true);
+    expect(bodySuccess.stats).toEqual({
+      totalInstitutions: 5,
+      authorizedInstitutions: 0,
+      totalCredentials: 5,
+      activeCredentials: 5,
+      totalStudents: 5,
+    });
   });
 });
