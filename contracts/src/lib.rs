@@ -168,7 +168,7 @@ impl AcrediaCredential {
             return Err(ContractError::IssuerNotAuthorized);
         }
 
-        // Reject duplicate hashes — prevents index overwrite
+        // Reject duplicate hashes to prevent index overwrite.
         if env
             .storage()
             .persistent()
@@ -320,7 +320,7 @@ mod tests {
         }
     }
 
-    // ── initialization ────────────────────────────────────────────────────────
+    // Initialization
 
     #[test]
     fn test_initialize_once() {
@@ -337,7 +337,7 @@ mod tests {
         });
     }
 
-    // ── issuance ──────────────────────────────────────────────────────────────
+    // Issuance
 
     #[test]
     fn test_issue_and_verify() {
@@ -402,7 +402,7 @@ mod tests {
         });
     }
 
-    // ── revocation ────────────────────────────────────────────────────────────
+    // Revocation
 
     #[test]
     fn test_revoke_credential() {
@@ -490,7 +490,7 @@ mod tests {
         });
     }
 
-    // ── events ────────────────────────────────────────────────────────────────
+    // Events
 
     #[test]
     fn test_credential_issued_event() {
@@ -579,7 +579,7 @@ mod tests {
         );
     }
 
-    // ── totals ────────────────────────────────────────────────────────────────
+    // Totals
 
     #[test]
     fn test_total_credentials() {
