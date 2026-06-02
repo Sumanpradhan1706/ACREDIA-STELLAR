@@ -12,6 +12,7 @@ import {
 } from '@stellar/stellar-sdk';
 import { activeNetwork, getContractAddress, sorobanServer } from './stellar';
 import { debugLog, debugWarn } from './debug';
+import { generateCanonicalCredentialHash } from './credentialHash';
 
 export interface CredentialMetadata {
     studentAddress: string;
@@ -320,11 +321,7 @@ export async function revokeCredentialOnStellar(tokenId: string, issuerAddress: 
 }
 
 export async function generateCredentialHash(metadata: any): Promise<string> {
-    const dataString = JSON.stringify(metadata);
-    const msgUint8 = new TextEncoder().encode(dataString);
-    const hashBuffer = await crypto.subtle.digest('SHA-256', msgUint8);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
+    return generateCanonicalCredentialHash(metadata);
 }
 
 export function isValidStellarAddress(address: string): boolean {

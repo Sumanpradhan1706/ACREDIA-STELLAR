@@ -67,6 +67,11 @@ vi.mock('../src/lib/supabase', () => ({
 import { issueCredential, type CredentialData } from '../src/lib/credentialService';
 import { GET } from '../src/app/api/verify/[token]/route';
 import { GET as adminStatsGET } from '../src/app/api/admin/stats/route';
+import {
+  CREDENTIAL_HASH_ALGORITHM,
+  CREDENTIAL_METADATA_SCHEMA_VERSION,
+  generateCanonicalCredentialHash,
+} from '../src/lib/credentialHash';
 
 // Helper to derive SHA-256 hash exactly like route.ts does
 function deriveCredentialHash(metadata: unknown): string {
@@ -159,15 +164,20 @@ describe('Academic Credential E2E Integration / Lifecycle', () => {
   // ── 3. VERIFICATION SUCCESS ───────────────────────────────────────────────
   it('covers verification success states', async () => {
     const dbMetadata = {
+      name: 'diploma - Alice Smith',
+      description: 'Academic credential issued by Acredia Academy to Alice Smith',
+      image: 'ipfs://mocked-file-cid',
       credentialData: {
         studentName: 'Alice Smith',
+        studentWallet: 'gstudentaddress123456789012345678901234567890123456789',
         credentialType: 'diploma',
         degree: 'Bachelor of Computer Science',
         institutionName: 'Acredia Academy',
+        issueDate: '2026-05-31',
       },
     };
 
-    const expectedHash = deriveCredentialHash(dbMetadata);
+    const expectedHash = await generateCanonicalCredentialHash(dbMetadata);
 
     // Mock Supabase service role client to return database credential record
     const mockMaybeSingle = vi.fn().mockResolvedValue({
@@ -178,6 +188,8 @@ describe('Academic Credential E2E Integration / Lifecycle', () => {
         revoked: false,
         revoked_at: null,
         metadata: dbMetadata,
+        metadata_schema_version: CREDENTIAL_METADATA_SCHEMA_VERSION,
+        hash_algorithm: CREDENTIAL_HASH_ALGORITHM,
         ipfs_hash: 'mocked-metadata-path',
         student_wallet_address: 'gstudentaddress123456789012345678901234567890123456789',
         issuer_wallet_address: 'ginstitutionaddress12345678901234567890123456789',

@@ -1,16 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createHash } from 'crypto';
 import { getServiceRoleClient } from '@/lib/serverAuth';
 import { getCredential, isRevoked } from '@/lib/contractReads';
+import { deriveCredentialHash } from '@/lib/credentialHash';
 
 export const dynamic = 'force-dynamic';
-
-/** Re-derive the credential hash from stored metadata (server-side, Node crypto). */
-function deriveCredentialHash(metadata: unknown): string {
-    return createHash('sha256')
-        .update(JSON.stringify(metadata))
-        .digest('hex');
-}
 
 export async function GET(
     _request: NextRequest,
@@ -38,6 +31,8 @@ export async function GET(
                 revoked,
                 revoked_at,
                 metadata,
+                metadata_schema_version,
+                hash_algorithm,
                 ipfs_hash,
                 student_wallet_address,
                 issuer_wallet_address,
@@ -69,7 +64,13 @@ export async function GET(
         ]);
 
         // ── 3. Cross-check ────────────────────────────────────────────────────
-        const dbHash = data.metadata ? deriveCredentialHash(data.metadata) : null;
+        const dbHash = data.metadata
+            ? await deriveCredentialHash(
+                  data.metadata,
+                  data.metadata_schema_version,
+                  data.hash_algorithm
+              )
+            : null;
         const expectedUri = data.ipfs_hash ? `ipfs://${data.ipfs_hash}` : null;
 
         const onChainMatch = onChain !== null && (() => {

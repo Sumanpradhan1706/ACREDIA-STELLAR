@@ -25,6 +25,8 @@ export interface Credential {
     ipfs_hash: string;
     blockchain_hash: string;
     metadata: CredentialMetadata;
+    metadata_schema_version: number;
+    hash_algorithm: string;
     issued_at: string;
     revoked: boolean;
 }

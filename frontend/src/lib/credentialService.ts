@@ -5,6 +5,10 @@ import {
     generateCredentialHash,
     revokeCredentialOnStellar,
 } from './contracts';
+import {
+    CREDENTIAL_HASH_ALGORITHM,
+    CREDENTIAL_METADATA_SCHEMA_VERSION,
+} from './credentialHash';
 import { debugLog } from './debug';
 
 export interface Subject {
@@ -177,6 +181,8 @@ export async function issueCredential(
             ipfs_hash: metadataPath, // Store full path (CID/filename)
             blockchain_hash: transactionHash,
             metadata,
+            metadata_schema_version: CREDENTIAL_METADATA_SCHEMA_VERSION,
+            hash_algorithm: CREDENTIAL_HASH_ALGORITHM,
             issued_at: new Date().toISOString(),
             revoked: false,
         });

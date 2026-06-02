@@ -136,6 +136,8 @@ CREATE TABLE credentials (
     ipfs_hash TEXT NOT NULL,
     blockchain_hash TEXT NOT NULL,
     metadata JSONB NOT NULL,
+    metadata_schema_version INTEGER NOT NULL DEFAULT 1,
+    hash_algorithm TEXT NOT NULL DEFAULT 'sha256:canonical-json:v1',
     issued_at TIMESTAMP
     WITH
         TIME ZONE DEFAULT NOW(),

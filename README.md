@@ -967,6 +967,8 @@ credentials
 ├── ipfs_hash (text) - IPFS metadata hash
 ├── blockchain_hash (text) - Transaction hash
 ├── metadata (jsonb) - Credential details
+├── metadata_schema_version (integer) - Canonical metadata schema version
+├── hash_algorithm (text) - Hash algorithm identifier
 ├── issued_at (timestamp)
 ├── revoked (boolean)
 ├── revoked_at (timestamp)
@@ -994,6 +996,19 @@ verification_logs
 ├── verified_at (timestamp)
 └── verification_result (jsonb)
 ```
+
+### Credential Metadata Hashing
+
+Credential hashes are derived from a versioned canonical payload, not directly from raw `JSON.stringify(metadata)`.
+
+- Current schema: `metadata_schema_version = 1`
+- Current algorithm: `hash_algorithm = sha256:canonical-json:v1`
+- Shared implementation: `frontend/src/lib/credentialHash.ts`
+- Test vectors: `frontend/tests/credentialHash.test.ts`
+
+Schema v1 hashes only the credential meaning needed for verification: name, description, image, student wallet/name, credential type, degree, major, GPA, issue date, institution name, and normalized subjects. Optional fields are represented as `null` or empty arrays, numeric-like values are converted to strings where the UI treats them as text, and object keys are serialized in sorted canonical order.
+
+Future metadata fields can be added to stored `metadata` or IPFS display metadata without changing old hashes. To make a new field part of the on-chain digest, add a new schema version and algorithm identifier, keep the v1 builder intact, add new fixed test vectors, store the new version on newly issued credentials, and keep verification dispatching by each row's stored `metadata_schema_version` and `hash_algorithm`.
 
 ---
 
