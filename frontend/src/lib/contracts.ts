@@ -93,10 +93,26 @@ async function invokeContractMethod(
     const preparedTx = await sorobanServer.prepareTransaction(transaction as any);
 
     debugLog('Signing transaction with Freighter.');
-    const signedXdrResponse = await signTransaction(preparedTx.toXDR(), {
-        networkPassphrase: activeNetwork.networkPassphrase,
-        network: activeNetwork.networkName,
-    } as any);
+    let signedXdrResponse: any;
+    try {
+        signedXdrResponse = await signTransaction(preparedTx.toXDR(), {
+            networkPassphrase: activeNetwork.networkPassphrase,
+            network: activeNetwork.networkName,
+        } as any);
+    } catch (signError: any) {
+        const msg = String(signError?.message || signError);
+        if (msg.includes('User canceled') || msg.includes('canceled') || msg.includes('rejected')) {
+            throw new Error('Transaction signing was canceled by the user.');
+        }
+        if (msg.includes('Network') || msg.includes('network') || msg.includes('testnet') || msg.includes('mainnet')) {
+            throw new Error(
+                `Network mismatch: Your Freighter wallet may be on a different network.\n` +
+                `Expected: ${activeNetwork.networkName}\n` +
+                `${msg}`
+            );
+        }
+        throw new Error(`Freighter signing error: ${msg}`);
+    }
 
     const finalXdr =
         typeof signedXdrResponse === 'string'
@@ -105,7 +121,7 @@ async function invokeContractMethod(
 
     if (!finalXdr || typeof finalXdr !== 'string') {
         throw new Error(
-            'Freighter signing failed or was canceled. Response: ' + JSON.stringify(signedXdrResponse)
+            'Freighter signing failed or wallet account may have disconnected. Please reconnect and try again.'
         );
     }
 

@@ -101,7 +101,11 @@ export function IssuedCredentialsList({ institutionId, refreshTrigger }: IssuedC
             // Show user-friendly error messages
             let errorMessage = 'Failed to revoke credential';
 
-            if (err.message?.includes('same wallet')) {
+            if (err.message?.includes('canceled') || err.message?.includes('rejected')) {
+                errorMessage = 'Revocation was canceled or rejected by you';
+            } else if (err.message?.includes('Network')) {
+                errorMessage = 'Network mismatch. Please check your Freighter wallet settings.';
+            } else if (err.message?.includes('same wallet')) {
                 errorMessage = 'You must connect the same wallet that issued this credential';
             } else if (err.message?.includes('Not authorized')) {
                 errorMessage = 'Only the institution that issued this credential can revoke it';

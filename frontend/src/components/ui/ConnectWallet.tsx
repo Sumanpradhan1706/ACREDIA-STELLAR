@@ -20,6 +20,7 @@ export function ConnectWallet() {
                         toast.success('Wallet address copied!');
                     }}
                     title="Copy Address"
+                    aria-label={`Wallet connected: ${address.slice(0, 5)}...${address.slice(-4)}. Click to copy full address.`}
                 >
                     <Wallet className="h-4 w-4 mr-2 text-teal-600" />
                     {address.slice(0, 5)}...{address.slice(-4)}
@@ -30,6 +31,7 @@ export function ConnectWallet() {
                     variant="ghost" 
                     className="rounded-none text-red-500 hover:text-red-700 hover:bg-red-50 h-full px-3"
                     title="Disconnect Wallet"
+                    aria-label="Disconnect wallet"
                 >
                     <LogOut className="h-4 w-4" />
                 </Button>
@@ -42,6 +44,7 @@ export function ConnectWallet() {
             onClick={connect} 
             disabled={isConnecting} 
             className="bg-linear-to-r from-teal-600 to-cyan-600 text-white font-semibold hover:from-teal-700 hover:to-cyan-700 transition-all shadow-md"
+            aria-label={isConnecting ? 'Connecting wallet...' : 'Connect Stellar wallet with Freighter'}
         >
             <Wallet className="h-4 w-4 mr-2" />
             {isConnecting ? 'Connecting...' : 'Connect Wallet'}

@@ -80,6 +80,11 @@ export function AuthorizeIssuer() {
             return;
         }
 
+        if (address.toLowerCase() !== contractOwner?.toLowerCase()) {
+            toast.error('Only the contract owner can authorize wallets');
+            return;
+        }
+
         setIsAuthorizing(true);
         try {
             toast.loading('Preparing transaction...', { id: 'authorize' });
@@ -125,7 +130,13 @@ export function AuthorizeIssuer() {
             await checkAuthorization(walletToAuthorize);
         } catch (error: any) {
             console.error('Error authorizing wallet:', error);
-            toast.error(error.message || 'Failed to authorize wallet', { id: 'authorize' });
+            let msg = error.message || 'Failed to authorize wallet';
+            if (msg.includes('canceled') || msg.includes('User')) {
+                msg = 'Authorization transaction was canceled.';
+            } else if (msg.includes('Network')) {
+                msg = 'Network mismatch detected. Please check your Freighter settings.';
+            }
+            toast.error(msg, { id: 'authorize' });
         } finally {
             setIsAuthorizing(false);
         }
