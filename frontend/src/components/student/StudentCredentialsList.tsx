@@ -202,17 +202,22 @@ export default function StudentCredentialsList({
 
             <div className="mb-6">
                 <div className="relative">
+                    <label htmlFor="student-credential-search" className="sr-only">
+                        Search credentials
+                    </label>
                     <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
                     <Input
+                        id="student-credential-search"
                         placeholder="Search by type, degree, major, or institution..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         className="pl-10"
+                        aria-label="Search credentials"
                     />
                 </div>
             </div>
 
-            <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-3">
+            <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-3" role="region" aria-label="Credential statistics">
                 <div className="rounded-lg bg-teal-50 p-4">
                     <p className="text-sm font-medium text-teal-700">Total Credentials</p>
                     <p className="text-3xl font-bold text-teal-900">{credentials.length}</p>
@@ -232,7 +237,7 @@ export default function StudentCredentialsList({
             </div>
 
             {filteredCredentials.length === 0 ? (
-                <div className="py-12 text-center">
+                <div className="py-12 text-center" aria-live="polite">
                     <Award className="mx-auto mb-4 h-16 w-16 text-gray-300" />
                     <p className="text-lg text-gray-500">
                         {searchQuery
