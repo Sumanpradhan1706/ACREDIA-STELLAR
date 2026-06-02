@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServiceRoleClient, requireAdminRequest } from '@/lib/serverAuth';
+import { verifyAdminAuthorizationTransaction } from '@/lib/adminAuthorizationVerification';
 
 export const dynamic = 'force-dynamic';
 
@@ -24,11 +25,30 @@ export async function POST(request: NextRequest) {
             );
         }
 
+        if (!transactionHash) {
+            return NextResponse.json(
+                { success: false, error: 'Authorization transaction hash is required' },
+                { status: 400 }
+            );
+        }
+
+        const verification = await verifyAdminAuthorizationTransaction(walletAddress, transactionHash);
+        if (!verification.ok) {
+            return NextResponse.json(
+                {
+                    success: false,
+                    error: verification.message,
+                    code: verification.code,
+                },
+                { status: verification.status }
+            );
+        }
+
         // Find institution by wallet address and update/verify them
         const { data: institution, error: findError } = await supabase
             .from('institutions')
             .select('*')
-            .eq('wallet_address', walletAddress)
+            .eq('wallet_address', verification.walletAddress)
             .single();
 
         if (findError && findError.code !== 'PGRST116') {
@@ -41,10 +61,10 @@ export async function POST(request: NextRequest) {
 
         if (institution) {
             // Update existing institution to mark as verified and store transaction hash
-            const updateData: any = { verified: true };
-            if (transactionHash) {
-                updateData.authorization_tx_hash = transactionHash;
-            }
+            const updateData = {
+                verified: true,
+                authorization_tx_hash: verification.transactionHash,
+            };
 
             const { error: updateError } = await supabase
                 .from('institutions')
@@ -63,7 +83,7 @@ export async function POST(request: NextRequest) {
                 success: true,
                 message: 'Institution verified successfully',
                 institution,
-                transactionHash,
+                transactionHash: verification.transactionHash,
             });
         }
 
@@ -71,8 +91,8 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({
             success: true,
             message: 'Wallet authorized on blockchain. Institution will be linked when they connect.',
-            wallet: walletAddress,
-            transactionHash,
+            wallet: verification.walletAddress,
+            transactionHash: verification.transactionHash,
         });
     } catch (error) {
         console.error('Error in update-authorization:', error);
