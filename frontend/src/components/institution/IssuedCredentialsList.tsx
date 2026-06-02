@@ -193,18 +193,23 @@ export function IssuedCredentialsList({ institutionId, refreshTrigger }: IssuedC
             {/* Search */}
             <div className="mb-6">
                 <div className="relative">
+                    <label htmlFor="credential-search" className="sr-only">
+                        Search credentials
+                    </label>
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
                     <Input
+                        id="credential-search"
                         placeholder="Search by student name, degree, or token ID..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         className="pl-10"
+                        aria-label="Search credentials"
                     />
                 </div>
             </div>
 
             {/* Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6" role="region" aria-label="Credential statistics">
                 <div className="bg-teal-50 rounded-lg p-4">
                     <p className="text-sm text-teal-700 font-medium">Total Issued</p>
                     <p className="text-3xl font-bold text-teal-900">{credentials.length}</p>
@@ -225,7 +230,7 @@ export function IssuedCredentialsList({ institutionId, refreshTrigger }: IssuedC
 
             {/* Credentials List */}
             {filteredCredentials.length === 0 ? (
-                <div className="text-center py-12">
+                <div className="text-center py-12" aria-live="polite">
                     <FileText className="h-16 w-16 text-gray-300 mx-auto mb-4" />
                     <p className="text-gray-500 text-lg">
                         {searchQuery ? 'No credentials found matching your search' : 'No credentials issued yet'}

@@ -120,6 +120,10 @@ Acredia is built on **Stellar Network**, a decentralized network focused on prov
 
 ---
 
+
+
+
+
 ## 🎯 The Problem
 
 The current academic credential system faces critical challenges:
@@ -132,7 +136,9 @@ The current academic credential system faces critical challenges:
 
 ---
 
-## 💡 Our Solution
+
+
+## 💡 Our Solution Is
 
 Acredia creates a **three-layer verification system** powered by Stellar Network:
 
@@ -622,8 +628,11 @@ STELLAR_CONTRACT_ID=
 Run the canonical SQL setup listed in `frontend/sql/README.md`. For a fresh
 Supabase project, run only these scripts in your Supabase SQL Editor:
 
-1. `frontend/sql/database_schema.sql`
-2. `frontend/sql/secure_rls_migration.sql`
+```sql
+-- Run these in order:
+1. frontend/sql/database_schema.sql
+2. frontend/sql/secure_rls_migration.sql
+```
 
 `database_schema.sql` creates tables, indexes, triggers, and enables RLS without
 opening broad public policies. `secure_rls_migration.sql` is the canonical
@@ -632,14 +641,6 @@ production policy set and can be safely re-run after older deployments.
 The older one-off SQL repair scripts are retained only as compatibility notices:
 they point back to the canonical setup flow and should not be run for new
 deployments.
-
-Fresh setup checklist:
-
-- Run the two canonical scripts above in order.
-- Do not run `FIX_DATABASE_RLS.sql`, `STUDENT_DASHBOARD_FIX.sql`, `add_profiles_table.sql`, `enable_admin_stats.sql`, or `enable_public_verification.sql` on a new project.
-- Create test accounts for student and institution flows.
-- Provision admin accounts only through a trusted Supabase service-role process.
-- Verify student, institution, admin, and public credential verification flows after setup.
 
 ### Smart Contract Deployment
 
@@ -749,7 +750,7 @@ Before deploying to production:
    - `frontend/sql/database_schema.sql`
    - `frontend/sql/secure_rls_migration.sql`
 
-The older repair scripts are kept for legacy deployments only. For a clean clone, use the two scripts above and validate each role before sharing the environment.
+The older repair scripts are kept for legacy deployments only. For a clean clone, use the two scripts above.
 
 #### Stellar Account Setup
 

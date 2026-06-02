@@ -471,6 +471,8 @@ function VerifyContent() {
                                                             : 'border-blue-200 bg-white text-gray-700'
                                                 }`}
                                                 role="status"
+                                                aria-live="polite"
+                                                aria-atomic="true"
                                             >
                                                 <div className="flex items-start gap-2">
                                                     {scanState === 'success' ? (
