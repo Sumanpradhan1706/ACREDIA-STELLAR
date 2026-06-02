@@ -373,10 +373,11 @@ function VerifyContent() {
 
                                 <div className="w-full max-w-md space-y-4">
                                     <div>
-                                        <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                        <label htmlFor="manual-token" className="block text-sm font-semibold text-gray-700 mb-2">
                                             Credential Token ID
                                         </label>
                                         <input
+                                            id="manual-token"
                                             type="text"
                                             value={manualToken}
                                             onChange={(e) => setManualToken(e.target.value)}

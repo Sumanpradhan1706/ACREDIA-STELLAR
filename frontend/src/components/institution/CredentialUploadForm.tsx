@@ -461,6 +461,7 @@ export function CredentialUploadForm({
                                                 variant="ghost"
                                                 size="sm"
                                                 className="h-9 w-9 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+                                                aria-label="Remove subject"
                                             >
                                                 <X className="h-4 w-4" />
                                             </Button>
