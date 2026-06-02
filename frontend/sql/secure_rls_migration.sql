@@ -1,3 +1,6 @@
+-- CANONICAL SETUP STEP 2 OF 2
+-- Run after database_schema.sql. This is the production RLS policy set.
+
 -- ========================================
 -- PRODUCTION SECURITY HARDENING (RLS)
 -- ========================================

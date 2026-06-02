@@ -1,3 +1,6 @@
+-- CANONICAL SETUP STEP 1 OF 2
+-- Run this first for a fresh Supabase project, then run secure_rls_migration.sql.
+
 -- Enable UUID extension
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 

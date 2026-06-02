@@ -139,6 +139,8 @@ export default function QRCodeModal({ open, onClose, credential }: QRCodeModalPr
                             ref={canvasRef}
                             width={240}
                             height={240}
+                            role="img"
+                            aria-label={`QR code for verifying credential token ${credential?.token_id || 'unknown'}`}
                             style={{ display: 'block', width: '240px', maxWidth: '100%', height: 'auto' }}
                         />
                     </div>
@@ -163,6 +165,7 @@ export default function QRCodeModal({ open, onClose, credential }: QRCodeModalPr
                                 variant="outline"
                                 size="sm"
                                 className="h-9 w-9 shrink-0 p-0"
+                                aria-label={copied ? 'Verification link copied' : 'Copy verification link'}
                             >
                                 {copied ? (
                                     <Check className="h-3.5 w-3.5 text-green-600" />

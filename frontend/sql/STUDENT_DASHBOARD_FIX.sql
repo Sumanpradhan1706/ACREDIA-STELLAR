@@ -1,2 +1,3 @@
 -- SUPERSEDED MIGRATION
 -- Use secure_rls_migration.sql for the current production RLS policy set.
+-- Do not run this file for a fresh Supabase project.

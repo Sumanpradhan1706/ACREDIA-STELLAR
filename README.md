@@ -120,6 +120,10 @@ Acredia is built on **Stellar Network**, a decentralized network focused on prov
 
 ---
 
+
+
+
+
 ## 🎯 The Problem
 
 The current academic credential system faces critical challenges:
@@ -132,7 +136,9 @@ The current academic credential system faces critical challenges:
 
 ---
 
-## 💡 Our Solution
+
+
+## 💡 Our Solution Is
 
 Acredia creates a **three-layer verification system** powered by Stellar Network:
 
@@ -619,7 +625,8 @@ STELLAR_CONTRACT_ID=
 
 5. **Set Up Supabase Database**
 
-Run the following SQL scripts in your Supabase SQL Editor:
+Run the canonical SQL setup listed in `frontend/sql/README.md`. For a fresh
+Supabase project, run only these scripts in your Supabase SQL Editor:
 
 ```sql
 -- Run these in order:
@@ -739,7 +746,7 @@ Before deploying to production:
 1. Create account at [Supabase](https://supabase.com)
 2. Create a new project
 3. Get your project URL and anon key from Settings > API
-4. Run the provided SQL scripts in SQL Editor (in order):
+4. Run the canonical SQL scripts in SQL Editor (see `frontend/sql/README.md`):
    - `frontend/sql/database_schema.sql`
    - `frontend/sql/secure_rls_migration.sql`
 
