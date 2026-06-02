@@ -67,43 +67,49 @@ export async function GET(request: NextRequest) {
             );
 
             const serviceClient = hasServiceRoleEnv() ? getServiceRoleClient() : null;
-            if (serviceClient) {
-                const { data: authUser } = await serviceClient.auth.admin.getUserById(
-                    authCheck.userId
+            if (!serviceClient) {
+                return NextResponse.json(
+                    { success: false, error: 'Student profile not found' },
+                    { status: 404 }
                 );
-                const userEmail = authUser?.user?.email ?? '';
-                const userName =
-                    authUser?.user?.user_metadata?.name ??
-                    userEmail.split('@')[0] ??
-                    'Student';
+            }
 
-                if (userEmail) {
-                    const { data: newStudent, error: createError } = await serviceClient
-                        .from('students')
-                        .upsert(
-                            { auth_user_id: authCheck.userId, name: userName, email: userEmail },
-                            { onConflict: 'email', ignoreDuplicates: false }
-                        )
-                        .select('id, wallet_address')
-                        .maybeSingle();
+            const { data: authUser, error: authUserError } =
+                await serviceClient.auth.admin.getUserById(authCheck.userId);
 
-                    if (!createError && newStudent) {
-                        studentRow = newStudent;
-                        console.log(
-                            '[student/credentials] Auto-created student row:',
-                            newStudent.id
-                        );
-                    } else {
-                        // E-mail collision — row exists with a different auth_user_id,
-                        // try fetching the row by email and adopt it.
-                        const { data: byEmail } = await serviceClient
-                            .from('students')
-                            .select('id, wallet_address')
-                            .eq('email', userEmail)
-                            .maybeSingle();
-                        if (byEmail) studentRow = byEmail;
-                    }
-                }
+            if (authUserError || !authUser?.user?.email) {
+                console.error('[student/credentials] Failed to load auth user info:', authUserError);
+                return NextResponse.json(
+                    { success: false, error: 'Student profile not found' },
+                    { status: 404 }
+                );
+            }
+
+            const userEmail = authUser.user.email;
+            const userName =
+                authUser.user.user_metadata?.name ??
+                userEmail.split('@')[0] ??
+                'Student';
+
+            const { data: newStudent, error: createError } = await serviceClient
+                .from('students')
+                .insert({ auth_user_id: authCheck.userId, name: userName, email: userEmail })
+                .select('id, wallet_address')
+                .maybeSingle();
+
+            if (!createError && newStudent) {
+                studentRow = newStudent;
+                console.log('[student/credentials] Auto-created student row:', newStudent.id);
+            } else {
+                console.warn(
+                    '[student/credentials] Failed to auto-create student row:',
+                    createError
+                );
+                const status = createError?.code === '23505' ? 409 : 500;
+                return NextResponse.json(
+                    { success: false, error: 'Unable to create student profile' },
+                    { status }
+                );
             }
         }
 
