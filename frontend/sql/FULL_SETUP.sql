@@ -93,14 +93,26 @@ ALTER TABLE public.credentials
     ADD COLUMN IF NOT EXISTS hash_algorithm TEXT;
 
 -- Stamp legacy rows that predate canonical hashing, then set defaults.
+-- v0 means "legacy JSON.stringify(metadata)"; v1 means canonical JSON.
 UPDATE public.credentials
-SET hash_algorithm = 'sha256:json-stringify'
-WHERE metadata_schema_version IS NULL
-  AND hash_algorithm IS NULL;
+SET metadata_schema_version = CASE
+    WHEN hash_algorithm = 'sha256:canonical-json:v1' THEN 1
+    ELSE 0
+END
+WHERE metadata_schema_version IS NULL;
+
+UPDATE public.credentials
+SET hash_algorithm = CASE
+    WHEN metadata_schema_version = 0 THEN 'sha256:json-stringify'
+    ELSE 'sha256:canonical-json:v1'
+END
+WHERE hash_algorithm IS NULL;
 
 ALTER TABLE public.credentials
     ALTER COLUMN metadata_schema_version SET DEFAULT 1,
-    ALTER COLUMN hash_algorithm SET DEFAULT 'sha256:canonical-json:v1';
+    ALTER COLUMN hash_algorithm SET DEFAULT 'sha256:canonical-json:v1',
+    ALTER COLUMN metadata_schema_version SET NOT NULL,
+    ALTER COLUMN hash_algorithm SET NOT NULL;
 
 -- ---------------------------------------------------------------------
 -- Functions

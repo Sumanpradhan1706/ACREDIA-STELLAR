@@ -242,6 +242,8 @@ export const dbHelpers = {
         ipfs_hash: string;
         blockchain_hash: string;
         metadata: any;
+        metadata_schema_version?: number;
+        hash_algorithm?: string;
     }) {
         const { data, error } = await supabase
             .from('credentials')

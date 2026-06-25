@@ -1,6 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { NextRequest } from 'next/server';
-import { createHash } from 'crypto';
 
 // ── HOISTED MOCK VARIABLES ───────────────────────────────────────────────────
 // Vitest hoists vi.mock calls, so any variables used inside must be created with vi.hoisted
@@ -73,13 +72,6 @@ import {
   generateCanonicalCredentialHash,
 } from '../src/lib/credentialHash';
 
-// Helper to derive SHA-256 hash exactly like route.ts does
-function deriveCredentialHash(metadata: unknown): string {
-  return createHash('sha256')
-    .update(JSON.stringify(metadata))
-    .digest('hex');
-}
-
 // ── CORE LIFECYCLE TESTS ──────────────────────────────────────────────────────
 
 describe('Academic Credential E2E Integration / Lifecycle', () => {
@@ -137,6 +129,8 @@ describe('Academic Credential E2E Integration / Lifecycle', () => {
         token_id: '123',
         ipfs_hash: 'mocked-metadata-path',
         blockchain_hash: 'mocked-transaction-hash',
+        metadata_schema_version: CREDENTIAL_METADATA_SCHEMA_VERSION,
+        hash_algorithm: CREDENTIAL_HASH_ALGORITHM,
         revoked: false,
       })
     );
@@ -241,7 +235,7 @@ describe('Academic Credential E2E Integration / Lifecycle', () => {
       },
     };
 
-    const expectedHash = deriveCredentialHash(dbMetadata);
+    const expectedHash = await generateCanonicalCredentialHash(dbMetadata);
 
     // Mock Supabase service role client to return active record but marked revoked on-chain
     const mockMaybeSingle = vi.fn().mockResolvedValue({
@@ -252,6 +246,8 @@ describe('Academic Credential E2E Integration / Lifecycle', () => {
         revoked: false, // active in DB
         revoked_at: null,
         metadata: dbMetadata,
+        metadata_schema_version: CREDENTIAL_METADATA_SCHEMA_VERSION,
+        hash_algorithm: CREDENTIAL_HASH_ALGORITHM,
         ipfs_hash: 'mocked-metadata-path',
         student_wallet_address: 'gstudentaddress123456789012345678901234567890123456789',
         issuer_wallet_address: 'ginstitutionaddress12345678901234567890123456789',
@@ -336,6 +332,8 @@ describe('Academic Credential E2E Integration / Lifecycle', () => {
         revoked: false,
         revoked_at: null,
         metadata: dbMetadata,
+        metadata_schema_version: CREDENTIAL_METADATA_SCHEMA_VERSION,
+        hash_algorithm: CREDENTIAL_HASH_ALGORITHM,
         ipfs_hash: 'mocked-metadata-path',
         student_wallet_address: 'gstudentaddress123456789012345678901234567890123456789',
         issuer_wallet_address: 'ginstitutionaddress12345678901234567890123456789',
