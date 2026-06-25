@@ -14,6 +14,10 @@ import {
     scValToNative,
     xdr,
 } from "@stellar/stellar-sdk";
+import {
+    credentialHashBytesToHex,
+    credentialHashHexToScVal,
+} from "./credentialHashEncoding";
 
 const RPC_URL =
     process.env.NEXT_PUBLIC_SOROBAN_RPC_URL || "https://soroban-testnet.stellar.org";
@@ -29,11 +33,13 @@ const DUMMY_SOURCE = CONTRACT_ID;
 const server = new rpc.Server(RPC_URL);
 
 export interface OnChainCredential {
+    token_id?: bigint | number;
     student: string;
     issuer: string;
     hash: string;
     uri: string;
     issued_at: bigint | number;
+    revoked?: boolean;
 }
 
 async function simulate(method: string, args: xdr.ScVal[]): Promise<unknown> {
@@ -67,6 +73,54 @@ async function simulate(method: string, args: xdr.ScVal[]): Promise<unknown> {
     return scValToNative(retval);
 }
 
+function nativeStructToRecord(value: unknown): Record<string, unknown> | null {
+    if (!value || typeof value !== "object") {
+        return null;
+    }
+
+    if (value instanceof Map) {
+        return Object.fromEntries(
+            Array.from(value.entries()).map(([key, item]) => [String(key), item])
+        );
+    }
+
+    return value as Record<string, unknown>;
+}
+
+function firstPresent(record: Record<string, unknown>, keys: string[]): unknown {
+    for (const key of keys) {
+        if (record[key] !== undefined && record[key] !== null) {
+            return record[key];
+        }
+    }
+
+    return undefined;
+}
+
+export function normalizeOnChainCredential(result: unknown): OnChainCredential | null {
+    const record = nativeStructToRecord(result);
+    if (!record) {
+        return null;
+    }
+
+    const credentialHash = firstPresent(record, ["credential_hash", "credentialHash", "hash"]);
+    const ipfsHash = firstPresent(record, ["ipfs_hash", "ipfsHash", "uri"]);
+
+    if (!credentialHash || !ipfsHash) {
+        return null;
+    }
+
+    return {
+        token_id: firstPresent(record, ["token_id", "tokenId"]) as bigint | number | undefined,
+        student: String(firstPresent(record, ["student"]) ?? ""),
+        issuer: String(firstPresent(record, ["issuer"]) ?? ""),
+        hash: credentialHashBytesToHex(credentialHash),
+        uri: String(ipfsHash),
+        issued_at: (firstPresent(record, ["issued_at", "issuedAt"]) as bigint | number) ?? 0,
+        revoked: firstPresent(record, ["revoked"]) as boolean | undefined,
+    };
+}
+
 /**
  * Fetch full credential struct by token_id (u64).
  * Returns null if the token does not exist on-chain.
@@ -76,15 +130,7 @@ export async function getCredential(tokenId: string | number): Promise<OnChainCr
         const result = await simulate("get_credential", [
             nativeToScVal(Number(tokenId), { type: "u64" }),
         ]);
-        if (!result || typeof result !== "object") return null;
-        const r = result as Record<string, unknown>;
-        return {
-            student: String(r.student ?? ""),
-            issuer: String(r.issuer ?? ""),
-            hash: String(r.hash ?? ""),
-            uri: String(r.uri ?? ""),
-            issued_at: (r.issued_at as bigint | number) ?? 0,
-        };
+        return normalizeOnChainCredential(result);
     } catch {
         return null;
     }
@@ -92,15 +138,12 @@ export async function getCredential(tokenId: string | number): Promise<OnChainCr
 
 /**
  * Look up a credential by its SHA-256 hash.
- * Returns the token_id (number) or null if not found.
+ * Returns the full credential struct or null if not found.
  */
-export async function verifyCredentialByHash(hash: string): Promise<number | null> {
+export async function verifyCredentialByHash(hash: string): Promise<OnChainCredential | null> {
     try {
-        const result = await simulate("verify_credential", [
-            nativeToScVal(hash, { type: "string" }),
-        ]);
-        if (result === null || result === undefined) return null;
-        return Number(result);
+        const result = await simulate("verify_credential", [credentialHashHexToScVal(hash)]);
+        return normalizeOnChainCredential(result);
     } catch {
         return null;
     }

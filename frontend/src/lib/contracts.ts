@@ -13,6 +13,7 @@ import {
 import { activeNetwork, getContractAddress, sorobanServer } from './stellar';
 import { debugLog, debugWarn } from './debug';
 import { generateCanonicalCredentialHash } from './credentialHash';
+import { credentialHashHexToScVal } from './credentialHashEncoding';
 
 export interface CredentialMetadata {
     studentAddress: string;
@@ -306,7 +307,7 @@ export async function issueCredentialOnStellar(
     const args = [
         new Address(studentAddress).toScVal(),
         new Address(issuerAddress).toScVal(),
-        nativeToScVal(credentialHash, { type: 'string' }),
+        credentialHashHexToScVal(credentialHash),
         nativeToScVal(ipfsUri, { type: 'string' }),
     ];
 

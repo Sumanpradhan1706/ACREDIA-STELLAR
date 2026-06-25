@@ -3,6 +3,8 @@ import { describe, expect, it } from 'vitest';
 import {
   CREDENTIAL_HASH_ALGORITHM,
   CREDENTIAL_METADATA_SCHEMA_VERSION,
+  LEGACY_CREDENTIAL_HASH_ALGORITHM,
+  LEGACY_CREDENTIAL_METADATA_SCHEMA_VERSION,
   buildCanonicalCredentialPayloadV1,
   canonicalJson,
   deriveCredentialHash,
@@ -82,6 +84,27 @@ describe('canonical credential metadata hashing', () => {
     await expect(generateCanonicalCredentialHash(reordered)).resolves.toBe(canonicalHashVector);
   });
 
+  it('normalizes equivalent issue date representations in schema v1', async () => {
+    const withIsoTimestamp = {
+      ...metadata,
+      credentialData: {
+        ...metadata.credentialData,
+        issueDate: '2026-05-31T00:00:00.000Z',
+      },
+    };
+
+    const withDateObject = {
+      ...metadata,
+      credentialData: {
+        ...metadata.credentialData,
+        issueDate: new Date('2026-05-31T00:00:00.000Z'),
+      },
+    };
+
+    await expect(generateCanonicalCredentialHash(withIsoTimestamp)).resolves.toBe(canonicalHashVector);
+    await expect(generateCanonicalCredentialHash(withDateObject)).resolves.toBe(canonicalHashVector);
+  });
+
   it('matches Node SHA-256 over the same canonical payload string', async () => {
     const payload = buildCanonicalCredentialPayloadV1(metadata);
     const serialized = canonicalJson(payload as any);
@@ -95,5 +118,18 @@ describe('canonical credential metadata hashing', () => {
     const legacyHash = createHash('sha256').update(JSON.stringify(metadata)).digest('hex');
 
     await expect(deriveCredentialHash(metadata, null, null)).resolves.toBe(legacyHash);
+    await expect(
+      deriveCredentialHash(
+        metadata,
+        LEGACY_CREDENTIAL_METADATA_SCHEMA_VERSION,
+        LEGACY_CREDENTIAL_HASH_ALGORITHM
+      )
+    ).resolves.toBe(legacyHash);
+  });
+
+  it('rejects unsupported stamped hash schemas instead of guessing', async () => {
+    await expect(
+      deriveCredentialHash(metadata, 99, CREDENTIAL_HASH_ALGORITHM)
+    ).rejects.toThrow(/Unsupported credential metadata hash schema/);
   });
 });

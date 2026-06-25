@@ -281,7 +281,7 @@ This single contract replaces two separate EVM contracts (CredentialNFT + Creden
 **Storage Architecture**:
 - `DataKey::Authorized(Address)` → `instance` storage (low-cost, ephemeral)
 - `DataKey::Credential(u64)` → `persistent` storage (permanent, survives ledger closings)
-- `DataKey::HashIndex(String)` → `persistent` storage (hash → token_id index)
+- `DataKey::HashIndex(BytesN<32>)` → `persistent` storage (SHA-256 hash bytes → token_id index)
 
 ### Stellar Testnet Deployment (Active)
 
@@ -625,18 +625,17 @@ STELLAR_CONTRACT_ID=
 
 5. **Set Up Supabase Database**
 
-Run the canonical SQL setup listed in `frontend/sql/README.md`. For a fresh
-Supabase project, run only these scripts in your Supabase SQL Editor:
+Run the canonical SQL setup in your Supabase SQL Editor. For a fresh Supabase
+project, run the single idempotent setup file:
 
 ```sql
--- Run these in order:
-1. frontend/sql/database_schema.sql
-2. frontend/sql/secure_rls_migration.sql
+frontend/sql/FULL_SETUP.sql
 ```
 
-`database_schema.sql` creates tables, indexes, triggers, and enables RLS without
-opening broad public policies. `secure_rls_migration.sql` is the canonical
-production policy set and can be safely re-run after older deployments.
+`FULL_SETUP.sql` creates tables, indexes, triggers, canonical credential hash
+metadata columns, and production RLS policies. It can be safely re-run after
+older deployments. `frontend/sql/database_schema.sql` is kept as a focused base
+schema reference, but clean deployments should use `FULL_SETUP.sql`.
 
 The older one-off SQL repair scripts are retained only as compatibility notices:
 they point back to the canonical setup flow and should not be run for new
@@ -722,7 +721,7 @@ Before deploying to production:
 - Use Stellar Public Network values only after contract review and a verified mainnet deployment.
 - Rotate any secret that was pasted into chat, screenshots, logs, browser code, or an issue.
 - Set server-only secrets (`SUPABASE_SERVICE_ROLE_KEY`, `PINATA_JWT`, Stellar secret keys) only in the hosting provider's protected environment variables.
-- Confirm Supabase RLS is enabled and production policies come from `frontend/sql/secure_rls_migration.sql`.
+- Confirm Supabase RLS is enabled and production policies come from `frontend/sql/FULL_SETUP.sql`.
 - Verify contract IDs on Stellar Expert before pointing users at a production environment.
 
 ---
@@ -746,11 +745,9 @@ Before deploying to production:
 1. Create account at [Supabase](https://supabase.com)
 2. Create a new project
 3. Get your project URL and anon key from Settings > API
-4. Run the canonical SQL scripts in SQL Editor (see `frontend/sql/README.md`):
-   - `frontend/sql/database_schema.sql`
-   - `frontend/sql/secure_rls_migration.sql`
+4. Run `frontend/sql/FULL_SETUP.sql` in the Supabase SQL Editor.
 
-The older repair scripts are kept for legacy deployments only. For a clean clone, use the two scripts above.
+The base `frontend/sql/database_schema.sql` file is retained as a schema reference. For a clean clone, use `FULL_SETUP.sql`.
 
 #### Stellar Account Setup
 
@@ -1010,10 +1007,12 @@ Credential hashes are derived from a versioned canonical payload, not directly f
 
 - Current schema: `metadata_schema_version = 1`
 - Current algorithm: `hash_algorithm = sha256:canonical-json:v1`
+- Legacy schema: `metadata_schema_version = 0`, `hash_algorithm = sha256:json-stringify`
 - Shared implementation: `frontend/src/lib/credentialHash.ts`
+- Stellar byte encoding: `frontend/src/lib/credentialHashEncoding.ts`
 - Test vectors: `frontend/tests/credentialHash.test.ts`
 
-Schema v1 hashes only the credential meaning needed for verification: name, description, image, student wallet/name, credential type, degree, major, GPA, issue date, institution name, and normalized subjects. Optional fields are represented as `null` or empty arrays, numeric-like values are converted to strings where the UI treats them as text, and object keys are serialized in sorted canonical order.
+Schema v1 hashes only the credential meaning needed for verification: name, description, image, student wallet/name, credential type, degree, major, GPA, issue date, institution name, and normalized subjects. Optional fields are represented as `null` or empty arrays, numeric-like values are converted to strings where the UI treats them as text, ISO date-times are normalized to `YYYY-MM-DD`, and object keys are serialized in sorted canonical order.
 
 Future metadata fields can be added to stored `metadata` or IPFS display metadata without changing old hashes. To make a new field part of the on-chain digest, add a new schema version and algorithm identifier, keep the v1 builder intact, add new fixed test vectors, store the new version on newly issued credentials, and keep verification dispatching by each row's stored `metadata_schema_version` and `hash_algorithm`.
 

@@ -223,7 +223,7 @@ soroban contract invoke \
   issue_credential \
   --student <STUDENT_ADDRESS> \
   --issuer <INSTITUTION_ADDRESS> \
-  --credential_hash "credential_hash_value" \
+  --credential_hash "<64_CHAR_SHA256_HEX_DIGEST>" \
   --ipfs_uri "ipfs_hash_value"
 ```
 
@@ -236,7 +236,7 @@ soroban contract invoke \
   --network testnet \
   -- \
   verify_credential \
-  --credential_hash "credential_hash_value"
+  --credential_hash "<64_CHAR_SHA256_HEX_DIGEST>"
 ```
 
 ### Check Revocation Status

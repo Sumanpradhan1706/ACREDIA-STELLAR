@@ -30,7 +30,7 @@ Located in [e2e.lifecycle.test.ts](./e2e.lifecycle.test.ts):
 * **Strategy**: Configure Freighter signature simulators to throw rejected/canceled errors, verifying that the service fails gracefully, bubbles up transaction sign failures, and does **not** insert stray records into Supabase.
 
 ### 3. Verification Success States
-* **Strategy**: Query the `/api/verify/[token]` handler with a mock request. Verify that the system dynamically calculates the SHA-256 metadata hash, checks it against the simulated on-chain registry, and returns `verification.verified: true`.
+* **Strategy**: Query the `/api/verify/[token]` handler with a mock request. Verify that the system dynamically calculates the stored schema version's credential metadata hash, checks it against the simulated on-chain registry, and returns `verification.verified: true`.
 
 ### 4. Verification Revoked States
 * **Strategy**: Request validation of an issued credential where the on-chain Soroban query yields `isRevoked: true`. Verify that the route responds with `revoked: true` and `verification.verified: false` instantly.
