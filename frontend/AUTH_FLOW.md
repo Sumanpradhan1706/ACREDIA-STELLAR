@@ -34,14 +34,14 @@ verification. The auth system is split into three layers:
 └──────────────────────────────────────────────────────┘
 ```
 
-| Concern | Module |
-|---|---|
+| Concern                    | Module                         |
+| -------------------------- | ------------------------------ |
 | Auth state & React context | `src/contexts/AuthContext.tsx` |
-| Shared role resolution | `src/lib/roleResolver.ts` |
-| Server-side route guards | `src/lib/serverAuth.ts` |
-| Admin hardening | `src/lib/adminAccess.ts` |
-| Supabase client & helpers | `src/lib/supabase.ts` |
-| Type definitions | `src/types/index.ts` |
+| Shared role resolution     | `src/lib/roleResolver.ts`      |
+| Server-side route guards   | `src/lib/serverAuth.ts`        |
+| Admin hardening            | `src/lib/adminAccess.ts`       |
+| Supabase client & helpers  | `src/lib/supabase.ts`          |
+| Type definitions           | `src/types/index.ts`           |
 
 ---
 
@@ -130,10 +130,10 @@ export async function resolveUserRole(
 Two convenience wrappers exist so callers don't need to worry about client
 construction:
 
-| Wrapper | Used by | Notes |
-|---|---|---|
-| `resolveUserRoleClient(client, user)` | `AuthContext.tsx` | Thin pass-through to `resolveUserRole` |
-| `resolveUserRoleServer(client, userId)` | API routes | Fetches the `User` object via `auth.admin.getUserById()` first |
+| Wrapper                                 | Used by           | Notes                                                          |
+| --------------------------------------- | ----------------- | -------------------------------------------------------------- |
+| `resolveUserRoleClient(client, user)`   | `AuthContext.tsx` | Thin pass-through to `resolveUserRole`                         |
+| `resolveUserRoleServer(client, userId)` | API routes        | Fetches the `User` object via `auth.admin.getUserById()` first |
 
 ---
 
@@ -151,7 +151,7 @@ function MyComponent() {
     const { user, userRole, loading, signOut } = useAuth();
 
     if (loading) return <Spinner />;
-    if (!user)   return <LoginPrompt />;
+    if (!user) return <LoginPrompt />;
 
     return <p>Your role is: {userRole}</p>;
 }
@@ -179,10 +179,14 @@ The `AuthProvider` (which wraps the app) handles:
 const { userRole, loading } = useAuth();
 
 // ❌ Bad — userRole is 'loading' on first render
-if (userRole === 'admin') { /* ... */ }
+if (userRole === 'admin') {
+    /* ... */
+}
 
 // ✅ Good — wait for resolution to finish
-if (!loading && userRole === 'admin') { /* ... */ }
+if (!loading && userRole === 'admin') {
+    /* ... */
+}
 ```
 
 ---
@@ -213,12 +217,12 @@ import { ProtectedRoute } from '@/contexts/AuthContext';
 
 **Behavior:**
 
-| Condition | Action |
-|---|---|
-| `loading === true` | Renders a full-screen "Loading…" spinner |
-| No authenticated user | Redirects to `/auth/login` |
-| User's role not in `allowedRoles` | Redirects to `/dashboard` |
-| Authorized | Renders `children` |
+| Condition                         | Action                                   |
+| --------------------------------- | ---------------------------------------- |
+| `loading === true`                | Renders a full-screen "Loading…" spinner |
+| No authenticated user             | Redirects to `/auth/login`               |
+| User's role not in `allowedRoles` | Redirects to `/dashboard`                |
+| Authorized                        | Renders `children`                       |
 
 ---
 
@@ -229,9 +233,7 @@ Server-side guards live in
 token from the `Authorization` header and return a discriminated union:
 
 ```ts
-type AuthResult =
-    | { ok: true;  userId: string }
-    | { ok: false; status: number; error: string };
+type AuthResult = { ok: true; userId: string } | { ok: false; status: number; error: string };
 ```
 
 ### `requireAuthenticatedRequest(request)`
@@ -327,16 +329,16 @@ Follow these steps **exactly**:
 
 2. **Set the profile role** — update the `profiles` table directly:
 
-   ```sql
-   UPDATE profiles SET role = 'admin' WHERE id = '<user-uuid>';
-   ```
+    ```sql
+    UPDATE profiles SET role = 'admin' WHERE id = '<user-uuid>';
+    ```
 
 3. **Add to email allowlist** — append the user's email to the
    `ADMIN_EMAIL_ALLOWLIST` environment variable:
 
-   ```env
-   ADMIN_EMAIL_ALLOWLIST=alice@example.com,bob@example.com
-   ```
+    ```env
+    ADMIN_EMAIL_ALLOWLIST=alice@example.com,bob@example.com
+    ```
 
 4. **Redeploy** — the env var change must be picked up by the server.
 
@@ -403,14 +405,14 @@ tokens and proactive session renewal. Always prefer it over the raw Supabase
 
 ## 9. File Map
 
-| File | Purpose |
-|---|---|
-| [`src/types/index.ts`](src/types/index.ts) | `AppRole`, `RoleState` type definitions |
-| [`src/lib/roleResolver.ts`](src/lib/roleResolver.ts) | Shared role resolution logic (`resolveUserRole`, `resolveUserRoleClient`, `resolveUserRoleServer`) |
-| [`src/contexts/AuthContext.tsx`](src/contexts/AuthContext.tsx) | Client-side auth state provider (`AuthProvider`, `useAuth`, `ProtectedRoute`) |
-| [`src/lib/serverAuth.ts`](src/lib/serverAuth.ts) | Server-side auth guards (`requireAuthenticatedRequest`, `requireAdminRequest`, `getServiceRoleClient`) |
-| [`src/lib/adminAccess.ts`](src/lib/adminAccess.ts) | Admin setup helpers, `normalizePublicSignupRole()` |
-| [`src/lib/supabase.ts`](src/lib/supabase.ts) | Supabase browser client, `signUp`, `signIn`, `signOut`, `safeGetSession` |
+| File                                                           | Purpose                                                                                                |
+| -------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| [`src/types/index.ts`](src/types/index.ts)                     | `AppRole`, `RoleState` type definitions                                                                |
+| [`src/lib/roleResolver.ts`](src/lib/roleResolver.ts)           | Shared role resolution logic (`resolveUserRole`, `resolveUserRoleClient`, `resolveUserRoleServer`)     |
+| [`src/contexts/AuthContext.tsx`](src/contexts/AuthContext.tsx) | Client-side auth state provider (`AuthProvider`, `useAuth`, `ProtectedRoute`)                          |
+| [`src/lib/serverAuth.ts`](src/lib/serverAuth.ts)               | Server-side auth guards (`requireAuthenticatedRequest`, `requireAdminRequest`, `getServiceRoleClient`) |
+| [`src/lib/adminAccess.ts`](src/lib/adminAccess.ts)             | Admin setup helpers, `normalizePublicSignupRole()`                                                     |
+| [`src/lib/supabase.ts`](src/lib/supabase.ts)                   | Supabase browser client, `signUp`, `signIn`, `signOut`, `safeGetSession`                               |
 
 ---
 

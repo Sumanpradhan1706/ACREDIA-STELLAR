@@ -144,11 +144,7 @@ async function hasRowIn(
     table: 'institutions' | 'students',
     userId: string,
 ): Promise<boolean> {
-    const { data } = await client
-        .from(table)
-        .select('id')
-        .eq('auth_user_id', userId)
-        .maybeSingle();
+    const { data } = await client.from(table).select('id').eq('auth_user_id', userId).maybeSingle();
 
     return !!data?.id;
 }

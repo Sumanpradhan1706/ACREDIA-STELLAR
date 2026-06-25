@@ -51,7 +51,7 @@ export function DashboardTopbar({
                                 <span
                                     className={cn(
                                         'rounded-full bg-red-600 px-2 py-1 text-xs font-semibold text-white',
-                                        brandBadgeClassName
+                                        brandBadgeClassName,
                                     )}
                                 >
                                     {brandBadge}

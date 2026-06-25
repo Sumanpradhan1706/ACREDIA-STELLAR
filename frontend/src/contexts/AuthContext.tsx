@@ -18,7 +18,7 @@ const AuthContext = createContext<AuthContextType>({
     user: null,
     loading: true,
     userRole: 'loading',
-    signOut: async () => { },
+    signOut: async () => {},
 });
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -43,16 +43,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     useEffect(() => {
         // Check active sessions
-        safeGetSession().then(({ data: { session } }) => {
-            const nextUser = session?.user ?? null;
-            setUser(nextUser);
-            resolveRole(nextUser);
-            setLoading(false);
-        }).catch(() => {
-            setUser(null);
-            setUserRole('unknown');
-            setLoading(false);
-        });
+        safeGetSession()
+            .then(({ data: { session } }) => {
+                const nextUser = session?.user ?? null;
+                setUser(nextUser);
+                resolveRole(nextUser);
+                setLoading(false);
+            })
+            .catch(() => {
+                setUser(null);
+                setUserRole('unknown');
+                setLoading(false);
+            });
 
         // Listen for auth changes
         const {
@@ -125,8 +127,19 @@ export function ProtectedRoute({
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-linear-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
-                <div className="text-white text-xl">Loading...</div>
+            <div className="min-h-screen bg-linear-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4">
+                <div className="w-full max-w-md space-y-8 p-8 rounded-xl bg-slate-800/50 border border-slate-700/50 shadow-2xl backdrop-blur-sm">
+                    <div className="flex justify-center mb-8">
+                        <div className="h-16 w-16 animate-pulse rounded-2xl bg-slate-700"></div>
+                    </div>
+                    <div className="space-y-4">
+                        <div className="h-6 w-3/4 animate-pulse rounded-lg bg-slate-700 mx-auto"></div>
+                        <div className="h-4 w-1/2 animate-pulse rounded bg-slate-700 mx-auto"></div>
+                    </div>
+                    <div className="space-y-4 pt-8 border-t border-slate-700/50">
+                        <div className="h-12 w-full animate-pulse rounded-lg bg-slate-700"></div>
+                    </div>
+                </div>
             </div>
         );
     }
@@ -135,7 +148,12 @@ export function ProtectedRoute({
         return null;
     }
 
-    if (allowedRoles && userRole !== 'loading' && userRole !== 'unknown' && !allowedRoles.includes(userRole)) {
+    if (
+        allowedRoles &&
+        userRole !== 'loading' &&
+        userRole !== 'unknown' &&
+        !allowedRoles.includes(userRole)
+    ) {
         return null;
     }
 

@@ -62,6 +62,7 @@ describe('verify route rate limiting', () => {
             });
 
         for (let index = 0; index < 10; index += 1) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const response = await GET(makeRequest() as any, {
                 params: Promise.resolve({ token: 'token-123' }),
             });
@@ -69,6 +70,7 @@ describe('verify route rate limiting', () => {
             expect(response.status).toBe(200);
         }
 
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const blockedResponse = await GET(makeRequest() as any, {
             params: Promise.resolve({ token: 'token-123' }),
         });

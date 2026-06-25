@@ -10,11 +10,13 @@ import { supabase } from '@/lib/supabase';
  * This will show you exactly what's in the database
  */
 export default function CredentialDiagnostic({ studentWallet }: { studentWallet?: string }) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [results, setResults] = useState<any>(null);
     const [loading, setLoading] = useState(false);
 
     const runDiagnostic = async () => {
         setLoading(true);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const diagnostics: any = {
             wallet: studentWallet,
             timestamp: new Date().toISOString(),
@@ -43,13 +45,16 @@ export default function CredentialDiagnostic({ studentWallet }: { studentWallet?
             }
 
             // 3. Check table structure
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
             const { data: tableInfo, error: tableError } = await supabase
                 .from('credentials')
                 .select('*')
                 .limit(1);
 
             diagnostics.tableColumns = tableInfo?.[0] ? Object.keys(tableInfo[0]) : [];
-            diagnostics.hasWalletColumn = diagnostics.tableColumns.includes('student_wallet_address');
+            diagnostics.hasWalletColumn =
+                diagnostics.tableColumns.includes('student_wallet_address');
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (err: any) {
             diagnostics.error = err.message;
         }
@@ -80,17 +85,26 @@ export default function CredentialDiagnostic({ studentWallet }: { studentWallet?
 
                     <div className="bg-white p-4 rounded border">
                         <h4 className="font-bold">Column Check:</h4>
-                        <p>Has student_wallet_address column: <strong>{results.hasWalletColumn ? '✅ YES' : '❌ NO'}</strong></p>
-                        <p className="text-xs mt-2">Available columns: {results.tableColumns.join(', ')}</p>
+                        <p>
+                            Has student_wallet_address column:{' '}
+                            <strong>{results.hasWalletColumn ? '✅ YES' : '❌ NO'}</strong>
+                        </p>
+                        <p className="text-xs mt-2">
+                            Available columns: {results.tableColumns.join(', ')}
+                        </p>
                     </div>
 
                     {results.wallet && (
                         <>
                             <div className="bg-white p-4 rounded border">
                                 <h4 className="font-bold">Credentials Matching Your Wallet:</h4>
-                                <p className="text-2xl">{results.ilikeMatchCount || 0} credentials</p>
+                                <p className="text-2xl">
+                                    {results.ilikeMatchCount || 0} credentials
+                                </p>
                                 {results.ilikeMatchError && (
-                                    <p className="text-red-600 text-sm mt-2">Error: {results.ilikeMatchError}</p>
+                                    <p className="text-red-600 text-sm mt-2">
+                                        Error: {results.ilikeMatchError}
+                                    </p>
                                 )}
                                 {results.ilikeMatchCount === 0 && results.totalCredentials > 0 && (
                                     <p className="text-orange-600 text-sm mt-2">
@@ -105,6 +119,7 @@ export default function CredentialDiagnostic({ studentWallet }: { studentWallet?
                         <h4 className="font-bold">All Credentials (wallet addresses):</h4>
                         <div className="text-xs font-mono mt-2 space-y-1 max-h-60 overflow-y-auto">
                             {results.allCredentials?.length > 0 ? (
+                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                                 results.allCredentials.map((cred: any) => (
                                     <div key={cred.id} className="border-b pb-1">
                                         <div>Token: {cred.token_id}</div>
@@ -119,7 +134,9 @@ export default function CredentialDiagnostic({ studentWallet }: { studentWallet?
                     </div>
 
                     <details className="bg-gray-100 p-4 rounded border">
-                        <summary className="font-bold cursor-pointer">Full Diagnostic Data (Click to expand)</summary>
+                        <summary className="font-bold cursor-pointer">
+                            Full Diagnostic Data (Click to expand)
+                        </summary>
                         <pre className="text-xs mt-2 overflow-auto max-h-96">
                             {JSON.stringify(results, null, 2)}
                         </pre>

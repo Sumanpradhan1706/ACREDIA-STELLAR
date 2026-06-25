@@ -5,6 +5,7 @@ import {
     StrKey,
     TransactionBuilder,
     TimeoutInfinite,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     nativeToScVal,
     rpc,
     scValToNative,
@@ -62,13 +63,15 @@ export function normalizeTransactionHash(transactionHash: unknown): string | nul
 }
 
 export function isValidIssuerWallet(walletAddress: unknown): walletAddress is string {
-    return typeof walletAddress === 'string' && StrKey.isValidEd25519PublicKey(walletAddress.trim());
+    return (
+        typeof walletAddress === 'string' && StrKey.isValidEd25519PublicKey(walletAddress.trim())
+    );
 }
 
 function failure(
     code: AuthorizationVerificationFailureCode,
     message: string,
-    status: number
+    status: number,
 ): AuthorizationVerificationResult {
     return { ok: false, code, message, status };
 }
@@ -142,9 +145,10 @@ function scValToComparableString(value: unknown): string | null {
 }
 
 function getEventBodyV0(event: unknown): unknown {
-    const body = typeof (event as { body?: unknown }).body === 'function'
-        ? (event as { body: () => unknown }).body()
-        : (event as { body?: unknown }).body;
+    const body =
+        typeof (event as { body?: unknown }).body === 'function'
+            ? (event as { body: () => unknown }).body()
+            : (event as { body?: unknown }).body;
 
     if (!body) {
         return null;
@@ -152,7 +156,7 @@ function getEventBodyV0(event: unknown): unknown {
 
     return typeof (body as { v0?: unknown }).v0 === 'function'
         ? (body as { v0: () => unknown }).v0()
-        : (body as { v0?: unknown }).v0 ?? body;
+        : ((body as { v0?: unknown }).v0 ?? body);
 }
 
 function readEventContractId(event: unknown): string | null {
@@ -184,7 +188,9 @@ function readEventTopics(event: unknown): string[] {
             : null;
 
     return Array.isArray(topics)
-        ? topics.map((topic) => scValToComparableString(topic)).filter((topic): topic is string => Boolean(topic))
+        ? topics
+              .map((topic) => scValToComparableString(topic))
+              .filter((topic): topic is string => Boolean(topic))
         : [];
 }
 
@@ -204,30 +210,33 @@ function readEventData(event: unknown): string | null {
 }
 
 function getContractEvents(transaction: unknown): unknown[] {
-    const events = (transaction as { events?: { contractEventsXdr?: unknown } })?.events?.contractEventsXdr;
+    const events = (transaction as { events?: { contractEventsXdr?: unknown } })?.events
+        ?.contractEventsXdr;
     if (!Array.isArray(events)) {
         return [];
     }
 
-    return events.flatMap((operationEvents) =>
-        Array.isArray(operationEvents) ? operationEvents : [operationEvents]
-    ).map((event) => {
-        if (typeof event !== 'string') {
-            return event;
-        }
+    return events
+        .flatMap((operationEvents) =>
+            Array.isArray(operationEvents) ? operationEvents : [operationEvents],
+        )
+        .map((event) => {
+            if (typeof event !== 'string') {
+                return event;
+            }
 
-        try {
-            return xdr.ContractEvent.fromXDR(event, 'base64');
-        } catch {
-            return event;
-        }
-    });
+            try {
+                return xdr.ContractEvent.fromXDR(event, 'base64');
+            } catch {
+                return event;
+            }
+        });
 }
 
 function findAuthorizeIssuerEvent(
     transaction: unknown,
     walletAddress: string,
-    contractId: string
+    contractId: string,
 ): AuthorizationVerificationResult | null {
     const contractEvents = getContractEvents(transaction);
     let sawAuthorizeEventForAnotherContract = false;
@@ -256,7 +265,7 @@ function findAuthorizeIssuerEvent(
         return failure(
             'wrong-wallet',
             'Authorization transaction succeeded, but it authorized a different wallet.',
-            422
+            422,
         );
     }
 
@@ -265,14 +274,14 @@ function findAuthorizeIssuerEvent(
         sawAuthorizeEventForAnotherContract
             ? 'Authorization transaction succeeded on a different contract.'
             : 'Transaction does not contain an authorize_issuer event for the configured contract.',
-        422
+        422,
     );
 }
 
 async function defaultIsAuthorizedIssuerOnChain(
     walletAddress: string,
     contractId: string,
-    server: StellarRpcLike
+    server: StellarRpcLike,
 ): Promise<boolean> {
     const contract = new Contract(contractId);
     const source = new Account(walletAddress, '0');
@@ -284,20 +293,20 @@ async function defaultIsAuthorizedIssuerOnChain(
         .setTimeout(TimeoutInfinite)
         .build();
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const simulation = await server.simulateTransaction(transaction as any);
     if ('error' in simulation) {
         return false;
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const rawResult = (simulation as any)?.result?.retval;
     if (rawResult == null) {
         return false;
     }
 
     const resultScVal =
-        typeof rawResult === 'string'
-            ? xdr.ScVal.fromXDR(rawResult, 'base64')
-            : rawResult;
+        typeof rawResult === 'string' ? xdr.ScVal.fromXDR(rawResult, 'base64') : rawResult;
 
     return scValToNative(resultScVal) === true;
 }
@@ -305,7 +314,7 @@ async function defaultIsAuthorizedIssuerOnChain(
 export async function verifyAdminAuthorizationTransaction(
     walletAddressInput: unknown,
     transactionHashInput: unknown,
-    deps: AuthorizationVerificationDeps = {}
+    deps: AuthorizationVerificationDeps = {},
 ): Promise<AuthorizationVerificationResult> {
     if (!isValidIssuerWallet(walletAddressInput)) {
         return failure('invalid-wallet', 'Wallet address must be a valid Stellar public key.', 400);
@@ -314,12 +323,20 @@ export async function verifyAdminAuthorizationTransaction(
     const walletAddress = walletAddressInput.trim();
     const transactionHash = normalizeTransactionHash(transactionHashInput);
     if (!transactionHash) {
-        return failure('invalid-transaction-hash', 'Transaction hash must be a 64-character hexadecimal Stellar transaction hash.', 400);
+        return failure(
+            'invalid-transaction-hash',
+            'Transaction hash must be a 64-character hexadecimal Stellar transaction hash.',
+            400,
+        );
     }
 
     const contractId = deps.contractId ?? getContractAddress('CREDENTIAL_NFT');
     if (!contractId) {
-        return failure('missing-contract', 'Credential contract is not configured on the server.', 500);
+        return failure(
+            'missing-contract',
+            'Credential contract is not configured on the server.',
+            500,
+        );
     }
 
     if (!StrKey.isValidContract(contractId)) {
@@ -332,7 +349,11 @@ export async function verifyAdminAuthorizationTransaction(
     try {
         transaction = await server.getTransaction(transactionHash);
     } catch {
-        return failure('rpc-unavailable', 'Unable to fetch authorization transaction from Stellar RPC.', 503);
+        return failure(
+            'rpc-unavailable',
+            'Unable to fetch authorization transaction from Stellar RPC.',
+            503,
+        );
     }
 
     const status = getTransactionStatus(transaction);
@@ -340,7 +361,7 @@ export async function verifyAdminAuthorizationTransaction(
         return failure(
             'wrong-network',
             'Transaction was not found on the configured Stellar network. Confirm it was submitted on the configured network and has finalized.',
-            409
+            409,
         );
     }
 
@@ -357,17 +378,26 @@ export async function verifyAdminAuthorizationTransaction(
         return eventMismatch;
     }
 
+    // eslint-disable-next-line no-useless-assignment
     let isAuthorized = false;
     try {
         isAuthorized = deps.isAuthorizedIssuerOnChain
             ? await deps.isAuthorizedIssuerOnChain(walletAddress)
             : await defaultIsAuthorizedIssuerOnChain(walletAddress, contractId, server);
     } catch {
-        return failure('rpc-unavailable', 'Unable to confirm current issuer authorization state on Stellar RPC.', 503);
+        return failure(
+            'rpc-unavailable',
+            'Unable to confirm current issuer authorization state on Stellar RPC.',
+            503,
+        );
     }
 
     if (!isAuthorized) {
-        return failure('not-authorized', 'Configured contract does not currently authorize this wallet.', 422);
+        return failure(
+            'not-authorized',
+            'Configured contract does not currently authorize this wallet.',
+            422,
+        );
     }
 
     return {

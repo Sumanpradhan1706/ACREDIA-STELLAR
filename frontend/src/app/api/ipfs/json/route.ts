@@ -22,20 +22,18 @@ export async function POST(request: Request) {
         const validationError = validatePinataJson(content);
 
         if (validationError) {
-            return NextResponse.json(
-                { success: false, error: validationError },
-                { status: 400 }
-            );
+            return NextResponse.json({ success: false, error: validationError }, { status: 400 });
         }
 
         const cid = await pinJsonToPinata(content);
 
         return NextResponse.json({ success: true, cid });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
         console.error('[api/ipfs/json] Failed to pin JSON:', error);
         return NextResponse.json(
             { success: false, error: 'Failed to upload JSON to IPFS.' },
-            { status: 500 }
+            { status: 500 },
         );
     }
 }

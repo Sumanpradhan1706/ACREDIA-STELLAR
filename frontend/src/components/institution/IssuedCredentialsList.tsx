@@ -41,12 +41,16 @@ interface Credential {
     token_id: string;
     ipfs_hash: string;
     blockchain_hash: string;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     metadata: any;
     issued_at: string;
     revoked: boolean;
 }
 
-export function IssuedCredentialsList({ institutionId, refreshTrigger }: IssuedCredentialsListProps) {
+export function IssuedCredentialsList({
+    institutionId,
+    refreshTrigger,
+}: IssuedCredentialsListProps) {
     const [credentials, setCredentials] = useState<Credential[]>([]);
     const [filteredCredentials, setFilteredCredentials] = useState<Credential[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -64,6 +68,7 @@ export function IssuedCredentialsList({ institutionId, refreshTrigger }: IssuedC
             const data = await getInstitutionCredentials(institutionId);
             setCredentials(data || []);
             setFilteredCredentials(data || []);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (err: any) {
             console.error('Error loading credentials:', err);
             setError(err.message || 'Failed to load credentials');
@@ -95,6 +100,7 @@ export function IssuedCredentialsList({ institutionId, refreshTrigger }: IssuedC
             setRevokeDialogOpen(false);
             setCredentialToRevoke(null);
             await loadCredentials(); // Refresh list
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (err: any) {
             console.error('Error revoking credential:', err);
 
@@ -135,7 +141,8 @@ export function IssuedCredentialsList({ institutionId, refreshTrigger }: IssuedC
         const filtered = credentials.filter((cred) => {
             const studentName = cred.metadata?.credentialData?.studentName?.toLowerCase() || '';
             const degree = cred.metadata?.credentialData?.degree?.toLowerCase() || '';
-            const credentialType = cred.metadata?.credentialData?.credentialType?.toLowerCase() || '';
+            const credentialType =
+                cred.metadata?.credentialData?.credentialType?.toLowerCase() || '';
             const tokenId = cred.token_id?.toLowerCase() || '';
 
             return (
@@ -213,7 +220,11 @@ export function IssuedCredentialsList({ institutionId, refreshTrigger }: IssuedC
             </div>
 
             {/* Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6" role="region" aria-label="Credential statistics">
+            <div
+                className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6"
+                role="region"
+                aria-label="Credential statistics"
+            >
                 <div className="bg-teal-50 rounded-lg p-4">
                     <p className="text-sm text-teal-700 font-medium">Total Issued</p>
                     <p className="text-3xl font-bold text-teal-900">{credentials.length}</p>
@@ -237,7 +248,9 @@ export function IssuedCredentialsList({ institutionId, refreshTrigger }: IssuedC
                 <div className="text-center py-12" aria-live="polite">
                     <FileText className="h-16 w-16 text-gray-300 mx-auto mb-4" />
                     <p className="text-gray-500 text-lg">
-                        {searchQuery ? 'No credentials found matching your search' : 'No credentials issued yet'}
+                        {searchQuery
+                            ? 'No credentials found matching your search'
+                            : 'No credentials issued yet'}
                     </p>
                     {searchQuery && (
                         <Button
@@ -267,8 +280,9 @@ export function IssuedCredentialsList({ institutionId, refreshTrigger }: IssuedC
                     <DialogHeader>
                         <DialogTitle>Revoke Credential</DialogTitle>
                         <DialogDescription>
-                            Are you sure you want to revoke this credential? This action cannot be undone.
-                            The credential will be marked as revoked on the blockchain and in the database.
+                            Are you sure you want to revoke this credential? This action cannot be
+                            undone. The credential will be marked as revoked on the blockchain and
+                            in the database.
                         </DialogDescription>
                     </DialogHeader>
                     {credentialToRevoke && (
@@ -276,11 +290,13 @@ export function IssuedCredentialsList({ institutionId, refreshTrigger }: IssuedC
                             <div className="bg-gray-50 rounded-lg p-4 space-y-2">
                                 <p className="text-sm">
                                     <span className="font-medium">Student:</span>{' '}
-                                    {credentialToRevoke.metadata?.credentialData?.studentName || 'Unknown'}
+                                    {credentialToRevoke.metadata?.credentialData?.studentName ||
+                                        'Unknown'}
                                 </p>
                                 <p className="text-sm">
                                     <span className="font-medium">Credential:</span>{' '}
-                                    {credentialToRevoke.metadata?.credentialData?.credentialType || 'N/A'}
+                                    {credentialToRevoke.metadata?.credentialData?.credentialType ||
+                                        'N/A'}
                                 </p>
                                 <p className="text-sm">
                                     <span className="font-medium">Token ID:</span>{' '}
@@ -294,7 +310,10 @@ export function IssuedCredentialsList({ institutionId, refreshTrigger }: IssuedC
                                     <AlertCircle className="h-5 w-5 text-yellow-600 mt-0.5 flex-shrink-0" />
                                     <div className="text-sm text-yellow-800">
                                         <p className="font-medium mb-1">Important:</p>
-                                        <p>You must use the same wallet that issued this credential.</p>
+                                        <p>
+                                            You must use the same wallet that issued this
+                                            credential.
+                                        </p>
                                         {address && (
                                             <p className="mt-1 font-mono text-xs break-all">
                                                 Connected: {address}
@@ -337,7 +356,13 @@ export function IssuedCredentialsList({ institutionId, refreshTrigger }: IssuedC
     );
 }
 
-function CredentialCard({ credential, onRevoke }: { credential: Credential; onRevoke: (credential: Credential) => void }) {
+function CredentialCard({
+    credential,
+    onRevoke,
+}: {
+    credential: Credential;
+    onRevoke: (credential: Credential) => void;
+}) {
     const metadata = credential.metadata?.credentialData || {};
     const ipfsUrl = credential.ipfs_hash ? getIPFSUrl(credential.ipfs_hash) : null;
     const blockchainUrl = credential.blockchain_hash

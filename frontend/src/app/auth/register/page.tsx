@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { Shield, Building2, GraduationCap } from 'lucide-react';
 import { signUp } from '@/lib/supabase';
 
@@ -45,6 +46,7 @@ function RegisterForm() {
 
             // Redirect to dashboard after successful registration
             router.push('/dashboard');
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (err: any) {
             setError(err.message || 'An error occurred during registration');
         } finally {
@@ -75,25 +77,39 @@ function RegisterForm() {
                         type="button"
                         onClick={() => setRole('institution')}
                         aria-pressed={role === 'institution'}
-                        className={`p-4 rounded-lg border-2 transition-all focus:outline-none focus:ring-2 focus:ring-blue-300 ${role === 'institution'
-                            ? 'border-blue-500 bg-blue-500/10'
-                            : 'border-slate-300 hover:border-slate-400 bg-white'
-                            }`}
+                        className={`p-4 rounded-lg border-2 transition-all focus:outline-none focus:ring-2 focus:ring-blue-300 ${
+                            role === 'institution'
+                                ? 'border-blue-500 bg-blue-500/10'
+                                : 'border-slate-300 hover:border-slate-400 bg-white'
+                        }`}
                     >
-                        <Building2 className={`h-8 w-8 mx-auto mb-2 ${role === 'institution' ? 'text-blue-600' : 'text-slate-700'}`} />
-                        <p className={`${role === 'institution' ? 'text-blue-700 font-medium' : 'text-slate-700 font-medium'}`}>Institution</p>
+                        <Building2
+                            className={`h-8 w-8 mx-auto mb-2 ${role === 'institution' ? 'text-blue-600' : 'text-slate-700'}`}
+                        />
+                        <p
+                            className={`${role === 'institution' ? 'text-blue-700 font-medium' : 'text-slate-700 font-medium'}`}
+                        >
+                            Institution
+                        </p>
                     </button>
                     <button
                         type="button"
                         onClick={() => setRole('student')}
                         aria-pressed={role === 'student'}
-                        className={`p-4 rounded-lg border-2 transition-all focus:outline-none focus:ring-2 focus:ring-blue-300 ${role === 'student'
-                            ? 'border-blue-500 bg-blue-500/10'
-                            : 'border-slate-300 hover:border-slate-400 bg-white'
-                            }`}
+                        className={`p-4 rounded-lg border-2 transition-all focus:outline-none focus:ring-2 focus:ring-blue-300 ${
+                            role === 'student'
+                                ? 'border-blue-500 bg-blue-500/10'
+                                : 'border-slate-300 hover:border-slate-400 bg-white'
+                        }`}
                     >
-                        <GraduationCap className={`h-8 w-8 mx-auto mb-2 ${role === 'student' ? 'text-blue-600' : 'text-slate-700'}`} />
-                        <p className={`${role === 'student' ? 'text-blue-700 font-medium' : 'text-slate-700 font-medium'}`}>Student</p>
+                        <GraduationCap
+                            className={`h-8 w-8 mx-auto mb-2 ${role === 'student' ? 'text-blue-600' : 'text-slate-700'}`}
+                        />
+                        <p
+                            className={`${role === 'student' ? 'text-blue-700 font-medium' : 'text-slate-700 font-medium'}`}
+                        >
+                            Student
+                        </p>
                     </button>
                 </div>
 
@@ -105,11 +121,7 @@ function RegisterForm() {
                         <Input
                             id="name"
                             type="text"
-                            placeholder={
-                                role === 'institution'
-                                    ? 'Harvard University'
-                                    : 'John Doe'
-                            }
+                            placeholder={role === 'institution' ? 'Harvard University' : 'John Doe'}
                             value={name}
                             onChange={(e) => setName(e.target.value)}
                             required
@@ -146,9 +158,7 @@ function RegisterForm() {
                             minLength={8}
                             className="bg-gray-50 border-gray-300 text-gray-900 placeholder:text-gray-400"
                         />
-                        <p className="text-gray-500 text-sm mt-1">
-                            Minimum 8 characters
-                        </p>
+                        <p className="text-gray-500 text-sm mt-1">Minimum 8 characters</p>
                     </div>
 
                     {error && (
@@ -179,10 +189,7 @@ function RegisterForm() {
                 </div>
 
                 <div className="mt-4 text-center">
-                    <Link
-                        href="/"
-                        className="text-gray-500 hover:text-gray-700 text-sm"
-                    >
+                    <Link href="/" className="text-gray-500 hover:text-gray-700 text-sm">
                         ← Back to home
                     </Link>
                 </div>
@@ -193,11 +200,13 @@ function RegisterForm() {
 
 export default function RegisterPage() {
     return (
-        <Suspense fallback={
-            <div className="min-h-screen bg-gradient-to-br from-gray-50 via-teal-50 to-cyan-50 flex items-center justify-center">
-                <div className="text-white">Loading...</div>
-            </div>
-        }>
+        <Suspense
+            fallback={
+                <div className="min-h-screen bg-gradient-to-br from-gray-50 via-teal-50 to-cyan-50 flex items-center justify-center">
+                    <div className="text-white">Loading...</div>
+                </div>
+            }
+        >
             <RegisterForm />
         </Suspense>
     );

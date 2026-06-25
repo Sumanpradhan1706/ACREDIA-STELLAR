@@ -126,7 +126,7 @@ async function sha256Hex(value: string): Promise<string> {
 
 export function serializeCredentialMetadataForHash(
     metadata: unknown,
-    schemaVersion: number | null | undefined = CREDENTIAL_METADATA_SCHEMA_VERSION
+    schemaVersion: number | null | undefined = CREDENTIAL_METADATA_SCHEMA_VERSION,
 ): string {
     if (schemaVersion === CREDENTIAL_METADATA_SCHEMA_VERSION) {
         return canonicalJson(buildCanonicalCredentialPayloadV1(metadata) as unknown as JsonValue);
@@ -144,13 +144,15 @@ export function serializeCredentialMetadataForHash(
 }
 
 export async function generateCanonicalCredentialHash(metadata: unknown): Promise<string> {
-    return sha256Hex(serializeCredentialMetadataForHash(metadata, CREDENTIAL_METADATA_SCHEMA_VERSION));
+    return sha256Hex(
+        serializeCredentialMetadataForHash(metadata, CREDENTIAL_METADATA_SCHEMA_VERSION),
+    );
 }
 
 export async function deriveCredentialHash(
     metadata: unknown,
     schemaVersion?: number | null,
-    hashAlgorithm?: string | null
+    hashAlgorithm?: string | null,
 ): Promise<string> {
     if (
         schemaVersion === CREDENTIAL_METADATA_SCHEMA_VERSION &&
@@ -168,5 +170,7 @@ export async function deriveCredentialHash(
         return sha256Hex(JSON.stringify(metadata));
     }
 
-    throw new Error(`Unsupported credential metadata hash schema: ${schemaVersion ?? 'legacy'} / ${hashAlgorithm ?? 'unknown'}`);
+    throw new Error(
+        `Unsupported credential metadata hash schema: ${schemaVersion ?? 'legacy'} / ${hashAlgorithm ?? 'unknown'}`,
+    );
 }

@@ -21,6 +21,7 @@ interface QRCodeModalProps {
         token_id: string;
         blockchain_hash: string;
         ipfs_hash: string;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         metadata: any;
         student_wallet_address?: string;
     };
@@ -71,7 +72,7 @@ export default function QRCodeModal({ open, onClose, credential }: QRCodeModalPr
                     }
 
                     debugLog('Credential QR code generated.');
-                }
+                },
             );
         }, 100);
 
@@ -141,7 +142,12 @@ export default function QRCodeModal({ open, onClose, credential }: QRCodeModalPr
                             height={240}
                             role="img"
                             aria-label={`QR code for verifying credential token ${credential?.token_id || 'unknown'}`}
-                            style={{ display: 'block', width: '240px', maxWidth: '100%', height: 'auto' }}
+                            style={{
+                                display: 'block',
+                                width: '240px',
+                                maxWidth: '100%',
+                                height: 'auto',
+                            }}
                         />
                     </div>
 
@@ -153,7 +159,9 @@ export default function QRCodeModal({ open, onClose, credential }: QRCodeModalPr
                     </div>
 
                     <div className="space-y-1.5">
-                        <label className="text-xs font-medium text-gray-700">Verification Link</label>
+                        <label className="text-xs font-medium text-gray-700">
+                            Verification Link
+                        </label>
                         <div className="flex min-w-0 gap-2">
                             <Input
                                 value={verificationUrl}
@@ -165,7 +173,9 @@ export default function QRCodeModal({ open, onClose, credential }: QRCodeModalPr
                                 variant="outline"
                                 size="sm"
                                 className="h-9 w-9 shrink-0 p-0"
-                                aria-label={copied ? 'Verification link copied' : 'Copy verification link'}
+                                aria-label={
+                                    copied ? 'Verification link copied' : 'Copy verification link'
+                                }
                             >
                                 {copied ? (
                                     <Check className="h-3.5 w-3.5 text-green-600" />
