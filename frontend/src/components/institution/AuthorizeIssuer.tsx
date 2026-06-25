@@ -122,9 +122,16 @@ export function AuthorizeIssuer() {
                 const data = await response.json();
                 if (data.success) {
                     debugLog('Issuer authorization synced to the database.');
+                } else {
+                    throw new Error(data.error || 'Authorization transaction could not be verified by the server.');
                 }
             } catch (error) {
                 debugWarn('Failed to sync issuer authorization to the database.', error);
+                toast.warning(
+                    `Wallet authorized on-chain, but database sync failed: ${
+                        error instanceof Error ? error.message : 'Unknown error'
+                    }`
+                );
             }
 
             await checkAuthorization(walletToAuthorize);

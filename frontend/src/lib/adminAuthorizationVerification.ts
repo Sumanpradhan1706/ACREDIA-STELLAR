@@ -84,17 +84,38 @@ function encodeContractAddress(contractAddress: unknown): string | null {
     }
 
     if (typeof contractAddress === 'string') {
-        return contractAddress;
+        return StrKey.isValidContract(contractAddress) ? contractAddress : null;
+    }
+
+    if (contractAddress instanceof Uint8Array) {
+        return contractAddress.length === 32
+            ? StrKey.encodeContract(Buffer.from(contractAddress))
+            : null;
+    }
+
+    if (Array.isArray(contractAddress)) {
+        return contractAddress.length === 32
+            ? StrKey.encodeContract(Buffer.from(contractAddress))
+            : null;
     }
 
     try {
         const contractId =
             typeof (contractAddress as { contractId?: unknown }).contractId === 'function'
-                ? (contractAddress as { contractId: () => Uint8Array }).contractId()
+                ? (contractAddress as { contractId: () => unknown }).contractId()
                 : null;
 
         if (contractId) {
-            return StrKey.encodeContract(Buffer.from(contractId));
+            return encodeContractAddress(contractId);
+        }
+
+        const value =
+            typeof (contractAddress as { value?: unknown }).value === 'function'
+                ? (contractAddress as { value: () => unknown }).value()
+                : null;
+
+        if (value) {
+            return encodeContractAddress(value);
         }
     } catch {
         return null;
@@ -151,7 +172,9 @@ function readEventContractId(event: unknown): string | null {
 function readEventTopics(event: unknown): string[] {
     const plainTopics = (event as { topics?: unknown }).topics;
     if (Array.isArray(plainTopics)) {
-        return plainTopics.map((topic) => String(topic));
+        return plainTopics
+            .map((topic) => scValToComparableString(topic) ?? String(topic))
+            .filter(Boolean);
     }
 
     const bodyV0 = getEventBodyV0(event);
@@ -168,7 +191,7 @@ function readEventTopics(event: unknown): string[] {
 function readEventData(event: unknown): string | null {
     const plainData = (event as { data?: unknown }).data;
     if (plainData !== undefined) {
-        return String(plainData);
+        return scValToComparableString(plainData) ?? String(plainData);
     }
 
     const bodyV0 = getEventBodyV0(event);
@@ -188,7 +211,17 @@ function getContractEvents(transaction: unknown): unknown[] {
 
     return events.flatMap((operationEvents) =>
         Array.isArray(operationEvents) ? operationEvents : [operationEvents]
-    );
+    ).map((event) => {
+        if (typeof event !== 'string') {
+            return event;
+        }
+
+        try {
+            return xdr.ContractEvent.fromXDR(event, 'base64');
+        } catch {
+            return event;
+        }
+    });
 }
 
 function findAuthorizeIssuerEvent(
@@ -261,7 +294,12 @@ async function defaultIsAuthorizedIssuerOnChain(
         return false;
     }
 
-    return scValToNative(rawResult) === true;
+    const resultScVal =
+        typeof rawResult === 'string'
+            ? xdr.ScVal.fromXDR(rawResult, 'base64')
+            : rawResult;
+
+    return scValToNative(resultScVal) === true;
 }
 
 export async function verifyAdminAuthorizationTransaction(
@@ -319,9 +357,14 @@ export async function verifyAdminAuthorizationTransaction(
         return eventMismatch;
     }
 
-    const isAuthorized = deps.isAuthorizedIssuerOnChain
-        ? await deps.isAuthorizedIssuerOnChain(walletAddress)
-        : await defaultIsAuthorizedIssuerOnChain(walletAddress, contractId, server);
+    let isAuthorized = false;
+    try {
+        isAuthorized = deps.isAuthorizedIssuerOnChain
+            ? await deps.isAuthorizedIssuerOnChain(walletAddress)
+            : await defaultIsAuthorizedIssuerOnChain(walletAddress, contractId, server);
+    } catch {
+        return failure('rpc-unavailable', 'Unable to confirm current issuer authorization state on Stellar RPC.', 503);
+    }
 
     if (!isAuthorized) {
         return failure('not-authorized', 'Configured contract does not currently authorize this wallet.', 422);
