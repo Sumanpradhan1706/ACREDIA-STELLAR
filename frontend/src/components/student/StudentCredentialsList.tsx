@@ -105,7 +105,8 @@ export default function StudentCredentialsList({
             let payload = await response.json();
 
             if (response.status === 401 && payload?.error === 'Invalid or expired access token') {
-                const { data: refreshed, error: refreshError } = await supabase.auth.refreshSession();
+                const { data: refreshed, error: refreshError } =
+                    await supabase.auth.refreshSession();
                 accessToken = refreshed.session?.access_token;
 
                 if (refreshError || !accessToken) {
@@ -125,11 +126,12 @@ export default function StudentCredentialsList({
             }
 
             const data = ((payload.credentials || []) as Credential[]).sort(
-                (a, b) => new Date(b.issued_at).getTime() - new Date(a.issued_at).getTime()
+                (a, b) => new Date(b.issued_at).getTime() - new Date(a.issued_at).getTime(),
             );
 
             debugLog(`Fetched ${data.length} credentials for the student dashboard.`);
             setCredentials(data);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (error: any) {
             console.error('Error loading credentials:', error);
             setError(error.message || 'Failed to load credentials');
@@ -217,7 +219,11 @@ export default function StudentCredentialsList({
                 </div>
             </div>
 
-            <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-3" role="region" aria-label="Credential statistics">
+            <div
+                className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-3"
+                role="region"
+                aria-label="Credential statistics"
+            >
                 <div className="rounded-lg bg-teal-50 p-4">
                     <p className="text-sm font-medium text-teal-700">Total Credentials</p>
                     <p className="text-3xl font-bold text-teal-900">{credentials.length}</p>
@@ -314,7 +320,8 @@ function CredentialCard({ credential }: { credential: Credential }) {
                                 <div className="flex items-center space-x-2">
                                     <GraduationCap className="h-4 w-4 text-gray-500" />
                                     <span>
-                                        <span className="font-medium">Degree:</span> {metadata.degree}
+                                        <span className="font-medium">Degree:</span>{' '}
+                                        {metadata.degree}
                                     </span>
                                 </div>
                             )}

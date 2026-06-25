@@ -91,6 +91,8 @@ Before opening a pull request:
 
 ```powershell
 cd frontend
+npm run format
+npm run lint
 npm test
 npm run build
 ```

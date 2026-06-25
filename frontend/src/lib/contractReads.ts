@@ -9,22 +9,18 @@ import {
     TransactionBuilder,
     Account,
     TimeoutInfinite,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     Address,
     nativeToScVal,
     scValToNative,
     xdr,
-} from "@stellar/stellar-sdk";
-import {
-    credentialHashBytesToHex,
-    credentialHashHexToScVal,
-} from "./credentialHashEncoding";
+} from '@stellar/stellar-sdk';
+import { credentialHashBytesToHex, credentialHashHexToScVal } from './credentialHashEncoding';
 
-const RPC_URL =
-    process.env.NEXT_PUBLIC_SOROBAN_RPC_URL || "https://soroban-testnet.stellar.org";
+const RPC_URL = process.env.NEXT_PUBLIC_SOROBAN_RPC_URL || 'https://soroban-testnet.stellar.org';
 const NETWORK_PASSPHRASE =
-    process.env.NEXT_PUBLIC_NETWORK_PASSPHRASE || "Test SDF Network ; September 2015";
-const CONTRACT_ID =
-    process.env.NEXT_PUBLIC_CREDENTIAL_NFT_CONTRACT || "";
+    process.env.NEXT_PUBLIC_NETWORK_PASSPHRASE || 'Test SDF Network ; September 2015';
+const CONTRACT_ID = process.env.NEXT_PUBLIC_CREDENTIAL_NFT_CONTRACT || '';
 
 // Dummy funded account used as transaction source for read-only simulations.
 // The contract itself is always present on-ledger, so we borrow its address.
@@ -43,44 +39,47 @@ export interface OnChainCredential {
 }
 
 async function simulate(method: string, args: xdr.ScVal[]): Promise<unknown> {
-    if (!CONTRACT_ID) throw new Error("CONTRACT_ID not configured");
+    if (!CONTRACT_ID) throw new Error('CONTRACT_ID not configured');
 
     const contract = new Contract(CONTRACT_ID);
     // Use a dummy Account with sequence "0" — valid for read-only simulation
-    const source = new Account(DUMMY_SOURCE, "0");
+    const source = new Account(DUMMY_SOURCE, '0');
 
     const tx = new TransactionBuilder(source, {
-        fee: "100",
+        fee: '100',
         networkPassphrase: NETWORK_PASSPHRASE,
     })
         .addOperation(contract.call(method, ...args))
         .setTimeout(TimeoutInfinite)
         .build();
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const sim = await server.simulateTransaction(tx as any);
 
-    if ("error" in sim) {
+    if ('error' in sim) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         throw new Error(`Simulation error (${method}): ${(sim as any).error}`);
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const retval = (sim as any).result?.retval;
     if (retval === undefined || retval === null) return null;
 
     // retval may be an xdr.ScVal object or a base64 string depending on SDK version
-    if (typeof retval === "string") {
-        return scValToNative(xdr.ScVal.fromXDR(retval, "base64"));
+    if (typeof retval === 'string') {
+        return scValToNative(xdr.ScVal.fromXDR(retval, 'base64'));
     }
     return scValToNative(retval);
 }
 
 function nativeStructToRecord(value: unknown): Record<string, unknown> | null {
-    if (!value || typeof value !== "object") {
+    if (!value || typeof value !== 'object') {
         return null;
     }
 
     if (value instanceof Map) {
         return Object.fromEntries(
-            Array.from(value.entries()).map(([key, item]) => [String(key), item])
+            Array.from(value.entries()).map(([key, item]) => [String(key), item]),
         );
     }
 
@@ -103,21 +102,21 @@ export function normalizeOnChainCredential(result: unknown): OnChainCredential |
         return null;
     }
 
-    const credentialHash = firstPresent(record, ["credential_hash", "credentialHash", "hash"]);
-    const ipfsHash = firstPresent(record, ["ipfs_hash", "ipfsHash", "uri"]);
+    const credentialHash = firstPresent(record, ['credential_hash', 'credentialHash', 'hash']);
+    const ipfsHash = firstPresent(record, ['ipfs_hash', 'ipfsHash', 'uri']);
 
     if (!credentialHash || !ipfsHash) {
         return null;
     }
 
     return {
-        token_id: firstPresent(record, ["token_id", "tokenId"]) as bigint | number | undefined,
-        student: String(firstPresent(record, ["student"]) ?? ""),
-        issuer: String(firstPresent(record, ["issuer"]) ?? ""),
+        token_id: firstPresent(record, ['token_id', 'tokenId']) as bigint | number | undefined,
+        student: String(firstPresent(record, ['student']) ?? ''),
+        issuer: String(firstPresent(record, ['issuer']) ?? ''),
         hash: credentialHashBytesToHex(credentialHash),
         uri: String(ipfsHash),
-        issued_at: (firstPresent(record, ["issued_at", "issuedAt"]) as bigint | number) ?? 0,
-        revoked: firstPresent(record, ["revoked"]) as boolean | undefined,
+        issued_at: (firstPresent(record, ['issued_at', 'issuedAt']) as bigint | number) ?? 0,
+        revoked: firstPresent(record, ['revoked']) as boolean | undefined,
     };
 }
 
@@ -127,8 +126,8 @@ export function normalizeOnChainCredential(result: unknown): OnChainCredential |
  */
 export async function getCredential(tokenId: string | number): Promise<OnChainCredential | null> {
     try {
-        const result = await simulate("get_credential", [
-            nativeToScVal(Number(tokenId), { type: "u64" }),
+        const result = await simulate('get_credential', [
+            nativeToScVal(Number(tokenId), { type: 'u64' }),
         ]);
         return normalizeOnChainCredential(result);
     } catch {
@@ -142,7 +141,7 @@ export async function getCredential(tokenId: string | number): Promise<OnChainCr
  */
 export async function verifyCredentialByHash(hash: string): Promise<OnChainCredential | null> {
     try {
-        const result = await simulate("verify_credential", [credentialHashHexToScVal(hash)]);
+        const result = await simulate('verify_credential', [credentialHashHexToScVal(hash)]);
         return normalizeOnChainCredential(result);
     } catch {
         return null;
@@ -154,8 +153,8 @@ export async function verifyCredentialByHash(hash: string): Promise<OnChainCrede
  */
 export async function isRevoked(tokenId: string | number): Promise<boolean> {
     try {
-        const result = await simulate("is_revoked", [
-            nativeToScVal(Number(tokenId), { type: "u64" }),
+        const result = await simulate('is_revoked', [
+            nativeToScVal(Number(tokenId), { type: 'u64' }),
         ]);
         return result === true;
     } catch {

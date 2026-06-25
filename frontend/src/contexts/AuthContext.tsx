@@ -18,7 +18,7 @@ const AuthContext = createContext<AuthContextType>({
     user: null,
     loading: true,
     userRole: 'loading',
-    signOut: async () => { },
+    signOut: async () => {},
 });
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -43,16 +43,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     useEffect(() => {
         // Check active sessions
-        safeGetSession().then(({ data: { session } }) => {
-            const nextUser = session?.user ?? null;
-            setUser(nextUser);
-            resolveRole(nextUser);
-            setLoading(false);
-        }).catch(() => {
-            setUser(null);
-            setUserRole('unknown');
-            setLoading(false);
-        });
+        safeGetSession()
+            .then(({ data: { session } }) => {
+                const nextUser = session?.user ?? null;
+                setUser(nextUser);
+                resolveRole(nextUser);
+                setLoading(false);
+            })
+            .catch(() => {
+                setUser(null);
+                setUserRole('unknown');
+                setLoading(false);
+            });
 
         // Listen for auth changes
         const {
@@ -146,7 +148,12 @@ export function ProtectedRoute({
         return null;
     }
 
-    if (allowedRoles && userRole !== 'loading' && userRole !== 'unknown' && !allowedRoles.includes(userRole)) {
+    if (
+        allowedRoles &&
+        userRole !== 'loading' &&
+        userRole !== 'unknown' &&
+        !allowedRoles.includes(userRole)
+    ) {
         return null;
     }
 

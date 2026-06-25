@@ -23,27 +23,25 @@ export async function POST(request: Request) {
         if (!(file instanceof File)) {
             return NextResponse.json(
                 { success: false, error: 'A file is required.' },
-                { status: 400 }
+                { status: 400 },
             );
         }
 
         const validationError = validatePinataFile(file);
 
         if (validationError) {
-            return NextResponse.json(
-                { success: false, error: validationError },
-                { status: 400 }
-            );
+            return NextResponse.json({ success: false, error: validationError }, { status: 400 });
         }
 
         const cid = await pinFileToPinata(file);
 
         return NextResponse.json({ success: true, cid });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
         console.error('[api/ipfs/file] Failed to pin file:', error);
         return NextResponse.json(
             { success: false, error: 'Failed to upload file to IPFS.' },
-            { status: 500 }
+            { status: 500 },
         );
     }
 }

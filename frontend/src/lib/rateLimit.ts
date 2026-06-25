@@ -42,7 +42,7 @@ const getClientIp = (request: Request): string => {
 function cleanupStaleBuckets(now: number) {
     for (const [key, timestamps] of buckets.entries()) {
         // Remove entries with no activity in the last 10 minutes
-        const active = timestamps.filter(ts => now - ts < 10 * 60 * 1000);
+        const active = timestamps.filter((ts) => now - ts < 10 * 60 * 1000);
         if (active.length === 0) {
             buckets.delete(key);
         } else {
@@ -54,7 +54,7 @@ function cleanupStaleBuckets(now: number) {
 
 export const checkRateLimit = (
     request: Request,
-    { windowSeconds, maxRequests, prefix = 'api' }: RateLimitOptions
+    { windowSeconds, maxRequests, prefix = 'api' }: RateLimitOptions,
 ): RateLimitResult => {
     const now = Date.now();
     const windowMs = windowSeconds * 1000;
@@ -71,10 +71,7 @@ export const checkRateLimit = (
 
     if (activeTimestamps.length >= maxRequests) {
         const oldestTimestamp = activeTimestamps[0] ?? now;
-        const retryAfter = Math.max(
-            1,
-            Math.ceil((oldestTimestamp + windowMs - now) / 1000)
-        );
+        const retryAfter = Math.max(1, Math.ceil((oldestTimestamp + windowMs - now) / 1000));
 
         buckets.set(key, activeTimestamps);
 
@@ -97,7 +94,7 @@ export const checkRateLimit = (
 
 export const enforceRateLimit = (
     request: Request,
-    options: RateLimitOptions
+    options: RateLimitOptions,
 ): NextResponse | null => {
     const result = checkRateLimit(request, options);
 
@@ -112,7 +109,7 @@ export const enforceRateLimit = (
             headers: {
                 'Retry-After': String(result.retryAfter),
             },
-        }
+        },
     );
 };
 

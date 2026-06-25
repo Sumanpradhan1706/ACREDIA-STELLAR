@@ -24,6 +24,7 @@ export function credentialHashHexToBytes(hash: string): Uint8Array {
 }
 
 export function credentialHashHexToScVal(hash: string): xdr.ScVal {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return xdr.ScVal.scvBytes(credentialHashHexToBytes(hash) as any);
 }
 

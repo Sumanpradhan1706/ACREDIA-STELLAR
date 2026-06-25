@@ -14,7 +14,7 @@ const VERIFY_RATE_LIMIT = {
 
 export async function GET(
     request: NextRequest,
-    { params }: { params: Promise<{ token: string }> }
+    { params }: { params: Promise<{ token: string }> },
 ) {
     try {
         const rateLimitResponse = enforceRateLimit(request, VERIFY_RATE_LIMIT);
@@ -28,7 +28,7 @@ export async function GET(
         if (!token) {
             return NextResponse.json(
                 { success: false, error: 'Token is required' },
-                { status: 400 }
+                { status: 400 },
             );
         }
 
@@ -36,7 +36,8 @@ export async function GET(
         const supabase = getServiceRoleClient();
         const { data, error } = await supabase
             .from('credentials')
-            .select(`
+            .select(
+                `
                 id,
                 token_id,
                 issued_at,
@@ -51,21 +52,22 @@ export async function GET(
                 institution:institutions!credentials_institution_id_fkey (
                     name
                 )
-            `)
+            `,
+            )
             .eq('token_id', token)
             .maybeSingle();
 
         if (error) {
             return NextResponse.json(
                 { success: false, error: 'Failed to query credential' },
-                { status: 500 }
+                { status: 500 },
             );
         }
 
         if (!data) {
             return NextResponse.json(
                 { success: false, error: 'Credential not found' },
-                { status: 404 }
+                { status: 404 },
             );
         }
 
@@ -80,26 +82,28 @@ export async function GET(
             ? await deriveCredentialHash(
                   data.metadata,
                   data.metadata_schema_version,
-                  data.hash_algorithm
+                  data.hash_algorithm,
               )
             : null;
         const expectedUri = data.ipfs_hash ? `ipfs://${data.ipfs_hash}` : null;
 
-        const onChainMatch = onChain !== null && (() => {
-            const issuerMatch =
-                data.issuer_wallet_address &&
-                onChain.issuer.toLowerCase() === data.issuer_wallet_address.toLowerCase();
+        const onChainMatch =
+            onChain !== null &&
+            (() => {
+                const issuerMatch =
+                    data.issuer_wallet_address &&
+                    onChain.issuer.toLowerCase() === data.issuer_wallet_address.toLowerCase();
 
-            const studentMatch =
-                data.student_wallet_address &&
-                onChain.student.toLowerCase() === data.student_wallet_address.toLowerCase();
+                const studentMatch =
+                    data.student_wallet_address &&
+                    onChain.student.toLowerCase() === data.student_wallet_address.toLowerCase();
 
-            const hashMatch = dbHash && onChain.hash === dbHash;
+                const hashMatch = dbHash && onChain.hash === dbHash;
 
-            const uriMatch = expectedUri && onChain.uri === expectedUri;
+                const uriMatch = expectedUri && onChain.uri === expectedUri;
 
-            return Boolean(issuerMatch && studentMatch && hashMatch && uriMatch);
-        })();
+                return Boolean(issuerMatch && studentMatch && hashMatch && uriMatch);
+            })();
 
         // Revocation: trust the chain over the DB (chain is authoritative)
         const revoked = onChainRevoked || data.revoked;
@@ -135,16 +139,14 @@ export async function GET(
                 // Granular mismatch details (useful for debugging / UI)
                 checks: onChain
                     ? {
-                          issuerMatch:
-                              data.issuer_wallet_address
-                                  ? onChain.issuer.toLowerCase() ===
-                                    data.issuer_wallet_address.toLowerCase()
-                                  : null,
-                          studentMatch:
-                              data.student_wallet_address
-                                  ? onChain.student.toLowerCase() ===
-                                    data.student_wallet_address.toLowerCase()
-                                  : null,
+                          issuerMatch: data.issuer_wallet_address
+                              ? onChain.issuer.toLowerCase() ===
+                                data.issuer_wallet_address.toLowerCase()
+                              : null,
+                          studentMatch: data.student_wallet_address
+                              ? onChain.student.toLowerCase() ===
+                                data.student_wallet_address.toLowerCase()
+                              : null,
                           hashMatch: dbHash ? onChain.hash === dbHash : null,
                           uriMatch: expectedUri ? onChain.uri === expectedUri : null,
                           notRevoked: !onChainRevoked,
@@ -152,22 +154,26 @@ export async function GET(
                     : null,
             },
         });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
         if (err?.message?.startsWith('Missing contract configuration')) {
             return NextResponse.json(
                 { success: false, error: 'Server configuration error' },
-                { status: 500 }
+                { status: 500 },
             );
         }
-        if (err?.message?.startsWith('Contract simulation error') || err?.message?.startsWith('Failed to decode')) {
+        if (
+            err?.message?.startsWith('Contract simulation error') ||
+            err?.message?.startsWith('Failed to decode')
+        ) {
             return NextResponse.json(
                 { success: false, error: 'Blockchain verification unavailable' },
-                { status: 503 }
+                { status: 503 },
             );
         }
         return NextResponse.json(
             { success: false, error: 'Internal server error' },
-            { status: 500 }
+            { status: 500 },
         );
     }
 }

@@ -33,6 +33,7 @@ export default function LoginPage() {
 
             // Redirect to dashboard (we'll determine role-based routing later)
             router.push('/dashboard');
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (err: any) {
             setError(err.message || 'An error occurred during login');
         } finally {
@@ -126,10 +127,7 @@ export default function LoginPage() {
                 </div>
 
                 <div className="mt-4 text-center">
-                    <Link
-                        href="/"
-                        className="text-slate-400 hover:text-slate-300 text-sm"
-                    >
+                    <Link href="/" className="text-slate-400 hover:text-slate-300 text-sm">
                         ← Back to home
                     </Link>
                 </div>

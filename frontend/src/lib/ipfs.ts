@@ -23,12 +23,15 @@ export async function uploadToIPFS(file: File): Promise<string> {
         const cid = payload.cid as string;
         debugLog('File uploaded to IPFS via server IPFS route.');
         return cid;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
         console.error('Error uploading file to IPFS:', error);
+        // eslint-disable-next-line preserve-caught-error
         throw new Error(`Failed to upload to IPFS: ${error.message}`);
     }
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function uploadJSONToIPFS(data: any): Promise<string> {
     try {
         const response = await fetch(IPFS_JSON_ROUTE, {
@@ -48,8 +51,10 @@ export async function uploadJSONToIPFS(data: any): Promise<string> {
         const cid = payload.cid as string;
         debugLog('JSON uploaded to IPFS via server IPFS route.');
         return cid;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
         console.error('Error uploading JSON to IPFS:', error);
+        // eslint-disable-next-line preserve-caught-error
         throw new Error(`Failed to upload JSON to IPFS: ${error.message}`);
     }
 }
@@ -71,6 +76,7 @@ export function getIPFSUrl(cidOrUri: string): string {
     return `${PINATA_GATEWAY}/ipfs/${cid}${path}`;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function fetchFromIPFS(cid: string): Promise<any> {
     try {
         const url = getIPFSUrl(cid);
@@ -80,8 +86,10 @@ export async function fetchFromIPFS(cid: string): Promise<any> {
         }
 
         return await response.json();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
         console.error('Error fetching from IPFS:', error);
+        // eslint-disable-next-line preserve-caught-error
         throw new Error(`Failed to fetch from IPFS: ${error.message}`);
     }
 }

@@ -5,10 +5,7 @@ import {
     generateCredentialHash,
     revokeCredentialOnStellar,
 } from './contracts';
-import {
-    CREDENTIAL_HASH_ALGORITHM,
-    CREDENTIAL_METADATA_SCHEMA_VERSION,
-} from './credentialHash';
+import { CREDENTIAL_HASH_ALGORITHM, CREDENTIAL_METADATA_SCHEMA_VERSION } from './credentialHash';
 import { debugLog } from './debug';
 
 export interface Subject {
@@ -61,7 +58,7 @@ export type CredentialIssueProgressStep = 'upload-ipfs' | 'sign-transaction' | '
 export async function issueCredential(
     data: CredentialData,
     issuerAddress: string,
-    onProgress?: (step: CredentialIssueProgressStep) => void
+    onProgress?: (step: CredentialIssueProgressStep) => void,
 ): Promise<{
     tokenId: string;
     transactionHash: string;
@@ -99,27 +96,27 @@ export async function issueCredential(
                 },
                 ...(data.major
                     ? [
-                        {
-                            trait_type: 'Major',
-                            value: data.major,
-                        },
-                    ]
+                          {
+                              trait_type: 'Major',
+                              value: data.major,
+                          },
+                      ]
                     : []),
                 ...(data.gpa
                     ? [
-                        {
-                            trait_type: 'GPA',
-                            value: data.gpa,
-                        },
-                    ]
+                          {
+                              trait_type: 'GPA',
+                              value: data.gpa,
+                          },
+                      ]
                     : []),
                 ...(data.subjects && data.subjects.length > 0
                     ? [
-                        {
-                            trait_type: 'Total Subjects',
-                            value: data.subjects.length.toString(),
-                        },
-                    ]
+                          {
+                              trait_type: 'Total Subjects',
+                              value: data.subjects.length.toString(),
+                          },
+                      ]
                     : []),
             ],
             credentialData: {
@@ -150,14 +147,17 @@ export async function issueCredential(
             data.studentWallet,
             credentialHash,
             metadataUrl,
-            issuerAddress
+            issuerAddress,
         );
+        // eslint-disable-next-line no-console
         console.log('✅ Credential issued! Token ID:', tokenId);
+        // eslint-disable-next-line no-console
         console.log('✅ Transaction:', transactionHash);
 
         // Step 5: (Skipped) Registry handled atomically by Stellar contract
 
         // Step 6: Save to Supabase database
+        // eslint-disable-next-line no-console
         console.log('💾 Saving to database...');
 
         if (!data.institutionId) {
@@ -192,7 +192,9 @@ export async function issueCredential(
             const details = [dbError.code, dbError.message, dbError.details]
                 .filter(Boolean)
                 .join(' | ');
-            throw new Error(`Failed to save credential to database: ${details || 'Unknown database error'}`);
+            throw new Error(
+                `Failed to save credential to database: ${details || 'Unknown database error'}`,
+            );
         }
 
         debugLog('Credential saved to the database.');
@@ -245,7 +247,7 @@ export async function getCredentialById(credentialId: string) {
 
 export async function revokeCredentialById(
     credentialId: string,
-    issuerAddress: string
+    issuerAddress: string,
 ): Promise<void> {
     try {
         const credential = await getCredentialById(credentialId);
@@ -270,7 +272,7 @@ export async function revokeCredentialById(
             throw new Error(
                 `Authorization failed: You must use the same wallet that issued this credential.\n` +
                     `Expected: ${storedIssuerWallet}\n` +
-                    `Connected: ${connectedWallet}`
+                    `Connected: ${connectedWallet}`,
             );
         }
 

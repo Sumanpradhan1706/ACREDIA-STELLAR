@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
         if (!adminCheck.ok) {
             return NextResponse.json(
                 { success: false, error: adminCheck.error },
-                { status: adminCheck.status }
+                { status: adminCheck.status },
             );
         }
 
@@ -62,8 +62,8 @@ export async function GET(request: NextRequest) {
 
         // Combine and deduplicate
         const authorizedInstitutionIds = new Set([
-            ...(institutionsWithWallet?.map(i => i.id) || []),
-            ...(institutionsWithCredentials?.map(c => c.institution_id) || [])
+            ...(institutionsWithWallet?.map((i) => i.id) || []),
+            ...(institutionsWithCredentials?.map((c) => c.institution_id) || []),
         ]);
 
         const authorizedInstitutions = authorizedInstitutionIds.size;
@@ -114,7 +114,7 @@ export async function GET(request: NextRequest) {
                 error: 'Failed to fetch statistics',
                 details: error instanceof Error ? error.message : 'Unknown error',
             },
-            { status: 500 }
+            { status: 500 },
         );
     }
 }

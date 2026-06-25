@@ -123,18 +123,22 @@ export function AuthorizeIssuer() {
                 if (data.success) {
                     debugLog('Issuer authorization synced to the database.');
                 } else {
-                    throw new Error(data.error || 'Authorization transaction could not be verified by the server.');
+                    throw new Error(
+                        data.error ||
+                            'Authorization transaction could not be verified by the server.',
+                    );
                 }
             } catch (error) {
                 debugWarn('Failed to sync issuer authorization to the database.', error);
                 toast.warning(
                     `Wallet authorized on-chain, but database sync failed: ${
                         error instanceof Error ? error.message : 'Unknown error'
-                    }`
+                    }`,
                 );
             }
 
             await checkAuthorization(walletToAuthorize);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (error: any) {
             console.error('Error authorizing wallet:', error);
             let msg = error.message || 'Failed to authorize wallet';
@@ -172,9 +176,7 @@ export function AuthorizeIssuer() {
 
             {contractOwner && (
                 <div className="mb-4 rounded-lg border border-blue-200 bg-blue-50 p-4">
-                    <p className="mb-1 text-sm font-medium text-blue-900">
-                        Contract Owner Address
-                    </p>
+                    <p className="mb-1 text-sm font-medium text-blue-900">Contract Owner Address</p>
                     <p className="break-all text-xs font-mono text-blue-700">{contractOwner}</p>
                     <p className="mt-2 text-xs text-blue-600">
                         Only this wallet can authorize other institutions
@@ -191,11 +193,13 @@ export function AuthorizeIssuer() {
                         <p className="break-all text-xs font-mono text-teal-700">
                             {address || 'Not connected'}
                         </p>
-                        {address && contractOwner && address.toLowerCase() === contractOwner.toLowerCase() && (
-                            <p className="mt-2 text-xs font-medium text-green-600">
-                                You are the contract owner and can authorize other wallets.
-                            </p>
-                        )}
+                        {address &&
+                            contractOwner &&
+                            address.toLowerCase() === contractOwner.toLowerCase() && (
+                                <p className="mt-2 text-xs font-medium text-green-600">
+                                    You are the contract owner and can authorize other wallets.
+                                </p>
+                            )}
                     </div>
                     <Button
                         onClick={checkMyWallet}

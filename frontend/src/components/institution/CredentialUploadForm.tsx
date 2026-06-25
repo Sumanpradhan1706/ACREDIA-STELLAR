@@ -5,7 +5,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 import {
     Dialog,
     DialogContent,
@@ -15,7 +21,11 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog';
 import { Upload, FileText, Loader2, CheckCircle2, Plus, X } from 'lucide-react';
-import { issueCredential, type CredentialData, type CredentialIssueProgressStep } from '@/lib/credentialService';
+import {
+    issueCredential,
+    type CredentialData,
+    type CredentialIssueProgressStep,
+} from '@/lib/credentialService';
 import { isValidAddress } from '@/lib/contracts';
 import { validateCredentialDraft } from '@/lib/credentialValidation';
 import { toast } from 'sonner';
@@ -49,7 +59,9 @@ export function CredentialUploadForm({
     const [subjects, setSubjects] = useState<Subject[]>([]);
     const [reviewOpen, setReviewOpen] = useState(false);
     const [validationErrors, setValidationErrors] = useState<string[]>([]);
-    const [progressStep, setProgressStep] = useState<'validate' | CredentialIssueProgressStep | null>(null);
+    const [progressStep, setProgressStep] = useState<
+        'validate' | CredentialIssueProgressStep | null
+    >(null);
 
     const [formData, setFormData] = useState({
         studentName: '',
@@ -74,13 +86,15 @@ export function CredentialUploadForm({
     };
 
     const removeSubject = (id: string) => {
-        setSubjects(subjects.filter(subject => subject.id !== id));
+        setSubjects(subjects.filter((subject) => subject.id !== id));
     };
 
     const updateSubject = (id: string, field: keyof Subject, value: string) => {
-        setSubjects(subjects.map(subject =>
-            subject.id === id ? { ...subject, [field]: value } : subject
-        ));
+        setSubjects(
+            subjects.map((subject) =>
+                subject.id === id ? { ...subject, [field]: value } : subject,
+            ),
+        );
     };
 
     const calculatePercentage = (marks: string, maxMarks: string) => {
@@ -92,13 +106,14 @@ export function CredentialUploadForm({
 
     const getActiveSubjects = () =>
         subjects
-            .filter(subject =>
-                subject.name.trim() ||
-                subject.marks.trim() ||
-                subject.maxMarks.trim() ||
-                subject.grade?.trim()
+            .filter(
+                (subject) =>
+                    subject.name.trim() ||
+                    subject.marks.trim() ||
+                    subject.maxMarks.trim() ||
+                    subject.grade?.trim(),
             )
-            .map(subject => ({
+            .map((subject) => ({
                 ...subject,
                 name: subject.name.trim(),
                 marks: subject.marks.trim(),
@@ -118,7 +133,7 @@ export function CredentialUploadForm({
                 subjects,
                 file: selectedFile,
             },
-            isValidAddress
+            isValidAddress,
         );
 
     const progressSteps: Array<{ key: 'validate' | CredentialIssueProgressStep; label: string }> = [
@@ -252,6 +267,7 @@ export function CredentialUploadForm({
             if (onSuccess) {
                 onSuccess();
             }
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (error: any) {
             console.error('Error issuing credential:', error);
             toast.error(error.message || 'Failed to issue credential', {
@@ -396,7 +412,9 @@ export function CredentialUploadForm({
                 {/* Subject-wise Marks (Optional) */}
                 <div className="space-y-4">
                     <div className="flex items-center justify-between">
-                        <h3 className="text-lg font-semibold text-gray-900">Subject-wise Marks (Optional)</h3>
+                        <h3 className="text-lg font-semibold text-gray-900">
+                            Subject-wise Marks (Optional)
+                        </h3>
                         <Button
                             type="button"
                             onClick={addSubject}
@@ -411,7 +429,7 @@ export function CredentialUploadForm({
 
                     {subjects.length > 0 && (
                         <div className="space-y-3">
-                            {subjects.map((subject, index) => (
+                            {subjects.map((subject) => (
                                 <Card key={subject.id} className="p-4 bg-gray-50">
                                     <div className="flex items-start gap-3">
                                         <div className="flex-1 grid grid-cols-1 md:grid-cols-4 gap-3">
@@ -420,7 +438,13 @@ export function CredentialUploadForm({
                                                 <Input
                                                     placeholder="Mathematics"
                                                     value={subject.name}
-                                                    onChange={(e) => updateSubject(subject.id, 'name', e.target.value)}
+                                                    onChange={(e) =>
+                                                        updateSubject(
+                                                            subject.id,
+                                                            'name',
+                                                            e.target.value,
+                                                        )
+                                                    }
                                                     className="h-9"
                                                 />
                                             </div>
@@ -430,7 +454,13 @@ export function CredentialUploadForm({
                                                     type="number"
                                                     placeholder="85"
                                                     value={subject.marks}
-                                                    onChange={(e) => updateSubject(subject.id, 'marks', e.target.value)}
+                                                    onChange={(e) =>
+                                                        updateSubject(
+                                                            subject.id,
+                                                            'marks',
+                                                            e.target.value,
+                                                        )
+                                                    }
                                                     className="h-9"
                                                 />
                                             </div>
@@ -440,7 +470,13 @@ export function CredentialUploadForm({
                                                     type="number"
                                                     placeholder="100"
                                                     value={subject.maxMarks}
-                                                    onChange={(e) => updateSubject(subject.id, 'maxMarks', e.target.value)}
+                                                    onChange={(e) =>
+                                                        updateSubject(
+                                                            subject.id,
+                                                            'maxMarks',
+                                                            e.target.value,
+                                                        )
+                                                    }
                                                     className="h-9"
                                                 />
                                             </div>
@@ -449,7 +485,13 @@ export function CredentialUploadForm({
                                                 <Input
                                                     placeholder="A"
                                                     value={subject.grade}
-                                                    onChange={(e) => updateSubject(subject.id, 'grade', e.target.value)}
+                                                    onChange={(e) =>
+                                                        updateSubject(
+                                                            subject.id,
+                                                            'grade',
+                                                            e.target.value,
+                                                        )
+                                                    }
                                                     className="h-9"
                                                 />
                                             </div>
@@ -467,7 +509,10 @@ export function CredentialUploadForm({
                                             </Button>
                                             {subject.marks && subject.maxMarks && (
                                                 <span className="text-xs font-medium text-teal-600">
-                                                    {calculatePercentage(subject.marks, subject.maxMarks)}
+                                                    {calculatePercentage(
+                                                        subject.marks,
+                                                        subject.maxMarks,
+                                                    )}
                                                 </span>
                                             )}
                                         </div>
@@ -477,16 +522,20 @@ export function CredentialUploadForm({
                             <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
                                 <p className="text-xs text-blue-800">
                                     💡 <strong>Total Subjects:</strong> {subjects.length} |
-                                    <strong className="ml-2">Average:</strong> {subjects.length > 0 && subjects.every(s => s.marks && s.maxMarks)
+                                    <strong className="ml-2">Average:</strong>{' '}
+                                    {subjects.length > 0 &&
+                                    subjects.every((s) => s.marks && s.maxMarks)
                                         ? (() => {
-                                            const total = subjects.reduce((acc, s) => {
-                                                const percentage = (parseFloat(s.marks) / parseFloat(s.maxMarks)) * 100;
-                                                return acc + percentage;
-                                            }, 0);
-                                            return (total / subjects.length).toFixed(2) + '%';
-                                        })()
-                                        : 'N/A'
-                                    }
+                                              const total = subjects.reduce((acc, s) => {
+                                                  const percentage =
+                                                      (parseFloat(s.marks) /
+                                                          parseFloat(s.maxMarks)) *
+                                                      100;
+                                                  return acc + percentage;
+                                              }, 0);
+                                              return (total / subjects.length).toFixed(2) + '%';
+                                          })()
+                                        : 'N/A'}
                                 </p>
                             </div>
                         </div>
@@ -494,7 +543,10 @@ export function CredentialUploadForm({
 
                     {subjects.length === 0 && (
                         <div className="text-center py-4 border border-dashed border-gray-300 rounded-lg">
-                            <p className="text-sm text-gray-500">No subjects added yet. Click "Add Subject" to include subject-wise marks.</p>
+                            <p className="text-sm text-gray-500">
+                                No subjects added yet. Click "Add Subject" to include subject-wise
+                                marks.
+                            </p>
                         </div>
                     )}
                 </div>
@@ -546,6 +598,7 @@ export function CredentialUploadForm({
                     {previewUrl && (
                         <div className="mt-4">
                             <p className="text-sm font-medium text-gray-700 mb-2">Preview:</p>
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img
                                 src={previewUrl}
                                 alt="Preview"
@@ -567,7 +620,9 @@ export function CredentialUploadForm({
                     {progressStep && (
                         <div className="mb-4 grid grid-cols-2 gap-2 md:grid-cols-4">
                             {progressSteps.map((step, index) => {
-                                const activeIndex = progressSteps.findIndex(item => item.key === progressStep);
+                                const activeIndex = progressSteps.findIndex(
+                                    (item) => item.key === progressStep,
+                                );
                                 const isComplete = activeIndex > index;
                                 const isActive = progressStep === step.key;
 
@@ -580,7 +635,11 @@ export function CredentialUploadForm({
                                                 : 'border-gray-200 bg-gray-50 text-gray-500'
                                         }`}
                                     >
-                                        {isComplete ? 'Done ' : isActive && isSubmitting ? '* ' : ''}
+                                        {isComplete
+                                            ? 'Done '
+                                            : isActive && isSubmitting
+                                              ? '* '
+                                              : ''}
                                         {step.label}
                                     </div>
                                 );
@@ -617,32 +676,46 @@ export function CredentialUploadForm({
                         <div className="grid grid-cols-2 gap-3">
                             <div>
                                 <p className="text-gray-500">Student</p>
-                                <p className="font-medium text-gray-900">{formData.studentName || 'N/A'}</p>
+                                <p className="font-medium text-gray-900">
+                                    {formData.studentName || 'N/A'}
+                                </p>
                             </div>
                             <div>
                                 <p className="text-gray-500">Credential</p>
-                                <p className="font-medium text-gray-900">{formData.credentialType}</p>
+                                <p className="font-medium text-gray-900">
+                                    {formData.credentialType}
+                                </p>
                             </div>
                             <div>
                                 <p className="text-gray-500">Degree</p>
-                                <p className="font-medium text-gray-900">{formData.degree || 'N/A'}</p>
+                                <p className="font-medium text-gray-900">
+                                    {formData.degree || 'N/A'}
+                                </p>
                             </div>
                             <div>
                                 <p className="text-gray-500">Issue Date</p>
-                                <p className="font-medium text-gray-900">{formData.issueDate || 'N/A'}</p>
+                                <p className="font-medium text-gray-900">
+                                    {formData.issueDate || 'N/A'}
+                                </p>
                             </div>
                         </div>
                         <div>
                             <p className="text-gray-500">Student Wallet</p>
-                            <p className="break-all font-medium text-gray-900">{formData.studentWallet || 'N/A'}</p>
+                            <p className="break-all font-medium text-gray-900">
+                                {formData.studentWallet || 'N/A'}
+                            </p>
                         </div>
                         <div>
                             <p className="text-gray-500">Document</p>
-                            <p className="font-medium text-gray-900">{selectedFile?.name || 'N/A'}</p>
+                            <p className="font-medium text-gray-900">
+                                {selectedFile?.name || 'N/A'}
+                            </p>
                         </div>
                         <div>
                             <p className="text-gray-500">Subjects</p>
-                            <p className="font-medium text-gray-900">{getActiveSubjects().length}</p>
+                            <p className="font-medium text-gray-900">
+                                {getActiveSubjects().length}
+                            </p>
                         </div>
                     </div>
 
