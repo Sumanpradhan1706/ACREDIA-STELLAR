@@ -125,8 +125,19 @@ export function ProtectedRoute({
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-linear-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
-                <div className="text-white text-xl">Loading...</div>
+            <div className="min-h-screen bg-linear-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4">
+                <div className="w-full max-w-md space-y-8 p-8 rounded-xl bg-slate-800/50 border border-slate-700/50 shadow-2xl backdrop-blur-sm">
+                    <div className="flex justify-center mb-8">
+                        <div className="h-16 w-16 animate-pulse rounded-2xl bg-slate-700"></div>
+                    </div>
+                    <div className="space-y-4">
+                        <div className="h-6 w-3/4 animate-pulse rounded-lg bg-slate-700 mx-auto"></div>
+                        <div className="h-4 w-1/2 animate-pulse rounded bg-slate-700 mx-auto"></div>
+                    </div>
+                    <div className="space-y-4 pt-8 border-t border-slate-700/50">
+                        <div className="h-12 w-full animate-pulse rounded-lg bg-slate-700"></div>
+                    </div>
+                </div>
             </div>
         );
     }

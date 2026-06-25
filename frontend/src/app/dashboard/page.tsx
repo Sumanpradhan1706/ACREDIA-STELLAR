@@ -10,6 +10,7 @@ import { CredentialUploadForm } from '@/components/institution/CredentialUploadF
 import { IssuedCredentialsList } from '@/components/institution/IssuedCredentialsList';
 import StudentCredentialsList from '@/components/student/StudentCredentialsList';
 import { Card } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { debugLog, debugWarn } from '@/lib/debug';
 import { supabase } from '@/lib/supabase';
@@ -109,9 +110,20 @@ function DashboardContent() {
                     <div className="space-y-6">
                         {loadingInstitution && (
                             <Card className="border-gray-200 bg-white p-6 shadow-lg">
-                                <div className="flex items-center justify-center py-8">
-                                    <div className="mr-3 h-8 w-8 animate-spin rounded-full border-b-2 border-blue-600"></div>
-                                    <p className="text-gray-600">Loading institution data...</p>
+                                <Skeleton className="h-7 w-48 mb-4" />
+                                <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                                    <div className="space-y-2">
+                                        <Skeleton className="h-4 w-16" />
+                                        <Skeleton className="h-5 w-32" />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Skeleton className="h-4 w-16" />
+                                        <Skeleton className="h-5 w-24" />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Skeleton className="h-4 w-24" />
+                                        <Skeleton className="h-5 w-40" />
+                                    </div>
                                 </div>
                             </Card>
                         )}

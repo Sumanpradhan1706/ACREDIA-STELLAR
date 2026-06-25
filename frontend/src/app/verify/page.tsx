@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Card } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { CheckCircle, XCircle, AlertCircle, ExternalLink, Shield, Calendar, User, Building2, FileText, Hash, Home, Info, Award, Lock, Camera, ScanLine, RotateCcw } from 'lucide-react';
@@ -576,11 +577,24 @@ function VerifyContent() {
                 </nav>
 
                 <div className="flex items-center justify-center p-4 min-h-[calc(100vh-80px)]">
-                    <Card className="w-full max-w-2xl p-8">
-                        <div className="flex flex-col items-center justify-center space-y-4">
-                            <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-600"></div>
-                            <p className="text-lg font-semibold text-gray-700">Verifying credential...</p>
-                            <p className="text-sm text-gray-500">Checking blockchain records</p>
+                    <Card className="w-full max-w-2xl p-8 space-y-8">
+                        <div className="flex flex-col items-center space-y-4">
+                            <Skeleton className="h-16 w-16 rounded-full" />
+                            <Skeleton className="h-6 w-48" />
+                            <Skeleton className="h-4 w-32" />
+                        </div>
+                        <div className="space-y-6 pt-6 border-t border-gray-100">
+                            <div className="flex items-start space-x-4">
+                                <Skeleton className="h-12 w-12 rounded-full" />
+                                <div className="space-y-2 flex-1">
+                                    <Skeleton className="h-5 w-1/3" />
+                                    <Skeleton className="h-4 w-1/4" />
+                                </div>
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <Skeleton className="h-24 w-full rounded-lg" />
+                                <Skeleton className="h-24 w-full rounded-lg" />
+                            </div>
                         </div>
                     </Card>
                 </div>
@@ -1106,8 +1120,14 @@ function VerifyContent() {
 export default function VerifyPage() {
     return (
         <Suspense fallback={
-            <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+            <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+                <div className="w-full max-w-md space-y-8">
+                    <div className="flex flex-col items-center justify-center space-y-4">
+                        <div className="h-16 w-16 animate-pulse rounded-2xl bg-gray-200"></div>
+                        <div className="h-8 w-48 animate-pulse rounded-lg bg-gray-200"></div>
+                        <div className="h-4 w-64 animate-pulse rounded bg-gray-200"></div>
+                    </div>
+                </div>
             </div>
         }>
             <VerifyContent />
