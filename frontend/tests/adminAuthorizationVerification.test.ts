@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Address, Keypair, StrKey, xdr } from '@stellar/stellar-sdk';
 import { describe, expect, it, vi } from 'vitest';
 import { verifyAdminAuthorizationTransaction } from '../src/lib/adminAuthorizationVerification';
@@ -12,7 +13,6 @@ function fakeServer(transaction: unknown) {
     return {
         getTransaction: vi.fn(async () => transaction),
         simulateTransaction: vi.fn(),
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any;
 }
 
@@ -21,7 +21,7 @@ function authEvent(wallet = walletAddress, contract = contractId) {
         contractId: contract,
         topics: ['iss_auth'],
         data: wallet,
-    };
+    } as any;
 }
 
 function xdrAuthEvent(wallet = walletAddress, contract = contractId) {
@@ -33,10 +33,10 @@ function xdrAuthEvent(wallet = walletAddress, contract = contractId) {
 
     return new xdr.ContractEvent({
         ext: new xdr.ExtensionPoint(0),
-        contractId: contractBytes,
+        contractId: contractBytes as any,
         type: xdr.ContractEventType.contract(),
-        body: new xdr.ContractEventBody(0, body),
-    });
+        body: new xdr.ContractEventBody(0, body as any),
+    }) as any;
 }
 
 function successTransaction(event = authEvent()) {

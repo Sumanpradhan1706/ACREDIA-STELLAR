@@ -48,7 +48,7 @@ export default function AdminLoginPage() {
             });
 
             if (error) {
-                toast.error('Login failed: ' + error.message);
+                toast.error('Login failed: ' + (error instanceof Error ? error.message : String(error)));
                 return;
             }
 
@@ -56,9 +56,8 @@ export default function AdminLoginPage() {
                 toast.success('Login successful! Now connect your contract owner wallet.');
                 router.push('/admin');
             }
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        } catch (error: any) {
-            toast.error('An error occurred: ' + error.message);
+        } catch (error: unknown) {
+            toast.error('An error occurred: ' + (error instanceof Error ? error.message : String(error)));
         } finally {
             setLoading(false);
         }

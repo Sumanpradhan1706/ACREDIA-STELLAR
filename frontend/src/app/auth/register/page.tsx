@@ -46,9 +46,8 @@ function RegisterForm() {
 
             // Redirect to dashboard after successful registration
             router.push('/dashboard');
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        } catch (err: any) {
-            setError(err.message || 'An error occurred during registration');
+        } catch (err: unknown) {
+            setError((err instanceof Error ? err.message : String(err)) || 'An error occurred during registration');
         } finally {
             setLoading(false);
         }

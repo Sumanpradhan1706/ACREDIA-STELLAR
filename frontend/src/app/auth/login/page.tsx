@@ -33,9 +33,8 @@ export default function LoginPage() {
 
             // Redirect to dashboard (we'll determine role-based routing later)
             router.push('/dashboard');
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        } catch (err: any) {
-            setError(err.message || 'An error occurred during login');
+        } catch (err: unknown) {
+            setError((err instanceof Error ? err.message : String(err)) || 'An error occurred during login');
         } finally {
             setLoading(false);
         }

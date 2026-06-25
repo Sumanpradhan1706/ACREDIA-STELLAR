@@ -5,6 +5,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
     Dialog,
     DialogContent,
@@ -41,8 +42,16 @@ interface Credential {
     token_id: string;
     ipfs_hash: string;
     blockchain_hash: string;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    metadata: any;
+    metadata: {
+        credentialData?: {
+            studentName?: string;
+            degree?: string;
+            major?: string;
+            gpa?: string;
+            issueDate?: string;
+            credentialType?: string;
+        };
+    } | null;
     issued_at: string;
     revoked: boolean;
 }
@@ -68,10 +77,9 @@ export function IssuedCredentialsList({
             const data = await getInstitutionCredentials(institutionId);
             setCredentials(data || []);
             setFilteredCredentials(data || []);
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error('Error loading credentials:', err);
-            setError(err.message || 'Failed to load credentials');
+            setError((err instanceof Error ? err.message : String(err)) || 'Failed to load credentials');
         } finally {
             setIsLoading(false);
         }
@@ -100,25 +108,24 @@ export function IssuedCredentialsList({
             setRevokeDialogOpen(false);
             setCredentialToRevoke(null);
             await loadCredentials(); // Refresh list
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error('Error revoking credential:', err);
 
             // Show user-friendly error messages
             let errorMessage = 'Failed to revoke credential';
 
-            if (err.message?.includes('canceled') || err.message?.includes('rejected')) {
+            if ((err instanceof Error ? err.message : String(err))?.includes('canceled') || (err instanceof Error ? err.message : String(err))?.includes('rejected')) {
                 errorMessage = 'Revocation was canceled or rejected by you';
-            } else if (err.message?.includes('Network')) {
+            } else if ((err instanceof Error ? err.message : String(err))?.includes('Network')) {
                 errorMessage = 'Network mismatch. Please check your Freighter wallet settings.';
-            } else if (err.message?.includes('same wallet')) {
+            } else if ((err instanceof Error ? err.message : String(err))?.includes('same wallet')) {
                 errorMessage = 'You must connect the same wallet that issued this credential';
-            } else if (err.message?.includes('Not authorized')) {
+            } else if ((err instanceof Error ? err.message : String(err))?.includes('Not authorized')) {
                 errorMessage = 'Only the institution that issued this credential can revoke it';
-            } else if (err.message?.includes('already revoked')) {
+            } else if ((err instanceof Error ? err.message : String(err))?.includes('already revoked')) {
                 errorMessage = 'This credential has already been revoked';
-            } else if (err.message) {
-                errorMessage = err.message;
+            } else if ((err instanceof Error ? err.message : String(err))) {
+                errorMessage = (err instanceof Error ? err.message : String(err));
             }
 
             toast.error(errorMessage, { duration: 5000 });
@@ -158,10 +165,26 @@ export function IssuedCredentialsList({
 
     if (isLoading) {
         return (
-            <Card className="p-8 bg-white border-gray-200 shadow-lg">
-                <div className="flex flex-col items-center justify-center space-y-4">
-                    <Loader2 className="h-12 w-12 text-teal-600 animate-spin" />
-                    <p className="text-gray-600">Loading credentials...</p>
+            <Card className="p-6 bg-white border-gray-200 shadow-lg">
+                <div className="flex items-center justify-between mb-6">
+                    <h2 className="text-2xl font-bold text-gray-900">Issued Credentials</h2>
+                    <Skeleton className="h-9 w-24" />
+                </div>
+                
+                <div className="mb-6">
+                    <Skeleton className="h-10 w-full" />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                    <Skeleton className="h-24 w-full rounded-lg" />
+                    <Skeleton className="h-24 w-full rounded-lg" />
+                    <Skeleton className="h-24 w-full rounded-lg" />
+                </div>
+
+                <div className="space-y-4">
+                    {[1, 2, 3].map((i) => (
+                        <Skeleton key={i} className="h-40 w-full rounded-xl" />
+                    ))}
                 </div>
             </Card>
         );

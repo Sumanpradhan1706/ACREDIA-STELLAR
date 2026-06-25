@@ -18,6 +18,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { Skeleton } from '@/components/ui/skeleton';
 import QRCodeModal from './QRCodeModal';
 import { getIPFSUrl } from '@/lib/ipfs';
 import { debugLog } from '@/lib/debug';
@@ -131,10 +132,9 @@ export default function StudentCredentialsList({
 
             debugLog(`Fetched ${data.length} credentials for the student dashboard.`);
             setCredentials(data);
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error('Error loading credentials:', error);
-            setError(error.message || 'Failed to load credentials');
+            setError((error instanceof Error ? error.message : String(error)) || 'Failed to load credentials');
         } finally {
             setLoading(false);
         }
@@ -159,10 +159,26 @@ export default function StudentCredentialsList({
 
     if (loading) {
         return (
-            <Card className="border-gray-200 bg-white p-8 shadow-lg">
-                <div className="flex items-center justify-center py-12">
-                    <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-teal-600"></div>
-                    <p className="ml-4 text-gray-600">Loading your credentials...</p>
+            <Card className="border-gray-200 bg-white p-6 shadow-lg">
+                <div className="mb-6 flex items-center justify-between">
+                    <h2 className="text-2xl font-bold text-gray-900">My Credentials</h2>
+                    <Skeleton className="h-9 w-24" />
+                </div>
+                
+                <div className="mb-6">
+                    <Skeleton className="h-10 w-full" />
+                </div>
+
+                <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-3">
+                    <Skeleton className="h-24 w-full rounded-lg" />
+                    <Skeleton className="h-24 w-full rounded-lg" />
+                    <Skeleton className="h-24 w-full rounded-lg" />
+                </div>
+
+                <div className="space-y-4">
+                    {[1, 2, 3].map((i) => (
+                        <Skeleton key={i} className="h-40 w-full rounded-xl" />
+                    ))}
                 </div>
             </Card>
         );

@@ -28,8 +28,7 @@ export async function POST(request: Request) {
         const cid = await pinJsonToPinata(content);
 
         return NextResponse.json({ success: true, cid });
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error('[api/ipfs/json] Failed to pin JSON:', error);
         return NextResponse.json(
             { success: false, error: 'Failed to upload JSON to IPFS.' },

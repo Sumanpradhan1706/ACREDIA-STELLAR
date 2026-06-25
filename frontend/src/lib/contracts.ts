@@ -32,8 +32,7 @@ interface ContractInvocationResult<T = unknown> {
  * Poll for transaction confirmation after sendTransaction()
  * Soroban transactions are async — sendTransaction() only queues them.
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function waitForConfirmation(hash: string, maxAttempts = 20): Promise<any> {
+async function waitForConfirmation(hash: string, maxAttempts = 20): Promise<unknown> {
     for (let i = 0; i < maxAttempts; i++) {
         await new Promise((res) => setTimeout(res, 1500));
         const response = await sorobanServer.getTransaction(hash);
@@ -43,8 +42,7 @@ async function waitForConfirmation(hash: string, maxAttempts = 20): Promise<any>
         }
 
         if (response.status === 'FAILED') {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const resultMeta = (response as any).resultMetaXdr;
+            const resultMeta = (response as unknown as { resultMetaXdr?: string }).resultMetaXdr;
             throw new Error(
                 `Transaction FAILED on-chain.\n` +
                     `Hash: ${hash}\n` +
@@ -61,8 +59,7 @@ async function waitForConfirmation(hash: string, maxAttempts = 20): Promise<any>
 async function invokeContractMethod(
     contractId: string,
     method: string,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    args: any[],
+    args: xdr.ScVal[],
     signerAddress: string,
 ): Promise<ContractInvocationResult> {
     const contract = new Contract(contractId);
@@ -78,12 +75,10 @@ async function invokeContractMethod(
     const transaction = txBuilder.build();
 
     debugLog(`Simulating contract method "${method}".`);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const simResult = await sorobanServer.simulateTransaction(transaction as any);
+    const simResult = await sorobanServer.simulateTransaction(transaction as never);
 
     if ('error' in simResult) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const errStr = String((simResult as any).error);
+        const errStr = String((simResult as unknown as { error?: unknown }).error);
         if (errStr.includes('Issuer not authorized') || errStr.includes('UnreachableCodeReached')) {
             throw new Error(
                 `Your wallet is not authorized to issue credentials.\n\n` +
@@ -97,24 +92,19 @@ async function invokeContractMethod(
     }
 
     debugLog(`Preparing contract method "${method}".`);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const preparedTx = await sorobanServer.prepareTransaction(transaction as any);
+    const preparedTx = await sorobanServer.prepareTransaction(transaction as never);
 
     debugLog('Signing transaction with Freighter.');
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let signedXdrResponse: any;
+    let signedXdrResponse: unknown;
     try {
         signedXdrResponse = await signTransaction(preparedTx.toXDR(), {
             networkPassphrase: activeNetwork.networkPassphrase,
             network: activeNetwork.networkName,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        } as any);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (signError: any) {
-        const msg = String(signError?.message || signError);
+        } as never);
+    } catch (signError: unknown) {
+        const msg = String((signError instanceof Error ? (signError instanceof Error ? signError.message : String(signError)) : String(signError)) || signError);
         if (msg.includes('User canceled') || msg.includes('canceled') || msg.includes('rejected')) {
-            // eslint-disable-next-line preserve-caught-error
-            throw new Error('Transaction signing was canceled by the user.');
+            throw new Error('Transaction signing was canceled by the user.', { cause: signError });
         }
         if (
             msg.includes('Network') ||
@@ -122,22 +112,20 @@ async function invokeContractMethod(
             msg.includes('testnet') ||
             msg.includes('mainnet')
         ) {
-            // eslint-disable-next-line preserve-caught-error
             throw new Error(
                 `Network mismatch: Your Freighter wallet may be on a different network.\n` +
                     `Expected: ${activeNetwork.networkName}\n` +
                     `${msg}`,
+                { cause: signError }
             );
         }
-        // eslint-disable-next-line preserve-caught-error
-        throw new Error(`Freighter signing error: ${msg}`);
+        throw new Error(`Freighter signing error: ${msg}`, { cause: signError });
     }
 
     const finalXdr =
         typeof signedXdrResponse === 'string'
             ? signedXdrResponse
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            : (signedXdrResponse as any)?.signedTxXdr || Object.values(signedXdrResponse || {})[0];
+            : (signedXdrResponse as Record<string, unknown>)?.signedTxXdr || Object.values(signedXdrResponse || {})[0];
 
     if (!finalXdr || typeof finalXdr !== 'string') {
         throw new Error(
@@ -147,8 +135,7 @@ async function invokeContractMethod(
 
     const signedTx = TransactionBuilder.fromXDR(finalXdr, activeNetwork.networkPassphrase);
     debugLog('Submitting signed transaction to Stellar.');
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const sendResponse = await sorobanServer.sendTransaction(signedTx as any);
+    const sendResponse = await sorobanServer.sendTransaction(signedTx as never);
 
     if (sendResponse.status === 'ERROR') {
         throw new Error(
@@ -171,10 +158,8 @@ async function invokeContractMethod(
         returnValue: decodeTransactionReturnValue(confirmation),
     };
 }
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function decodeTransactionReturnValue(confirmation: any): unknown | null {
-    const returnValue = confirmation?.returnValue;
+function decodeTransactionReturnValue(confirmation: unknown): unknown | null {
+    const returnValue = (confirmation as { returnValue?: unknown })?.returnValue;
     if (!returnValue) {
         return null;
     }
@@ -184,7 +169,7 @@ function decodeTransactionReturnValue(confirmation: any): unknown | null {
             return scValToNative(xdr.ScVal.fromXDR(returnValue, 'base64'));
         }
 
-        return scValToNative(returnValue);
+        return scValToNative(returnValue as xdr.ScVal);
     } catch (error) {
         console.error('Failed to decode Soroban return value:', error);
         return null;
@@ -206,14 +191,14 @@ export function normalizeTokenId(returnValue: unknown): string {
 
     throw new Error('Credential transaction confirmed but did not return a valid token ID');
 }
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function getSorobanTransactionResult(simResult: any): any {
+export function getSorobanTransactionResult(simResult: unknown): unknown {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const sim = simResult as any;
     const rawResult =
-        simResult?.result?.retval ||
-        simResult?.result?.result?.retval ||
-        simResult?.retval ||
-        simResult?.result?.xdr?.retval;
+        sim?.result?.retval ||
+        sim?.result?.result?.retval ||
+        sim?.retval ||
+        sim?.result?.xdr?.retval;
 
     if (rawResult == null) {
         return null;
@@ -239,11 +224,9 @@ export function getSorobanTransactionResult(simResult: any): any {
 async function simulateRead(
     contractId: string,
     method: string,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    args: any[] = [],
+    args: unknown[] = [],
     sourceAddress: string,
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-): Promise<any> {
+): Promise<unknown> {
     const contract = new Contract(contractId);
     let sourceAccount;
 
@@ -257,14 +240,11 @@ async function simulateRead(
         fee: '100',
         networkPassphrase: activeNetwork.networkPassphrase,
     })
-        .addOperation(contract.call(method, ...args))
+        .addOperation(contract.call(method, ...(args as xdr.ScVal[])))
         .setTimeout(TimeoutInfinite);
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const sim = await sorobanServer.simulateTransaction(txBuilder.build() as any);
+    const sim = await sorobanServer.simulateTransaction(txBuilder.build() as never);
     if ('error' in sim) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        debugWarn('simulateRead failed.', (sim as any).error);
+        debugWarn('simulateRead failed.', (sim as unknown as { error?: string }).error);
         return null;
     }
 
@@ -280,10 +260,9 @@ export async function getContractOwner(callerAddress: string): Promise<string> {
 
     try {
         const result = await simulateRead(contractId, 'get_owner', [], callerAddress);
-        return result || '';
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (error: any) {
-        debugWarn('Failed to load contract owner.', error?.message || String(error));
+        return (result as string) || '';
+    } catch (error: unknown) {
+        debugWarn('Failed to load contract owner.', error instanceof Error ? error.message : String(error));
         return '';
     }
 }
@@ -375,9 +354,7 @@ export async function revokeCredentialOnStellar(
     console.log('✅ Credential revoked on Stellar Network. Tx:', result.transactionHash);
     return result.transactionHash;
 }
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export async function generateCredentialHash(metadata: any): Promise<string> {
+export async function generateCredentialHash(metadata: unknown): Promise<string> {
     return generateCanonicalCredentialHash(metadata);
 }
 

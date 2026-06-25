@@ -241,8 +241,7 @@ export const dbHelpers = {
         token_id: string;
         ipfs_hash: string;
         blockchain_hash: string;
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        metadata: any;
+        metadata: unknown;
         metadata_schema_version?: number;
         hash_algorithm?: string;
     }) {
@@ -330,8 +329,7 @@ export const dbHelpers = {
         credential_id: string;
         verifier_email?: string;
         verifier_org?: string;
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        verification_result: any;
+        verification_result: unknown;
     }) {
         const { data, error } = await supabase
             .from('verification_logs')

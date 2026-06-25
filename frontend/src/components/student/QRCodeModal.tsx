@@ -21,8 +21,12 @@ interface QRCodeModalProps {
         token_id: string;
         blockchain_hash: string;
         ipfs_hash: string;
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        metadata: any;
+        metadata: {
+            credentialData?: {
+                credentialType?: string;
+                institutionName?: string;
+            }
+        } | null;
         student_wallet_address?: string;
     };
 }

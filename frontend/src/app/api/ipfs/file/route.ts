@@ -36,8 +36,7 @@ export async function POST(request: Request) {
         const cid = await pinFileToPinata(file);
 
         return NextResponse.json({ success: true, cid });
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error('[api/ipfs/file] Failed to pin file:', error);
         return NextResponse.json(
             { success: false, error: 'Failed to upload file to IPFS.' },

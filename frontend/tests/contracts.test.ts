@@ -4,7 +4,7 @@ import { normalizeTokenId } from '../src/lib/contracts';
 describe('Soroban credential token IDs', () => {
     it('normalizes u64 return values to database-safe token ID strings', () => {
         expect(normalizeTokenId(1)).toBe('1');
-        expect(normalizeTokenId(42n)).toBe('42');
+        expect(normalizeTokenId(BigInt(42))).toBe('42');
         expect(normalizeTokenId('123')).toBe('123');
     });
 

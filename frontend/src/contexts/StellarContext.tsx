@@ -62,10 +62,9 @@ export const StellarProvider = ({ children }: { children: React.ReactNode }) => 
                 setError(null);
                 toast.success('Wallet connected!');
             }
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error('Failed to connect Freighter:', error);
-            let msg = error.message || 'Connection refused';
+            let msg = (error instanceof Error ? error.message : String(error)) || 'Connection refused';
             // Detect user cancellation
             if (msg.includes('User canceled') || msg.includes('canceled')) {
                 msg = 'Connection canceled by user';

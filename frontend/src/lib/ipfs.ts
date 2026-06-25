@@ -23,16 +23,13 @@ export async function uploadToIPFS(file: File): Promise<string> {
         const cid = payload.cid as string;
         debugLog('File uploaded to IPFS via server IPFS route.');
         return cid;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error('Error uploading file to IPFS:', error);
-        // eslint-disable-next-line preserve-caught-error
-        throw new Error(`Failed to upload to IPFS: ${error.message}`);
+        const message = error instanceof Error ? error.message : String(error);
+        throw new Error(`Failed to upload to IPFS: ${message}`, { cause: error });
     }
 }
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export async function uploadJSONToIPFS(data: any): Promise<string> {
+export async function uploadJSONToIPFS(data: unknown): Promise<string> {
     try {
         const response = await fetch(IPFS_JSON_ROUTE, {
             method: 'POST',
@@ -51,11 +48,10 @@ export async function uploadJSONToIPFS(data: any): Promise<string> {
         const cid = payload.cid as string;
         debugLog('JSON uploaded to IPFS via server IPFS route.');
         return cid;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error('Error uploading JSON to IPFS:', error);
-        // eslint-disable-next-line preserve-caught-error
-        throw new Error(`Failed to upload JSON to IPFS: ${error.message}`);
+        const message = error instanceof Error ? error.message : String(error);
+        throw new Error(`Failed to upload JSON to IPFS: ${message}`, { cause: error });
     }
 }
 
@@ -75,9 +71,7 @@ export function getIPFSUrl(cidOrUri: string): string {
 
     return `${PINATA_GATEWAY}/ipfs/${cid}${path}`;
 }
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export async function fetchFromIPFS(cid: string): Promise<any> {
+export async function fetchFromIPFS(cid: string): Promise<unknown> {
     try {
         const url = getIPFSUrl(cid);
         const response = await fetch(url);
@@ -86,10 +80,9 @@ export async function fetchFromIPFS(cid: string): Promise<any> {
         }
 
         return await response.json();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error('Error fetching from IPFS:', error);
-        // eslint-disable-next-line preserve-caught-error
-        throw new Error(`Failed to fetch from IPFS: ${error.message}`);
+        const message = error instanceof Error ? error.message : String(error);
+        throw new Error(`Failed to fetch from IPFS: ${message}`, { cause: error });
     }
 }

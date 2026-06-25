@@ -292,21 +292,17 @@ async function defaultIsAuthorizedIssuerOnChain(
         .addOperation(contract.call('is_authorized_issuer', new Address(walletAddress).toScVal()))
         .setTimeout(TimeoutInfinite)
         .build();
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const simulation = await server.simulateTransaction(transaction as any);
+    const simulation = await server.simulateTransaction(transaction as never);
     if ('error' in simulation) {
         return false;
     }
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const rawResult = (simulation as any)?.result?.retval;
+    const rawResult = (simulation as { result?: { retval?: unknown } })?.result?.retval;
     if (rawResult == null) {
         return false;
     }
 
     const resultScVal =
-        typeof rawResult === 'string' ? xdr.ScVal.fromXDR(rawResult, 'base64') : rawResult;
+        typeof rawResult === 'string' ? xdr.ScVal.fromXDR(rawResult, 'base64') : (rawResult as xdr.ScVal);
 
     return scValToNative(resultScVal) === true;
 }

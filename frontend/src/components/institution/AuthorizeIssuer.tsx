@@ -132,16 +132,15 @@ export function AuthorizeIssuer() {
                 debugWarn('Failed to sync issuer authorization to the database.', error);
                 toast.warning(
                     `Wallet authorized on-chain, but database sync failed: ${
-                        error instanceof Error ? error.message : 'Unknown error'
+                        error instanceof Error ? (error instanceof Error ? error.message : String(error)) : 'Unknown error'
                     }`,
                 );
             }
 
             await checkAuthorization(walletToAuthorize);
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error('Error authorizing wallet:', error);
-            let msg = error.message || 'Failed to authorize wallet';
+            let msg = (error instanceof Error ? error.message : String(error)) || 'Failed to authorize wallet';
             if (msg.includes('canceled') || msg.includes('User')) {
                 msg = 'Authorization transaction was canceled.';
             } else if (msg.includes('Network')) {

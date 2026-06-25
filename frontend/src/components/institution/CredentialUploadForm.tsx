@@ -267,10 +267,9 @@ export function CredentialUploadForm({
             if (onSuccess) {
                 onSuccess();
             }
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error('Error issuing credential:', error);
-            toast.error(error.message || 'Failed to issue credential', {
+            toast.error((error instanceof Error ? error.message : String(error)) || 'Failed to issue credential', {
                 id: 'issue-credential',
             });
         } finally {

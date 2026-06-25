@@ -177,9 +177,8 @@ function VerifyContent() {
             } else {
                 setVerificationStatus('valid');
             }
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        } catch (err: any) {
-            setError(err.message || 'Failed to verify credential');
+        } catch (err: unknown) {
+            setError((err instanceof Error ? err.message : String(err)) || 'Failed to verify credential');
             setVerificationStatus('invalid');
         } finally {
             setLoading(false);
@@ -291,10 +290,9 @@ function VerifyContent() {
                 },
                 () => undefined,
             );
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        } catch (err: any) {
-            const errorName = err?.name || '';
-            const errorMessage = String(err?.message || err || '');
+        } catch (err: unknown) {
+            const errorName = err instanceof Error ? err.name : '';
+            const errorMessage = String(err instanceof Error ? err.message : err);
 
             if (
                 errorName === 'NotAllowedError' ||
@@ -1069,8 +1067,7 @@ function VerifyContent() {
                                                     Percentage
                                                 </th>
                                                 {credential.metadata?.credentialData?.subjects?.some(
-                                                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                                                    (s: any) => s.grade,
+                                                    (s: { grade?: string }) => s.grade,
                                                 ) && (
                                                     <th className="text-center py-3 px-4 text-sm font-semibold text-gray-700">
                                                         Grade
@@ -1080,8 +1077,7 @@ function VerifyContent() {
                                         </thead>
                                         <tbody>
                                             {credential.metadata?.credentialData?.subjects?.map(
-                                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                                                (subject: any, index: number) => {
+                                                (subject: { name?: string; marks?: string; maxMarks?: string; grade?: string }, index: number) => {
                                                     const percentage =
                                                         subject.marks && subject.maxMarks
                                                             ? (
@@ -1126,8 +1122,7 @@ function VerifyContent() {
                                                                 </span>
                                                             </td>
                                                             {credential.metadata?.credentialData?.subjects?.some(
-                                                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                                                                (s: any) => s.grade,
+                                                                (s: { grade?: string }) => s.grade,
                                                             ) && (
                                                                 <td className="text-center py-3 px-4">
                                                                     <span className="inline-block px-3 py-1 rounded-full text-sm font-bold bg-purple-100 text-purple-800">
@@ -1161,16 +1156,14 @@ function VerifyContent() {
                                                 const validSubjects = (
                                                     credential.metadata?.credentialData?.subjects ||
                                                     []
-                                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                                                ).filter((s: any) => s.marks && s.maxMarks);
+                                                ).filter((s: { marks?: string; maxMarks?: string; }) => s.marks && s.maxMarks);
                                                 if (validSubjects.length === 0) return 'N/A';
                                                 const total = validSubjects.reduce(
-                                                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                                                    (acc: number, s: any) => {
+                                                    (acc: number, s: { marks?: string; maxMarks?: string; }) => {
                                                         return (
                                                             acc +
-                                                            (parseFloat(s.marks) /
-                                                                parseFloat(s.maxMarks)) *
+                                                            ((s.marks ? parseFloat(s.marks) : 0) /
+                                                                (s.maxMarks ? parseFloat(s.maxMarks) : 1)) *
                                                                 100
                                                         );
                                                     },
@@ -1188,18 +1181,16 @@ function VerifyContent() {
                                             {(
                                                 credential.metadata?.credentialData?.subjects || []
                                             ).reduce(
-                                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                                                (acc: number, s: any) =>
-                                                    acc + (parseFloat(s.marks) || 0),
+                                                (acc: number, s: { marks?: string; maxMarks?: string; }) =>
+                                                    acc + (s.marks ? parseFloat(s.marks) || 0 : 0),
                                                 0,
                                             )}{' '}
                                             /{' '}
                                             {(
                                                 credential.metadata?.credentialData?.subjects || []
                                             ).reduce(
-                                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                                                (acc: number, s: any) =>
-                                                    acc + (parseFloat(s.maxMarks) || 0),
+                                                (acc: number, s: { marks?: string; maxMarks?: string; }) =>
+                                                    acc + (s.maxMarks ? parseFloat(s.maxMarks) || 0 : 0),
                                                 0,
                                             )}
                                         </p>

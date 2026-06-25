@@ -5,19 +5,36 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { supabase } from '@/lib/supabase';
 
+interface DiagnosticResults {
+    wallet?: string;
+    timestamp?: string;
+    totalCredentials?: number;
+    allCredentials?: Array<{
+        id: string;
+        token_id: string;
+        student_wallet_address?: string;
+        student_id?: string;
+    }>;
+    allCredentialsError?: string;
+    ilikeMatchCount?: number;
+    ilikeMatchData?: unknown[];
+    ilikeMatchError?: string;
+    tableColumns?: string[];
+    hasWalletColumn?: boolean;
+    error?: string;
+}
+
 /**
  * Diagnostic Tool - Add this temporarily to your dashboard to debug
  * This will show you exactly what's in the database
  */
 export default function CredentialDiagnostic({ studentWallet }: { studentWallet?: string }) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const [results, setResults] = useState<any>(null);
+    const [results, setResults] = useState<DiagnosticResults | null>(null);
     const [loading, setLoading] = useState(false);
 
     const runDiagnostic = async () => {
         setLoading(true);
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const diagnostics: any = {
+        const diagnostics: DiagnosticResults = {
             wallet: studentWallet,
             timestamp: new Date().toISOString(),
         };
@@ -29,7 +46,7 @@ export default function CredentialDiagnostic({ studentWallet }: { studentWallet?
                 .select('id, token_id, student_wallet_address, student_id, institution_id');
 
             diagnostics.totalCredentials = allCreds?.length || 0;
-            diagnostics.allCredentials = allCreds;
+            diagnostics.allCredentials = allCreds as DiagnosticResults['allCredentials'];
             diagnostics.allCredentialsError = allError?.message;
 
             // 2. Check credentials with wallet address (case-insensitive)
@@ -40,7 +57,7 @@ export default function CredentialDiagnostic({ studentWallet }: { studentWallet?
                     .ilike('student_wallet_address', studentWallet);
 
                 diagnostics.ilikeMatchCount = ilikeMatch?.length || 0;
-                diagnostics.ilikeMatchData = ilikeMatch;
+                diagnostics.ilikeMatchData = ilikeMatch || [];
                 diagnostics.ilikeMatchError = ilikeError?.message;
             }
 
@@ -51,12 +68,11 @@ export default function CredentialDiagnostic({ studentWallet }: { studentWallet?
                 .select('*')
                 .limit(1);
 
-            diagnostics.tableColumns = tableInfo?.[0] ? Object.keys(tableInfo[0]) : [];
-            diagnostics.hasWalletColumn =
-                diagnostics.tableColumns.includes('student_wallet_address');
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        } catch (err: any) {
-            diagnostics.error = err.message;
+            const tableColumns = tableInfo?.[0] ? Object.keys(tableInfo[0]) : [];
+            diagnostics.tableColumns = tableColumns;
+            diagnostics.hasWalletColumn = tableColumns.includes('student_wallet_address');
+        } catch (err: unknown) {
+            diagnostics.error = (err instanceof Error ? err.message : String(err));
         }
 
         setResults(diagnostics);
@@ -64,11 +80,18 @@ export default function CredentialDiagnostic({ studentWallet }: { studentWallet?
     };
 
     return (
-        <Card className="p-6 mb-6 bg-yellow-50 border-yellow-200">
-            <h3 className="font-bold text-lg mb-4">🔍 Credential Diagnostic Tool</h3>
+        <Card className="p-6 border-blue-200 bg-blue-50">
+            <h3 className="text-lg font-bold text-blue-800 mb-2">Diagnostic Tool</h3>
+            <p className="text-sm text-blue-600 mb-4">
+                Run this to check database connection and credential existence.
+            </p>
 
-            <Button onClick={runDiagnostic} disabled={loading}>
-                {loading ? 'Running...' : 'Run Diagnostic'}
+            <Button
+                onClick={runDiagnostic}
+                disabled={loading}
+                className="bg-blue-600 hover:bg-blue-700 text-white"
+            >
+                {loading ? 'Running...' : 'Run Diagnostics'}
             </Button>
 
             {results && (
@@ -90,7 +113,7 @@ export default function CredentialDiagnostic({ studentWallet }: { studentWallet?
                             <strong>{results.hasWalletColumn ? '✅ YES' : '❌ NO'}</strong>
                         </p>
                         <p className="text-xs mt-2">
-                            Available columns: {results.tableColumns.join(', ')}
+                            Available columns: {results.tableColumns?.join(', ')}
                         </p>
                     </div>
 
@@ -106,7 +129,7 @@ export default function CredentialDiagnostic({ studentWallet }: { studentWallet?
                                         Error: {results.ilikeMatchError}
                                     </p>
                                 )}
-                                {results.ilikeMatchCount === 0 && results.totalCredentials > 0 && (
+                                {(results.ilikeMatchCount === 0) && (results.totalCredentials ?? 0) > 0 && (
                                     <p className="text-orange-600 text-sm mt-2">
                                         ⚠️ Credentials exist but none match your wallet address
                                     </p>
@@ -118,9 +141,8 @@ export default function CredentialDiagnostic({ studentWallet }: { studentWallet?
                     <div className="bg-white p-4 rounded border">
                         <h4 className="font-bold">All Credentials (wallet addresses):</h4>
                         <div className="text-xs font-mono mt-2 space-y-1 max-h-60 overflow-y-auto">
-                            {results.allCredentials?.length > 0 ? (
-                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                                results.allCredentials.map((cred: any) => (
+                            {(results.allCredentials && results.allCredentials.length > 0) ? (
+                                results.allCredentials.map((cred) => (
                                     <div key={cred.id} className="border-b pb-1">
                                         <div>Token: {cred.token_id}</div>
                                         <div>Wallet: {cred.student_wallet_address || '(null)'}</div>

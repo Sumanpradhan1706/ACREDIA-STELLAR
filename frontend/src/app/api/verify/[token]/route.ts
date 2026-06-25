@@ -154,17 +154,16 @@ export async function GET(
                     : null,
             },
         });
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (err: any) {
-        if (err?.message?.startsWith('Missing contract configuration')) {
+    } catch (err: unknown) {
+        if ((err instanceof Error ? err.message : String(err))?.startsWith('Missing contract configuration')) {
             return NextResponse.json(
                 { success: false, error: 'Server configuration error' },
                 { status: 500 },
             );
         }
         if (
-            err?.message?.startsWith('Contract simulation error') ||
-            err?.message?.startsWith('Failed to decode')
+            (err instanceof Error ? err.message : String(err))?.startsWith('Contract simulation error') ||
+            (err instanceof Error ? err.message : String(err))?.startsWith('Failed to decode')
         ) {
             return NextResponse.json(
                 { success: false, error: 'Blockchain verification unavailable' },

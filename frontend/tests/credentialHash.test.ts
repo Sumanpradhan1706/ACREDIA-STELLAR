@@ -1,4 +1,5 @@
 import { createHash } from 'crypto';
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, expect, it } from 'vitest';
 import {
     CREDENTIAL_HASH_ALGORITHM,
@@ -113,7 +114,6 @@ describe('canonical credential metadata hashing', () => {
 
     it('matches Node SHA-256 over the same canonical payload string', async () => {
         const payload = buildCanonicalCredentialPayloadV1(metadata);
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const serialized = canonicalJson(payload as any);
         const nodeHash = createHash('sha256').update(serialized).digest('hex');
 

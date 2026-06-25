@@ -52,24 +52,19 @@ async function simulate(method: string, args: xdr.ScVal[]): Promise<unknown> {
         .addOperation(contract.call(method, ...args))
         .setTimeout(TimeoutInfinite)
         .build();
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const sim = await server.simulateTransaction(tx as any);
+    const sim = await server.simulateTransaction(tx as never);
 
     if ('error' in sim) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        throw new Error(`Simulation error (${method}): ${(sim as any).error}`);
+        throw new Error(`Simulation error (${method}): ${(sim as { error: string }).error}`);
     }
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const retval = (sim as any).result?.retval;
+    const retval = (sim as { result?: { retval?: unknown } }).result?.retval;
     if (retval === undefined || retval === null) return null;
 
     // retval may be an xdr.ScVal object or a base64 string depending on SDK version
     if (typeof retval === 'string') {
         return scValToNative(xdr.ScVal.fromXDR(retval, 'base64'));
     }
-    return scValToNative(retval);
+    return scValToNative(retval as xdr.ScVal);
 }
 
 function nativeStructToRecord(value: unknown): Record<string, unknown> | null {
