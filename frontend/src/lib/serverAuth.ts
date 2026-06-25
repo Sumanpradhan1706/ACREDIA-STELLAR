@@ -1,15 +1,13 @@
 import { createClient } from '@supabase/supabase-js';
 import type { NextRequest } from 'next/server';
+import { resolveUserRole } from './roleResolver';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const adminEmailAllowlist = process.env.ADMIN_EMAIL_ALLOWLIST;
 
-export function isTrustedAdminEmail(
-    email: string,
-    allowlist = adminEmailAllowlist || ''
-): boolean {
+export function isTrustedAdminEmail(email: string, allowlist = adminEmailAllowlist || ''): boolean {
     const allowedEmails = allowlist
         .split(',')
         .map((value) => value.trim().toLowerCase())
@@ -68,10 +66,9 @@ function createServiceRoleClient() {
     });
 }
 
-export async function requireAdminRequest(request: NextRequest): Promise<
-    | { ok: true; userId: string }
-    | { ok: false; status: number; error: string }
-> {
+export async function requireAdminRequest(
+    request: NextRequest,
+): Promise<{ ok: true; userId: string } | { ok: false; status: number; error: string }> {
     if (!hasServiceRoleEnv()) {
         return {
             ok: false,
@@ -87,7 +84,7 @@ export async function requireAdminRequest(request: NextRequest): Promise<
 
     const serviceClient = createServiceRoleClient();
     const { data: authUser, error: userError } = await serviceClient.auth.admin.getUserById(
-        authCheck.userId
+        authCheck.userId,
     );
 
     if (userError || !authUser.user?.email) {
@@ -106,21 +103,9 @@ export async function requireAdminRequest(request: NextRequest): Promise<
         };
     }
 
-    const { data: profile, error: profileError } = await serviceClient
-        .from('profiles')
-        .select('role')
-        .eq('id', authCheck.userId)
-        .maybeSingle();
+    const role = await resolveUserRole(serviceClient, authUser.user);
 
-    if (profileError) {
-        return {
-            ok: false,
-            status: 500,
-            error: 'Failed to resolve user role',
-        };
-    }
-
-    if (!profile || profile.role !== 'admin') {
+    if (role !== 'admin') {
         return {
             ok: false,
             status: 403,
@@ -134,10 +119,9 @@ export async function requireAdminRequest(request: NextRequest): Promise<
     };
 }
 
-export async function requireAuthenticatedRequest(request: NextRequest): Promise<
-    | { ok: true; userId: string }
-    | { ok: false; status: number; error: string }
-> {
+export async function requireAuthenticatedRequest(
+    request: NextRequest,
+): Promise<{ ok: true; userId: string } | { ok: false; status: number; error: string }> {
     if (!hasPublicEnv()) {
         return {
             ok: false,

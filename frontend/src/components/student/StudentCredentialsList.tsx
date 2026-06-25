@@ -18,6 +18,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { Skeleton } from '@/components/ui/skeleton';
 import QRCodeModal from './QRCodeModal';
 import { getIPFSUrl } from '@/lib/ipfs';
 import { debugLog } from '@/lib/debug';
@@ -105,7 +106,8 @@ export default function StudentCredentialsList({
             let payload = await response.json();
 
             if (response.status === 401 && payload?.error === 'Invalid or expired access token') {
-                const { data: refreshed, error: refreshError } = await supabase.auth.refreshSession();
+                const { data: refreshed, error: refreshError } =
+                    await supabase.auth.refreshSession();
                 accessToken = refreshed.session?.access_token;
 
                 if (refreshError || !accessToken) {
@@ -125,14 +127,14 @@ export default function StudentCredentialsList({
             }
 
             const data = ((payload.credentials || []) as Credential[]).sort(
-                (a, b) => new Date(b.issued_at).getTime() - new Date(a.issued_at).getTime()
+                (a, b) => new Date(b.issued_at).getTime() - new Date(a.issued_at).getTime(),
             );
 
             debugLog(`Fetched ${data.length} credentials for the student dashboard.`);
             setCredentials(data);
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error('Error loading credentials:', error);
-            setError(error.message || 'Failed to load credentials');
+            setError((error instanceof Error ? error.message : String(error)) || 'Failed to load credentials');
         } finally {
             setLoading(false);
         }
@@ -157,10 +159,26 @@ export default function StudentCredentialsList({
 
     if (loading) {
         return (
-            <Card className="border-gray-200 bg-white p-8 shadow-lg">
-                <div className="flex items-center justify-center py-12">
-                    <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-teal-600"></div>
-                    <p className="ml-4 text-gray-600">Loading your credentials...</p>
+            <Card className="border-gray-200 bg-white p-6 shadow-lg">
+                <div className="mb-6 flex items-center justify-between">
+                    <h2 className="text-2xl font-bold text-gray-900">My Credentials</h2>
+                    <Skeleton className="h-9 w-24" />
+                </div>
+                
+                <div className="mb-6">
+                    <Skeleton className="h-10 w-full" />
+                </div>
+
+                <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-3">
+                    <Skeleton className="h-24 w-full rounded-lg" />
+                    <Skeleton className="h-24 w-full rounded-lg" />
+                    <Skeleton className="h-24 w-full rounded-lg" />
+                </div>
+
+                <div className="space-y-4">
+                    {[1, 2, 3].map((i) => (
+                        <Skeleton key={i} className="h-40 w-full rounded-xl" />
+                    ))}
                 </div>
             </Card>
         );
@@ -202,17 +220,26 @@ export default function StudentCredentialsList({
 
             <div className="mb-6">
                 <div className="relative">
+                    <label htmlFor="student-credential-search" className="sr-only">
+                        Search credentials
+                    </label>
                     <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
                     <Input
+                        id="student-credential-search"
                         placeholder="Search by type, degree, major, or institution..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         className="pl-10"
+                        aria-label="Search credentials"
                     />
                 </div>
             </div>
 
-            <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-3">
+            <div
+                className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-3"
+                role="region"
+                aria-label="Credential statistics"
+            >
                 <div className="rounded-lg bg-teal-50 p-4">
                     <p className="text-sm font-medium text-teal-700">Total Credentials</p>
                     <p className="text-3xl font-bold text-teal-900">{credentials.length}</p>
@@ -232,7 +259,7 @@ export default function StudentCredentialsList({
             </div>
 
             {filteredCredentials.length === 0 ? (
-                <div className="py-12 text-center">
+                <div className="py-12 text-center" aria-live="polite">
                     <Award className="mx-auto mb-4 h-16 w-16 text-gray-300" />
                     <p className="text-lg text-gray-500">
                         {searchQuery
@@ -309,7 +336,8 @@ function CredentialCard({ credential }: { credential: Credential }) {
                                 <div className="flex items-center space-x-2">
                                     <GraduationCap className="h-4 w-4 text-gray-500" />
                                     <span>
-                                        <span className="font-medium">Degree:</span> {metadata.degree}
+                                        <span className="font-medium">Degree:</span>{' '}
+                                        {metadata.degree}
                                     </span>
                                 </div>
                             )}

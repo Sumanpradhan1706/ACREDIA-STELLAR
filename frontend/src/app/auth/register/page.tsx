@@ -183,25 +183,39 @@ function RegisterForm() {
                         type="button"
                         onClick={() => setRole('institution')}
                         aria-pressed={role === 'institution'}
-                        className={`p-4 rounded-lg border-2 transition-all focus:outline-none focus:ring-2 focus:ring-blue-300 ${role === 'institution'
-                            ? 'border-blue-500 bg-blue-500/10'
-                            : 'border-slate-300 hover:border-slate-400 bg-white'
-                            }`}
+                        className={`p-4 rounded-lg border-2 transition-all focus:outline-none focus:ring-2 focus:ring-blue-300 ${
+                            role === 'institution'
+                                ? 'border-blue-500 bg-blue-500/10'
+                                : 'border-slate-300 hover:border-slate-400 bg-white'
+                        }`}
                     >
-                        <Building2 className={`h-8 w-8 mx-auto mb-2 ${role === 'institution' ? 'text-blue-600' : 'text-slate-700'}`} />
-                        <p className={`${role === 'institution' ? 'text-blue-700 font-medium' : 'text-slate-700 font-medium'}`}>Institution</p>
+                        <Building2
+                            className={`h-8 w-8 mx-auto mb-2 ${role === 'institution' ? 'text-blue-600' : 'text-slate-700'}`}
+                        />
+                        <p
+                            className={`${role === 'institution' ? 'text-blue-700 font-medium' : 'text-slate-700 font-medium'}`}
+                        >
+                            Institution
+                        </p>
                     </button>
                     <button
                         type="button"
                         onClick={() => setRole('student')}
                         aria-pressed={role === 'student'}
-                        className={`p-4 rounded-lg border-2 transition-all focus:outline-none focus:ring-2 focus:ring-blue-300 ${role === 'student'
-                            ? 'border-blue-500 bg-blue-500/10'
-                            : 'border-slate-300 hover:border-slate-400 bg-white'
-                            }`}
+                        className={`p-4 rounded-lg border-2 transition-all focus:outline-none focus:ring-2 focus:ring-blue-300 ${
+                            role === 'student'
+                                ? 'border-blue-500 bg-blue-500/10'
+                                : 'border-slate-300 hover:border-slate-400 bg-white'
+                        }`}
                     >
-                        <GraduationCap className={`h-8 w-8 mx-auto mb-2 ${role === 'student' ? 'text-blue-600' : 'text-slate-700'}`} />
-                        <p className={`${role === 'student' ? 'text-blue-700 font-medium' : 'text-slate-700 font-medium'}`}>Student</p>
+                        <GraduationCap
+                            className={`h-8 w-8 mx-auto mb-2 ${role === 'student' ? 'text-blue-600' : 'text-slate-700'}`}
+                        />
+                        <p
+                            className={`${role === 'student' ? 'text-blue-700 font-medium' : 'text-slate-700 font-medium'}`}
+                        >
+                            Student
+                        </p>
                     </button>
                 </div>
 
@@ -213,11 +227,7 @@ function RegisterForm() {
                         <Input
                             id="name"
                             type="text"
-                            placeholder={
-                                role === 'institution'
-                                    ? 'Harvard University'
-                                    : 'John Doe'
-                            }
+                            placeholder={role === 'institution' ? 'Harvard University' : 'John Doe'}
                             value={name}
                             onChange={(e) => setName(e.target.value)}
                             required

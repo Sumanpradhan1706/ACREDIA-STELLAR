@@ -80,6 +80,11 @@ export function AuthorizeIssuer() {
             return;
         }
 
+        if (address.toLowerCase() !== contractOwner?.toLowerCase()) {
+            toast.error('Only the contract owner can authorize wallets');
+            return;
+        }
+
         setIsAuthorizing(true);
         try {
             toast.loading('Preparing transaction...', { id: 'authorize' });
@@ -117,15 +122,31 @@ export function AuthorizeIssuer() {
                 const data = await response.json();
                 if (data.success) {
                     debugLog('Issuer authorization synced to the database.');
+                } else {
+                    throw new Error(
+                        data.error ||
+                            'Authorization transaction could not be verified by the server.',
+                    );
                 }
             } catch (error) {
                 debugWarn('Failed to sync issuer authorization to the database.', error);
+                toast.warning(
+                    `Wallet authorized on-chain, but database sync failed: ${
+                        error instanceof Error ? (error instanceof Error ? error.message : String(error)) : 'Unknown error'
+                    }`,
+                );
             }
 
             await checkAuthorization(walletToAuthorize);
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error('Error authorizing wallet:', error);
-            toast.error(error.message || 'Failed to authorize wallet', { id: 'authorize' });
+            let msg = (error instanceof Error ? error.message : String(error)) || 'Failed to authorize wallet';
+            if (msg.includes('canceled') || msg.includes('User')) {
+                msg = 'Authorization transaction was canceled.';
+            } else if (msg.includes('Network')) {
+                msg = 'Network mismatch detected. Please check your Freighter settings.';
+            }
+            toast.error(msg, { id: 'authorize' });
         } finally {
             setIsAuthorizing(false);
         }
@@ -154,9 +175,7 @@ export function AuthorizeIssuer() {
 
             {contractOwner && (
                 <div className="mb-4 rounded-lg border border-blue-200 bg-blue-50 p-4">
-                    <p className="mb-1 text-sm font-medium text-blue-900">
-                        Contract Owner Address
-                    </p>
+                    <p className="mb-1 text-sm font-medium text-blue-900">Contract Owner Address</p>
                     <p className="break-all text-xs font-mono text-blue-700">{contractOwner}</p>
                     <p className="mt-2 text-xs text-blue-600">
                         Only this wallet can authorize other institutions
@@ -173,11 +192,13 @@ export function AuthorizeIssuer() {
                         <p className="break-all text-xs font-mono text-teal-700">
                             {address || 'Not connected'}
                         </p>
-                        {address && contractOwner && address.toLowerCase() === contractOwner.toLowerCase() && (
-                            <p className="mt-2 text-xs font-medium text-green-600">
-                                You are the contract owner and can authorize other wallets.
-                            </p>
-                        )}
+                        {address &&
+                            contractOwner &&
+                            address.toLowerCase() === contractOwner.toLowerCase() && (
+                                <p className="mt-2 text-xs font-medium text-green-600">
+                                    You are the contract owner and can authorize other wallets.
+                                </p>
+                            )}
                     </div>
                     <Button
                         onClick={checkMyWallet}

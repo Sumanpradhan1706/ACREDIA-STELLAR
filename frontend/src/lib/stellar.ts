@@ -1,5 +1,5 @@
-import { rpc } from "@stellar/stellar-sdk";
-import { debugWarn } from "./debug";
+import { rpc } from '@stellar/stellar-sdk';
+import { debugWarn } from './debug';
 
 // Contract addresses (Stellar contract addresses)
 export const CONTRACTS = {
@@ -19,8 +19,10 @@ export function getContractAddress(contractName: keyof typeof CONTRACTS) {
 export const STELLAR_CONFIG = {
     testnet: {
         horizonUrl: process.env.NEXT_PUBLIC_HORIZON_URL || 'https://horizon-testnet.stellar.org',
-        sorobanRpcUrl: process.env.NEXT_PUBLIC_SOROBAN_RPC_URL || 'https://soroban-testnet.stellar.org',
-        networkPassphrase: process.env.NEXT_PUBLIC_NETWORK_PASSPHRASE || 'Test SDF Network ; September 2015',
+        sorobanRpcUrl:
+            process.env.NEXT_PUBLIC_SOROBAN_RPC_URL || 'https://soroban-testnet.stellar.org',
+        networkPassphrase:
+            process.env.NEXT_PUBLIC_NETWORK_PASSPHRASE || 'Test SDF Network ; September 2015',
         networkName: 'testnet',
     },
     mainnet: {

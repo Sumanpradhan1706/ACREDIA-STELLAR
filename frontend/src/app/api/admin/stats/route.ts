@@ -1,15 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServiceRoleClient, requireAdminRequest } from '@/lib/serverAuth';
+import { enforceRateLimit } from '@/lib/rateLimit';
 
 export const dynamic = 'force-dynamic';
 
+const ADMIN_STATS_RATE_LIMIT = {
+    windowSeconds: 60,
+    maxRequests: 60,
+    prefix: 'admin-stats',
+} as const;
+
 export async function GET(request: NextRequest) {
     try {
+        const rateLimitResponse = enforceRateLimit(request, ADMIN_STATS_RATE_LIMIT);
+        if (rateLimitResponse) {
+            return rateLimitResponse;
+        }
+
         const adminCheck = await requireAdminRequest(request);
         if (!adminCheck.ok) {
             return NextResponse.json(
                 { success: false, error: adminCheck.error },
-                { status: adminCheck.status }
+                { status: adminCheck.status },
             );
         }
 
@@ -50,8 +62,8 @@ export async function GET(request: NextRequest) {
 
         // Combine and deduplicate
         const authorizedInstitutionIds = new Set([
-            ...(institutionsWithWallet?.map(i => i.id) || []),
-            ...(institutionsWithCredentials?.map(c => c.institution_id) || [])
+            ...(institutionsWithWallet?.map((i) => i.id) || []),
+            ...(institutionsWithCredentials?.map((c) => c.institution_id) || []),
         ]);
 
         const authorizedInstitutions = authorizedInstitutionIds.size;
@@ -102,7 +114,7 @@ export async function GET(request: NextRequest) {
                 error: 'Failed to fetch statistics',
                 details: error instanceof Error ? error.message : 'Unknown error',
             },
-            { status: 500 }
+            { status: 500 },
         );
     }
 }

@@ -8,6 +8,7 @@ import { DashboardShell } from '@/components/dashboard/DashboardShell';
 import { AuthorizeIssuer } from '@/components/institution/AuthorizeIssuer';
 import { ConnectWallet } from '@/components/ui/ConnectWallet';
 import { Card } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 import { getContractOwner } from '@/lib/contracts';
 import { debugLog, debugWarn } from '@/lib/debug';
 import { safeGetSession } from '@/lib/supabase';
@@ -124,13 +125,32 @@ function AdminDashboardContent() {
 
     if (isChecking) {
         return (
-            <div className="flex min-h-screen items-center justify-center bg-linear-to-br from-gray-50 via-teal-50 to-cyan-50">
-                <Card className="p-8">
-                    <div className="flex flex-col items-center space-y-4">
-                        <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-teal-600"></div>
-                        <p className="text-gray-600">Verifying admin access...</p>
+            <div className="flex min-h-screen flex-col bg-linear-to-br from-gray-50 via-teal-50 to-cyan-50">
+                <div className="p-6 md:p-10 mx-auto w-full max-w-7xl">
+                    <div className="flex items-center space-x-4 mb-8">
+                        <Skeleton className="h-10 w-10 rounded-xl" />
+                        <div className="space-y-2">
+                            <Skeleton className="h-8 w-48" />
+                            <Skeleton className="h-4 w-64" />
+                        </div>
                     </div>
-                </Card>
+                    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-8">
+                        {[1, 2, 3, 4].map((i) => (
+                            <Card key={i} className="p-6">
+                                <Skeleton className="h-4 w-24 mb-4" />
+                                <Skeleton className="h-8 w-16" />
+                            </Card>
+                        ))}
+                    </div>
+                    <Card className="p-6">
+                        <Skeleton className="h-6 w-32 mb-6" />
+                        <div className="space-y-4">
+                            {[1, 2, 3].map((i) => (
+                                <Skeleton key={i} className="h-16 w-full" />
+                            ))}
+                        </div>
+                    </Card>
+                </div>
             </div>
         );
     }
@@ -162,130 +182,124 @@ function AdminDashboardContent() {
             brandBadge="ADMIN"
             onSignOut={handleSignOut}
         >
-                {!isOwner && (
-                    <div className="mb-6 rounded-lg border border-red-200 bg-red-50 p-4">
-                        <div className="flex items-start space-x-3">
-                            <Shield className="mt-0.5 h-6 w-6 text-red-600" />
+            {!isOwner && (
+                <div className="mb-6 rounded-lg border border-red-200 bg-red-50 p-4">
+                    <div className="flex items-start space-x-3">
+                        <Shield className="mt-0.5 h-6 w-6 text-red-600" />
+                        <div>
+                            <h3 className="mb-1 text-sm font-bold text-red-900">
+                                Read-Only Mode: Not Contract Owner
+                            </h3>
+                            <p className="mt-1 text-xs text-red-700">
+                                You are viewing the dashboard, but you cannot authorize new
+                                institutions because your currently connected wallet (
+                                {address.slice(0, 6)}...{address.slice(-4)}) is not the contract
+                                owner.
+                                <br />
+                                Actual Owner:{' '}
+                                <span className="rounded bg-red-100 px-1 font-mono">
+                                    {contractOwner || 'Could not fetch'}
+                                </span>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            <Card className="mb-6 border-red-200 bg-red-50 p-6">
+                <div className="flex items-start space-x-4">
+                    <CheckCircle2 className="mt-1 h-6 w-6 text-red-600" />
+                    <div className="flex-1">
+                        <h3 className="mb-2 text-lg font-bold text-red-900">
+                            Contract Owner (Admin)
+                        </h3>
+                        <div className="space-y-2">
                             <div>
-                                <h3 className="mb-1 text-sm font-bold text-red-900">
-                                    Read-Only Mode: Not Contract Owner
-                                </h3>
-                                <p className="mt-1 text-xs text-red-700">
-                                    You are viewing the dashboard, but you cannot authorize new
-                                    institutions because your currently connected wallet (
-                                    {address.slice(0, 6)}...{address.slice(-4)}) is not the contract
-                                    owner.
-                                    <br />
-                                    Actual Owner:{' '}
-                                    <span className="rounded bg-red-100 px-1 font-mono">
-                                        {contractOwner || 'Could not fetch'}
-                                    </span>
+                                <p className="text-sm font-medium text-red-700">Email:</p>
+                                <p className="text-sm text-red-800">{user?.email}</p>
+                            </div>
+                            <div>
+                                <p className="text-sm font-medium text-red-700">Wallet Address:</p>
+                                <p className="break-all text-xs font-mono text-red-800">
+                                    {address}
+                                </p>
+                            </div>
+                            <div>
+                                <p className="text-sm font-medium text-red-700">
+                                    Contract Address:
+                                </p>
+                                <p className="break-all text-xs font-mono text-red-800">
+                                    {process.env.NEXT_PUBLIC_CREDENTIAL_NFT_CONTRACT}
                                 </p>
                             </div>
                         </div>
                     </div>
-                )}
+                </div>
+            </Card>
 
-                <Card className="mb-6 border-red-200 bg-red-50 p-6">
-                    <div className="flex items-start space-x-4">
-                        <CheckCircle2 className="mt-1 h-6 w-6 text-red-600" />
-                        <div className="flex-1">
-                            <h3 className="mb-2 text-lg font-bold text-red-900">
-                                Contract Owner (Admin)
-                            </h3>
-                            <div className="space-y-2">
-                                <div>
-                                    <p className="text-sm font-medium text-red-700">Email:</p>
-                                    <p className="text-sm text-red-800">{user?.email}</p>
-                                </div>
-                                <div>
-                                    <p className="text-sm font-medium text-red-700">Wallet Address:</p>
-                                    <p className="break-all text-xs font-mono text-red-800">
-                                        {address}
-                                    </p>
-                                </div>
-                                <div>
-                                    <p className="text-sm font-medium text-red-700">
-                                        Contract Address:
-                                    </p>
-                                    <p className="break-all text-xs font-mono text-red-800">
-                                        {process.env.NEXT_PUBLIC_CREDENTIAL_NFT_CONTRACT}
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
+            <div className="mb-8 grid grid-cols-1 gap-6 md:grid-cols-3">
+                <Card className="border-gray-200 bg-white p-6 shadow-lg">
+                    <div className="mb-2 flex items-center space-x-3">
+                        <Users className="h-8 w-8 text-teal-600" />
+                        <h3 className="text-lg font-semibold text-gray-900">Total Institutions</h3>
                     </div>
+                    {loadingStats ? (
+                        <div className="animate-pulse">
+                            <div className="mb-2 h-10 w-16 rounded bg-gray-200"></div>
+                        </div>
+                    ) : (
+                        <>
+                            <p className="text-3xl font-bold text-teal-600">
+                                {stats.totalInstitutions}
+                            </p>
+                            <p className="mt-1 text-sm text-gray-500">Registered institutions</p>
+                        </>
+                    )}
                 </Card>
 
-                <div className="mb-8 grid grid-cols-1 gap-6 md:grid-cols-3">
-                    <Card className="border-gray-200 bg-white p-6 shadow-lg">
-                        <div className="mb-2 flex items-center space-x-3">
-                            <Users className="h-8 w-8 text-teal-600" />
-                            <h3 className="text-lg font-semibold text-gray-900">
-                                Total Institutions
-                            </h3>
+                <Card className="border-gray-200 bg-white p-6 shadow-lg">
+                    <div className="mb-2 flex items-center space-x-3">
+                        <CheckCircle2 className="h-8 w-8 text-green-600" />
+                        <h3 className="text-lg font-semibold text-gray-900">Authorized</h3>
+                    </div>
+                    {loadingStats ? (
+                        <div className="animate-pulse">
+                            <div className="mb-2 h-10 w-16 rounded bg-gray-200"></div>
                         </div>
-                        {loadingStats ? (
-                            <div className="animate-pulse">
-                                <div className="mb-2 h-10 w-16 rounded bg-gray-200"></div>
-                            </div>
-                        ) : (
-                            <>
-                                <p className="text-3xl font-bold text-teal-600">
-                                    {stats.totalInstitutions}
-                                </p>
-                                <p className="mt-1 text-sm text-gray-500">
-                                    Registered institutions
-                                </p>
-                            </>
-                        )}
-                    </Card>
+                    ) : (
+                        <>
+                            <p className="text-3xl font-bold text-green-600">
+                                {stats.authorizedInstitutions}
+                            </p>
+                            <p className="mt-1 text-sm text-gray-500">Authorized to issue</p>
+                        </>
+                    )}
+                </Card>
 
-                    <Card className="border-gray-200 bg-white p-6 shadow-lg">
-                        <div className="mb-2 flex items-center space-x-3">
-                            <CheckCircle2 className="h-8 w-8 text-green-600" />
-                            <h3 className="text-lg font-semibold text-gray-900">Authorized</h3>
+                <Card className="border-gray-200 bg-white p-6 shadow-lg">
+                    <div className="mb-2 flex items-center space-x-3">
+                        <Shield className="h-8 w-8 text-blue-600" />
+                        <h3 className="text-lg font-semibold text-gray-900">Total Credentials</h3>
+                    </div>
+                    {loadingStats ? (
+                        <div className="animate-pulse">
+                            <div className="mb-2 h-10 w-16 rounded bg-gray-200"></div>
                         </div>
-                        {loadingStats ? (
-                            <div className="animate-pulse">
-                                <div className="mb-2 h-10 w-16 rounded bg-gray-200"></div>
-                            </div>
-                        ) : (
-                            <>
-                                <p className="text-3xl font-bold text-green-600">
-                                    {stats.authorizedInstitutions}
-                                </p>
-                                <p className="mt-1 text-sm text-gray-500">Authorized to issue</p>
-                            </>
-                        )}
-                    </Card>
+                    ) : (
+                        <>
+                            <p className="text-3xl font-bold text-blue-600">
+                                {stats.totalCredentials}
+                            </p>
+                            <p className="mt-1 text-sm text-gray-500">
+                                {stats.activeCredentials} active,{' '}
+                                {stats.totalCredentials - stats.activeCredentials} revoked
+                            </p>
+                        </>
+                    )}
+                </Card>
+            </div>
 
-                    <Card className="border-gray-200 bg-white p-6 shadow-lg">
-                        <div className="mb-2 flex items-center space-x-3">
-                            <Shield className="h-8 w-8 text-blue-600" />
-                            <h3 className="text-lg font-semibold text-gray-900">
-                                Total Credentials
-                            </h3>
-                        </div>
-                        {loadingStats ? (
-                            <div className="animate-pulse">
-                                <div className="mb-2 h-10 w-16 rounded bg-gray-200"></div>
-                            </div>
-                        ) : (
-                            <>
-                                <p className="text-3xl font-bold text-blue-600">
-                                    {stats.totalCredentials}
-                                </p>
-                                <p className="mt-1 text-sm text-gray-500">
-                                    {stats.activeCredentials} active,{' '}
-                                    {stats.totalCredentials - stats.activeCredentials} revoked
-                                </p>
-                            </>
-                        )}
-                    </Card>
-                </div>
-
-                <AuthorizeIssuer />
+            <AuthorizeIssuer />
         </DashboardShell>
     );
 }

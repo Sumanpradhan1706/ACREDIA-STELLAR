@@ -3,19 +3,22 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { safeGetSession } from '@/lib/supabase';
-import { normalizePublicSignupRole } from '@/lib/adminAccess';
+import { useAuth } from '@/contexts/AuthContext';
 import {
     Shield,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     Globe,
     Lock,
     Fingerprint,
     Eye,
     Database,
     FileCheck,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     Zap,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     Users,
     Building2,
     GraduationCap,
@@ -24,33 +27,17 @@ import {
     Coins,
     Network,
     CloudUpload,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     QrCode,
-    Search
+    Search,
 } from 'lucide-react';
 
 export default function AboutPage() {
     const [showSolutions, setShowSolutions] = useState(false);
-    const [isAuthenticated, setIsAuthenticated] = useState(false);
-    const [userRole, setUserRole] = useState<string | null>(null);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { user, userRole } = useAuth();
     const router = useRouter();
     let closeTimeout: NodeJS.Timeout;
-
-    useEffect(() => {
-        checkAuth();
-    }, []);
-
-    const checkAuth = async () => {
-        try {
-            const { data: { session } } = await safeGetSession();
-            setIsAuthenticated(!!session);
-            if (session?.user) {
-                setUserRole(normalizePublicSignupRole(session.user.user_metadata?.role));
-            }
-        } catch {
-            setIsAuthenticated(false);
-            setUserRole(null);
-        }
-    };
 
     const handleMouseEnter = () => {
         if (closeTimeout) clearTimeout(closeTimeout);
@@ -63,9 +50,12 @@ export default function AboutPage() {
         }, 500); // Increased to 500ms delay before closing
     };
 
-    const handleDashboardClick = (e: React.MouseEvent, dashboardType: 'student' | 'institution') => {
+    const handleDashboardClick = (
+        e: React.MouseEvent,
+        dashboardType: 'student' | 'institution',
+    ) => {
         e.preventDefault();
-        
+
         // Navigate to solution pages instead of dashboard
         if (dashboardType === 'student') {
             router.push('/solutions/students');
@@ -94,39 +84,46 @@ export default function AboutPage() {
                         </Link>
                         <div className="flex w-full flex-wrap items-center justify-end gap-2 sm:w-auto sm:flex-nowrap sm:space-x-4">
                             {/* Solutions Dropdown */}
-                            <div 
+                            <div
                                 className="relative"
                                 onMouseEnter={handleMouseEnter}
                                 onMouseLeave={handleMouseLeave}
                             >
-                                <Button 
+                                <Button
                                     type="button"
-                                    variant="ghost" 
+                                    variant="ghost"
                                     onClick={() => setShowSolutions((prev) => !prev)}
                                     className="text-gray-700 hover:text-teal-600 flex items-center gap-1 text-sm sm:text-base"
                                 >
                                     Solutions
-                                    <svg 
+                                    <svg
                                         className={`w-4 h-4 transition-transform duration-200 ${showSolutions ? 'rotate-180' : ''}`}
-                                        fill="none" 
-                                        stroke="currentColor" 
+                                        fill="none"
+                                        stroke="currentColor"
                                         viewBox="0 0 24 24"
                                     >
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                        <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            strokeWidth={2}
+                                            d="M19 9l-7 7-7-7"
+                                        />
                                     </svg>
                                 </Button>
 
                                 {/* Dropdown Menu */}
                                 {showSolutions && (
-                                    <div 
+                                    <div
                                         className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-[95vw] sm:w-[500px] max-w-[500px] bg-white rounded-2xl shadow-2xl border border-gray-200 p-4 sm:p-6 animate-in fade-in slide-in-from-top-5 duration-200"
                                         onMouseEnter={handleMouseEnter}
                                         onMouseLeave={handleMouseLeave}
                                     >
                                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                                             {/* For Universities */}
-                                            <button 
-                                                onClick={(e) => handleDashboardClick(e, 'institution')}
+                                            <button
+                                                onClick={(e) =>
+                                                    handleDashboardClick(e, 'institution')
+                                                }
                                                 className="group text-left w-full"
                                             >
                                                 <div className="flex flex-col items-center space-y-2 sm:space-y-3 p-4 sm:p-6 rounded-xl hover:bg-teal-50 transition-all duration-300 border-2 border-transparent hover:border-teal-300 hover:shadow-lg">
@@ -138,7 +135,8 @@ export default function AboutPage() {
                                                             For Institutions
                                                         </h3>
                                                         <p className="text-xs sm:text-sm text-gray-600 mb-2 sm:mb-3 px-2">
-                                                            Issue and manage credentials for your students
+                                                            Issue and manage credentials for your
+                                                            students
                                                         </p>
                                                         <div className="inline-flex items-center gap-2 text-xs text-teal-600 font-semibold opacity-0 group-hover:opacity-100 transition-opacity bg-teal-50 px-2 sm:px-3 py-1 sm:py-1.5 rounded-full">
                                                             Learn More
@@ -149,7 +147,7 @@ export default function AboutPage() {
                                             </button>
 
                                             {/* For Students */}
-                                            <button 
+                                            <button
                                                 onClick={(e) => handleDashboardClick(e, 'student')}
                                                 className="group text-left w-full"
                                             >
@@ -197,12 +195,18 @@ export default function AboutPage() {
                             </div>
 
                             <Link href="/about">
-                                <Button variant="ghost" className="text-gray-700 hover:text-teal-600 text-sm sm:text-base px-3 sm:px-4">
+                                <Button
+                                    variant="ghost"
+                                    className="text-gray-700 hover:text-teal-600 text-sm sm:text-base px-3 sm:px-4"
+                                >
                                     About
                                 </Button>
                             </Link>
                             <Link href="/auth/login">
-                                <Button variant="ghost" className="text-gray-700 hover:text-teal-600 text-sm sm:text-base px-3 sm:px-4">
+                                <Button
+                                    variant="ghost"
+                                    className="text-gray-700 hover:text-teal-600 text-sm sm:text-base px-3 sm:px-4"
+                                >
                                     Sign In
                                 </Button>
                             </Link>
@@ -227,9 +231,10 @@ export default function AboutPage() {
                         </span>
                     </h1>
                     <p className="text-lg sm:text-xl text-gray-600 leading-relaxed">
-                        The world's first comprehensive blockchain-powered academic credential platform combining
-                        Soulbound NFTs, Zero-Knowledge Proofs, and AI-driven verification for secure, tamper-proof,
-                        and globally recognized educational credentials.
+                        The world's first comprehensive blockchain-powered academic credential
+                        platform combining Soulbound NFTs, Zero-Knowledge Proofs, and AI-driven
+                        verification for secure, tamper-proof, and globally recognized educational
+                        credentials.
                     </p>
                 </div>
             </section>
@@ -247,44 +252,128 @@ export default function AboutPage() {
                         <div className="trust-marquee flex items-center gap-8 py-4">
                             <div className="flex items-center gap-8">
                                 <div className="min-w-[160px] flex items-center justify-center">
-                                    <Image src="https://tse3.mm.bing.net/th/id/OIP.7bACtsXUKPDhBOuidawTTwHaGr?pid=Api&P=0&h=180" alt="MIT" width={160} height={140} className="object-contain h-20" unoptimized />
+                                    <Image
+                                        src="https://tse3.mm.bing.net/th/id/OIP.7bACtsXUKPDhBOuidawTTwHaGr?pid=Api&P=0&h=180"
+                                        alt="MIT"
+                                        width={160}
+                                        height={140}
+                                        className="object-contain h-20"
+                                        unoptimized
+                                    />
                                 </div>
                                 <div className="min-w-[160px] flex items-center justify-center">
-                                    <Image src="https://www.scholarshipregion.com/wp-content/uploads/2022/09/University-of-Oxford-UK.jpg" alt="Oxford" width={160} height={140} className="object-contain h-20" unoptimized />
+                                    <Image
+                                        src="https://www.scholarshipregion.com/wp-content/uploads/2022/09/University-of-Oxford-UK.jpg"
+                                        alt="Oxford"
+                                        width={160}
+                                        height={140}
+                                        className="object-contain h-20"
+                                        unoptimized
+                                    />
                                 </div>
                                 <div className="min-w-[160px] flex items-center justify-center">
-                                    <Image src="https://tse1.mm.bing.net/th/id/OIP.xHMtPAL900IBFxWZBfM6gAHaEp?pid=Api&P=0&h=180" alt="Stanford" width={160} height={140} className="object-contain h-20" unoptimized />
+                                    <Image
+                                        src="https://tse1.mm.bing.net/th/id/OIP.xHMtPAL900IBFxWZBfM6gAHaEp?pid=Api&P=0&h=180"
+                                        alt="Stanford"
+                                        width={160}
+                                        height={140}
+                                        className="object-contain h-20"
+                                        unoptimized
+                                    />
                                 </div>
                                 <div className="min-w-[160px] flex items-center justify-center">
-                                    <Image src="https://tse4.mm.bing.net/th/id/OIP.7YBhBgFBg-bpAgV5kpJ0AwHaEL?pid=Api&P=0&h=180" alt="Harvard" width={160} height={140} className="object-contain h-20" unoptimized />
+                                    <Image
+                                        src="https://tse4.mm.bing.net/th/id/OIP.7YBhBgFBg-bpAgV5kpJ0AwHaEL?pid=Api&P=0&h=180"
+                                        alt="Harvard"
+                                        width={160}
+                                        height={140}
+                                        className="object-contain h-20"
+                                        unoptimized
+                                    />
                                 </div>
                                 <div className="min-w-[160px] flex items-center justify-center">
-                                    <Image src="https://tse3.mm.bing.net/th/id/OIP.cJonBR8WAhleDoeIvPHtDQHaEK?pid=Api&P=0&h=180" alt="Cambridge" width={160} height={140} className="object-contain h-20" unoptimized />
+                                    <Image
+                                        src="https://tse3.mm.bing.net/th/id/OIP.cJonBR8WAhleDoeIvPHtDQHaEK?pid=Api&P=0&h=180"
+                                        alt="Cambridge"
+                                        width={160}
+                                        height={140}
+                                        className="object-contain h-20"
+                                        unoptimized
+                                    />
                                 </div>
                                 <div className="min-w-[160px] flex items-center justify-center">
-                                    <Image src="https://tse3.mm.bing.net/th/id/OIP.6_BcDwnHtQHpmB0zsZW6JwHaDe?pid=Api&P=0&h=180" alt="IIT" width={160} height={140} className="object-contain h-20" unoptimized />
+                                    <Image
+                                        src="https://tse3.mm.bing.net/th/id/OIP.6_BcDwnHtQHpmB0zsZW6JwHaDe?pid=Api&P=0&h=180"
+                                        alt="IIT"
+                                        width={160}
+                                        height={140}
+                                        className="object-contain h-20"
+                                        unoptimized
+                                    />
                                 </div>
                             </div>
 
                             {/* duplicate for seamless loop */}
                             <div className="flex items-center gap-8">
                                 <div className="min-w-[160px] flex items-center justify-center">
-                                    <Image src="https://tse3.mm.bing.net/th/id/OIP.7bACtsXUKPDhBOuidawTTwHaGr?pid=Api&P=0&h=180" alt="MIT" width={160} height={140} className="object-contain h-20" unoptimized />
+                                    <Image
+                                        src="https://tse3.mm.bing.net/th/id/OIP.7bACtsXUKPDhBOuidawTTwHaGr?pid=Api&P=0&h=180"
+                                        alt="MIT"
+                                        width={160}
+                                        height={140}
+                                        className="object-contain h-20"
+                                        unoptimized
+                                    />
                                 </div>
                                 <div className="min-w-[160px] flex items-center justify-center">
-                                    <Image src="https://www.scholarshipregion.com/wp-content/uploads/2022/09/University-of-Oxford-UK.jpg" alt="Oxford" width={160} height={140} className="object-contain h-20" unoptimized />
+                                    <Image
+                                        src="https://www.scholarshipregion.com/wp-content/uploads/2022/09/University-of-Oxford-UK.jpg"
+                                        alt="Oxford"
+                                        width={160}
+                                        height={140}
+                                        className="object-contain h-20"
+                                        unoptimized
+                                    />
                                 </div>
                                 <div className="min-w-[160px] flex items-center justify-center">
-                                    <Image src="https://tse1.mm.bing.net/th/id/OIP.xHMtPAL900IBFxWZBfM6gAHaEp?pid=Api&P=0&h=180" alt="Stanford" width={160} height={140} className="object-contain h-20" unoptimized />
+                                    <Image
+                                        src="https://tse1.mm.bing.net/th/id/OIP.xHMtPAL900IBFxWZBfM6gAHaEp?pid=Api&P=0&h=180"
+                                        alt="Stanford"
+                                        width={160}
+                                        height={140}
+                                        className="object-contain h-20"
+                                        unoptimized
+                                    />
                                 </div>
                                 <div className="min-w-[160px] flex items-center justify-center">
-                                    <Image src="https://tse4.mm.bing.net/th/id/OIP.7YBhBgFBg-bpAgV5kpJ0AwHaEL?pid=Api&P=0&h=180" alt="Harvard" width={160} height={140} className="object-contain h-20" unoptimized />
+                                    <Image
+                                        src="https://tse4.mm.bing.net/th/id/OIP.7YBhBgFBg-bpAgV5kpJ0AwHaEL?pid=Api&P=0&h=180"
+                                        alt="Harvard"
+                                        width={160}
+                                        height={140}
+                                        className="object-contain h-20"
+                                        unoptimized
+                                    />
                                 </div>
                                 <div className="min-w-[160px] flex items-center justify-center">
-                                    <Image src="https://tse3.mm.bing.net/th/id/OIP.cJonBR8WAhleDoeIvPHtDQHaEK?pid=Api&P=0&h=180" alt="Cambridge" width={160} height={140} className="object-contain h-20" unoptimized />
+                                    <Image
+                                        src="https://tse3.mm.bing.net/th/id/OIP.cJonBR8WAhleDoeIvPHtDQHaEK?pid=Api&P=0&h=180"
+                                        alt="Cambridge"
+                                        width={160}
+                                        height={140}
+                                        className="object-contain h-20"
+                                        unoptimized
+                                    />
                                 </div>
                                 <div className="min-w-[160px] flex items-center justify-center">
-                                    <Image src="https://tse3.mm.bing.net/th/id/OIP.6_BcDwnHtQHpmB0zsZW6JwHaDe?pid=Api&P=0&h=180" alt="IIT" width={160} height={140} className="object-contain h-20" unoptimized />
+                                    <Image
+                                        src="https://tse3.mm.bing.net/th/id/OIP.6_BcDwnHtQHpmB0zsZW6JwHaDe?pid=Api&P=0&h=180"
+                                        alt="IIT"
+                                        width={160}
+                                        height={140}
+                                        className="object-contain h-20"
+                                        unoptimized
+                                    />
                                 </div>
                             </div>
                         </div>
@@ -299,10 +388,27 @@ export default function AboutPage() {
                         animation: marquee 18s linear infinite;
                         will-change: transform;
                     }
-                    .trust-marquee:hover { animation-play-state: paused; }
-                    @keyframes marquee { 0% { transform: translateX(0%); } 100% { transform: translateX(-50%); } }
-                    @media (max-width: 1024px) { .trust-marquee { animation-duration: 14s; } }
-                    @media (max-width: 640px) { .trust-marquee { animation-duration: 10s; } }
+                    .trust-marquee:hover {
+                        animation-play-state: paused;
+                    }
+                    @keyframes marquee {
+                        0% {
+                            transform: translateX(0%);
+                        }
+                        100% {
+                            transform: translateX(-50%);
+                        }
+                    }
+                    @media (max-width: 1024px) {
+                        .trust-marquee {
+                            animation-duration: 14s;
+                        }
+                    }
+                    @media (max-width: 640px) {
+                        .trust-marquee {
+                            animation-duration: 10s;
+                        }
+                    }
                 `}</style>
             </section>
 
@@ -314,9 +420,11 @@ export default function AboutPage() {
                     </div>
                     <div className="p-8 space-y-6">
                         <p className="text-lg text-gray-700 leading-relaxed">
-                            Acredia revolutionizes academic credential management through a sophisticated blockchain-based
-                            ecosystem. Our platform ensures credentials are permanently verifiable, cannot be forged, and
-                            remain under the control of students while being globally accessible to institutions and employers.
+                            Acredia revolutionizes academic credential management through a
+                            sophisticated blockchain-based ecosystem. Our platform ensures
+                            credentials are permanently verifiable, cannot be forged, and remain
+                            under the control of students while being globally accessible to
+                            institutions and employers.
                         </p>
 
                         <div className="grid md:grid-cols-3 gap-6 pt-6">
@@ -340,7 +448,9 @@ export default function AboutPage() {
             {/* Core Components */}
             <section className="container mx-auto px-4 py-16">
                 <div className="text-center mb-12">
-                    <h2 className="text-4xl font-bold text-gray-900 mb-4">Core System Components</h2>
+                    <h2 className="text-4xl font-bold text-gray-900 mb-4">
+                        Core System Components
+                    </h2>
                     <p className="text-xl text-gray-600 max-w-3xl mx-auto">
                         Four integrated modules powering the future of academic credentials
                     </p>
@@ -356,29 +466,39 @@ export default function AboutPage() {
                             Institution Dashboard
                         </h3>
                         <p className="text-gray-600 mb-6 leading-relaxed">
-                            Complete credential management system for educational institutions to issue, track,
-                            and manage blockchain-secured credentials.
+                            Complete credential management system for educational institutions to
+                            issue, track, and manage blockchain-secured credentials.
                         </p>
                         <div className="space-y-3">
                             <div className="flex items-start space-x-3">
                                 <CheckCircle className="w-5 h-5 text-teal-600 mt-0.5 flex-shrink-0" />
-                                <span className="text-gray-700">Bulk credential upload via CSV/Excel</span>
+                                <span className="text-gray-700">
+                                    Bulk credential upload via CSV/Excel
+                                </span>
                             </div>
                             <div className="flex items-start space-x-3">
                                 <CheckCircle className="w-5 h-5 text-teal-600 mt-0.5 flex-shrink-0" />
-                                <span className="text-gray-700">IPFS decentralized storage integration</span>
+                                <span className="text-gray-700">
+                                    IPFS decentralized storage integration
+                                </span>
                             </div>
                             <div className="flex items-start space-x-3">
                                 <CheckCircle className="w-5 h-5 text-teal-600 mt-0.5 flex-shrink-0" />
-                                <span className="text-gray-700">One-click NFT minting to blockchain</span>
+                                <span className="text-gray-700">
+                                    One-click NFT minting to blockchain
+                                </span>
                             </div>
                             <div className="flex items-start space-x-3">
                                 <CheckCircle className="w-5 h-5 text-teal-600 mt-0.5 flex-shrink-0" />
-                                <span className="text-gray-700">Real-time credential status tracking</span>
+                                <span className="text-gray-700">
+                                    Real-time credential status tracking
+                                </span>
                             </div>
                             <div className="flex items-start space-x-3">
                                 <CheckCircle className="w-5 h-5 text-teal-600 mt-0.5 flex-shrink-0" />
-                                <span className="text-gray-700">Analytics and compliance reporting</span>
+                                <span className="text-gray-700">
+                                    Analytics and compliance reporting
+                                </span>
                             </div>
                         </div>
                     </Card>
@@ -392,12 +512,15 @@ export default function AboutPage() {
                             Student Web Wallet
                         </h3>
                         <p className="text-gray-600 mb-6 leading-relaxed">
-                            Personal credential wallet where students own and control their educational achievements forever.
+                            Personal credential wallet where students own and control their
+                            educational achievements forever.
                         </p>
                         <div className="space-y-3">
                             <div className="flex items-start space-x-3">
                                 <CheckCircle className="w-5 h-5 text-cyan-600 mt-0.5 flex-shrink-0" />
-                                <span className="text-gray-700">View all issued NFT credentials</span>
+                                <span className="text-gray-700">
+                                    View all issued NFT credentials
+                                </span>
                             </div>
                             <div className="flex items-start space-x-3">
                                 <CheckCircle className="w-5 h-5 text-cyan-600 mt-0.5 flex-shrink-0" />
@@ -405,15 +528,21 @@ export default function AboutPage() {
                             </div>
                             <div className="flex items-start space-x-3">
                                 <CheckCircle className="w-5 h-5 text-cyan-600 mt-0.5 flex-shrink-0" />
-                                <span className="text-gray-700">Selective disclosure with Zero-Knowledge Proofs</span>
+                                <span className="text-gray-700">
+                                    Selective disclosure with Zero-Knowledge Proofs
+                                </span>
                             </div>
                             <div className="flex items-start space-x-3">
                                 <CheckCircle className="w-5 h-5 text-cyan-600 mt-0.5 flex-shrink-0" />
-                                <span className="text-gray-700">Export to digital wallets (MetaMask, etc.)</span>
+                                <span className="text-gray-700">
+                                    Export to digital wallets (MetaMask, etc.)
+                                </span>
                             </div>
                             <div className="flex items-start space-x-3">
                                 <CheckCircle className="w-5 h-5 text-cyan-600 mt-0.5 flex-shrink-0" />
-                                <span className="text-gray-700">Download PDF/digital certificates</span>
+                                <span className="text-gray-700">
+                                    Download PDF/digital certificates
+                                </span>
                             </div>
                         </div>
                     </Card>
@@ -427,7 +556,8 @@ export default function AboutPage() {
                             Global Verification Portal
                         </h3>
                         <p className="text-gray-600 mb-6 leading-relaxed">
-                            Public verification interface for employers, institutions, and agencies to instantly verify credentials.
+                            Public verification interface for employers, institutions, and agencies
+                            to instantly verify credentials.
                         </p>
                         <div className="space-y-3">
                             <div className="flex items-start space-x-3">
@@ -440,15 +570,21 @@ export default function AboutPage() {
                             </div>
                             <div className="flex items-start space-x-3">
                                 <CheckCircle className="w-5 h-5 text-purple-600 mt-0.5 flex-shrink-0" />
-                                <span className="text-gray-700">Real-time blockchain verification</span>
+                                <span className="text-gray-700">
+                                    Real-time blockchain verification
+                                </span>
                             </div>
                             <div className="flex items-start space-x-3">
                                 <CheckCircle className="w-5 h-5 text-purple-600 mt-0.5 flex-shrink-0" />
-                                <span className="text-gray-700">Detailed credential information display</span>
+                                <span className="text-gray-700">
+                                    Detailed credential information display
+                                </span>
                             </div>
                             <div className="flex items-start space-x-3">
                                 <CheckCircle className="w-5 h-5 text-purple-600 mt-0.5 flex-shrink-0" />
-                                <span className="text-gray-700">Verification audit trail logging</span>
+                                <span className="text-gray-700">
+                                    Verification audit trail logging
+                                </span>
                             </div>
                         </div>
                     </Card>
@@ -462,24 +598,33 @@ export default function AboutPage() {
                             AI Credential Engine
                         </h3>
                         <p className="text-gray-600 mb-6 leading-relaxed">
-                            Intelligent automation system for credential processing, validation, and university matching.
+                            Intelligent automation system for credential processing, validation, and
+                            university matching.
                         </p>
                         <div className="space-y-3">
                             <div className="flex items-start space-x-3">
                                 <CheckCircle className="w-5 h-5 text-orange-600 mt-0.5 flex-shrink-0" />
-                                <span className="text-gray-700">OCR document scanning and extraction</span>
+                                <span className="text-gray-700">
+                                    OCR document scanning and extraction
+                                </span>
                             </div>
                             <div className="flex items-start space-x-3">
                                 <CheckCircle className="w-5 h-5 text-orange-600 mt-0.5 flex-shrink-0" />
-                                <span className="text-gray-700">NLP-powered credential parsing</span>
+                                <span className="text-gray-700">
+                                    NLP-powered credential parsing
+                                </span>
                             </div>
                             <div className="flex items-start space-x-3">
                                 <CheckCircle className="w-5 h-5 text-orange-600 mt-0.5 flex-shrink-0" />
-                                <span className="text-gray-700">Global university database matching</span>
+                                <span className="text-gray-700">
+                                    Global university database matching
+                                </span>
                             </div>
                             <div className="flex items-start space-x-3">
                                 <CheckCircle className="w-5 h-5 text-orange-600 mt-0.5 flex-shrink-0" />
-                                <span className="text-gray-700">Fraud detection and anomaly analysis</span>
+                                <span className="text-gray-700">
+                                    Fraud detection and anomaly analysis
+                                </span>
                             </div>
                             <div className="flex items-start space-x-3">
                                 <CheckCircle className="w-5 h-5 text-orange-600 mt-0.5 flex-shrink-0" />
@@ -494,7 +639,9 @@ export default function AboutPage() {
             <section className="bg-white py-20">
                 <div className="container mx-auto px-4">
                     <div className="text-center mb-12">
-                        <h2 className="text-4xl font-bold text-gray-900 mb-4">Advanced Technology Stack</h2>
+                        <h2 className="text-4xl font-bold text-gray-900 mb-4">
+                            Advanced Technology Stack
+                        </h2>
                         <p className="text-xl text-gray-600 max-w-3xl mx-auto">
                             Built on cutting-edge blockchain and AI technologies
                         </p>
@@ -509,10 +656,13 @@ export default function AboutPage() {
                                 Soulbound NFTs
                             </h3>
                             <p className="text-gray-600 leading-relaxed mb-4">
-                                Non-transferable Soroban-based credential tokens permanently bound to student
-                                Stellar addresses, ensuring true ownership and preventing fraud or resale.
+                                Non-transferable Soroban-based credential tokens permanently bound
+                                to student Stellar addresses, ensuring true ownership and preventing
+                                fraud or resale.
                             </p>
-                            <div className="text-sm font-semibold text-teal-600">Soroban / Stellar Network</div>
+                            <div className="text-sm font-semibold text-teal-600">
+                                Soroban / Stellar Network
+                            </div>
                         </Card>
 
                         <Card className="border border-gray-200 p-8 text-center hover:shadow-xl transition-all">
@@ -523,10 +673,13 @@ export default function AboutPage() {
                                 Zero-Knowledge Proofs
                             </h3>
                             <p className="text-gray-600 leading-relaxed mb-4">
-                                Privacy-preserving verification allowing students to prove credentials without
-                                revealing sensitive information, using zkSNARKs cryptography.
+                                Privacy-preserving verification allowing students to prove
+                                credentials without revealing sensitive information, using zkSNARKs
+                                cryptography.
                             </p>
-                            <div className="text-sm font-semibold text-teal-600">zkSNARKs Powered</div>
+                            <div className="text-sm font-semibold text-teal-600">
+                                zkSNARKs Powered
+                            </div>
                         </Card>
 
                         <Card className="border border-gray-200 p-8 text-center hover:shadow-xl transition-all">
@@ -537,10 +690,12 @@ export default function AboutPage() {
                                 AI Verification
                             </h3>
                             <p className="text-gray-600 leading-relaxed mb-4">
-                                Machine learning-powered OCR and NLP engines for automated credential processing,
-                                university matching, and fraud detection.
+                                Machine learning-powered OCR and NLP engines for automated
+                                credential processing, university matching, and fraud detection.
                             </p>
-                            <div className="text-sm font-semibold text-teal-600">ML & NLP Powered</div>
+                            <div className="text-sm font-semibold text-teal-600">
+                                ML & NLP Powered
+                            </div>
                         </Card>
                     </div>
                 </div>
@@ -563,8 +718,9 @@ export default function AboutPage() {
                                 <CloudUpload className="w-10 h-10 mb-4" />
                                 <h3 className="text-xl font-bold mb-3">IPFS Storage</h3>
                                 <p className="text-teal-50">
-                                    Credentials stored on InterPlanetary File System (IPFS) via Pinata,
-                                    ensuring decentralized, permanent, and censorship-resistant storage.
+                                    Credentials stored on InterPlanetary File System (IPFS) via
+                                    Pinata, ensuring decentralized, permanent, and
+                                    censorship-resistant storage.
                                 </p>
                             </div>
 
@@ -572,8 +728,9 @@ export default function AboutPage() {
                                 <Coins className="w-10 h-10 mb-4" />
                                 <h3 className="text-xl font-bold mb-3">Smart Contracts</h3>
                                 <p className="text-teal-50">
-                                    Single unified AcrediaCredential Soroban contract handles credential issuance,
-                                    authorization, and revocation — all in one Rust-powered smart contract.
+                                    Single unified AcrediaCredential Soroban contract handles
+                                    credential issuance, authorization, and revocation — all in one
+                                    Rust-powered smart contract.
                                 </p>
                             </div>
 
@@ -581,8 +738,9 @@ export default function AboutPage() {
                                 <Lock className="w-10 h-10 mb-4" />
                                 <h3 className="text-xl font-bold mb-3">Stellar Testnet</h3>
                                 <p className="text-teal-50">
-                                    Deployed on Stellar Testnet via Soroban — ultra-low fees (~0.001 XLM per
-                                    transaction) with 5-second finality and mainnet-ready architecture.
+                                    Deployed on Stellar Testnet via Soroban — ultra-low fees (~0.001
+                                    XLM per transaction) with 5-second finality and mainnet-ready
+                                    architecture.
                                 </p>
                             </div>
 
@@ -590,8 +748,8 @@ export default function AboutPage() {
                                 <Shield className="w-10 h-10 mb-4" />
                                 <h3 className="text-xl font-bold mb-3">Access Control</h3>
                                 <p className="text-teal-50">
-                                    Role-based permissions managed through smart contracts ensuring only
-                                    authorized institutions can issue credentials.
+                                    Role-based permissions managed through smart contracts ensuring
+                                    only authorized institutions can issue credentials.
                                 </p>
                             </div>
                         </div>
@@ -616,7 +774,8 @@ export default function AboutPage() {
                         <div className="text-3xl font-bold text-teal-600 mb-2">W3C</div>
                         <div className="text-sm text-gray-600 mb-3">Verifiable Credentials</div>
                         <p className="text-xs text-gray-500">
-                            Adheres to W3C DID and Verifiable Credentials standards for interoperability
+                            Adheres to W3C DID and Verifiable Credentials standards for
+                            interoperability
                         </p>
                     </Card>
 
@@ -624,7 +783,8 @@ export default function AboutPage() {
                         <div className="text-3xl font-bold text-teal-600 mb-2">NAD</div>
                         <div className="text-sm text-gray-600 mb-3">Academic Bank</div>
                         <p className="text-xs text-gray-500">
-                            Compliant with National Academic Depository regulations for Indian institutions
+                            Compliant with National Academic Depository regulations for Indian
+                            institutions
                         </p>
                     </Card>
 
@@ -640,7 +800,8 @@ export default function AboutPage() {
                         <div className="text-3xl font-bold text-teal-600 mb-2">NEP 2020</div>
                         <div className="text-sm text-gray-600 mb-3">Education Policy</div>
                         <p className="text-xs text-gray-500">
-                            Aligned with National Education Policy 2020 digital credential requirements
+                            Aligned with National Education Policy 2020 digital credential
+                            requirements
                         </p>
                     </Card>
                 </div>
@@ -720,18 +881,26 @@ export default function AboutPage() {
                         Ready to Join Acredia?
                     </h2>
                     <p className="text-xl text-gray-600 mb-10 max-w-2xl mx-auto">
-                        Be part of the blockchain credential revolution with 500+ universities worldwide
+                        Be part of the blockchain credential revolution with 500+ universities
+                        worldwide
                     </p>
                     <div className="flex flex-col sm:flex-row gap-4 justify-center">
                         <Link href="/auth/register?role=institution">
-                            <Button size="lg" className="bg-gradient-to-r from-teal-600 to-cyan-600 hover:from-teal-700 hover:to-cyan-700 text-white px-10 py-6 text-lg">
+                            <Button
+                                size="lg"
+                                className="bg-gradient-to-r from-teal-600 to-cyan-600 hover:from-teal-700 hover:to-cyan-700 text-white px-10 py-6 text-lg"
+                            >
                                 <Building2 className="w-5 h-5 mr-2" />
                                 For Institutions
                                 <ArrowRight className="w-5 h-5 ml-2" />
                             </Button>
                         </Link>
                         <Link href="/auth/register?role=student">
-                            <Button size="lg" variant="outline" className="border-2 border-gray-300 hover:bg-gray-100 px-10 py-6 text-lg">
+                            <Button
+                                size="lg"
+                                variant="outline"
+                                className="border-2 border-gray-300 hover:bg-gray-100 px-10 py-6 text-lg"
+                            >
                                 <GraduationCap className="w-5 h-5 mr-2" />
                                 For Students
                             </Button>
@@ -763,30 +932,87 @@ export default function AboutPage() {
                         <div>
                             <h4 className="font-semibold mb-4">Product</h4>
                             <ul className="space-y-2 text-sm text-gray-400">
-                                <li><Link href="/about" className="hover:text-white transition-colors">About</Link></li>
-                                <li><Link href="/verify" className="hover:text-white transition-colors">Verification</Link></li>
-                                <li><Link href="#" className="hover:text-white transition-colors">API Docs</Link></li>
-                                <li><Link href="#" className="hover:text-white transition-colors">Pricing</Link></li>
+                                <li>
+                                    <Link
+                                        href="/about"
+                                        className="hover:text-white transition-colors"
+                                    >
+                                        About
+                                    </Link>
+                                </li>
+                                <li>
+                                    <Link
+                                        href="/verify"
+                                        className="hover:text-white transition-colors"
+                                    >
+                                        Verification
+                                    </Link>
+                                </li>
+                                <li>
+                                    <Link href="#" className="hover:text-white transition-colors">
+                                        API Docs
+                                    </Link>
+                                </li>
+                                <li>
+                                    <Link href="#" className="hover:text-white transition-colors">
+                                        Pricing
+                                    </Link>
+                                </li>
                             </ul>
                         </div>
 
                         <div>
                             <h4 className="font-semibold mb-4">Company</h4>
                             <ul className="space-y-2 text-sm text-gray-400">
-                                <li><Link href="/about" className="hover:text-white transition-colors">About Us</Link></li>
-                                <li><Link href="#" className="hover:text-white transition-colors">Blog</Link></li>
-                                <li><Link href="#" className="hover:text-white transition-colors">Careers</Link></li>
-                                <li><Link href="#" className="hover:text-white transition-colors">Contact</Link></li>
+                                <li>
+                                    <Link
+                                        href="/about"
+                                        className="hover:text-white transition-colors"
+                                    >
+                                        About Us
+                                    </Link>
+                                </li>
+                                <li>
+                                    <Link href="#" className="hover:text-white transition-colors">
+                                        Blog
+                                    </Link>
+                                </li>
+                                <li>
+                                    <Link href="#" className="hover:text-white transition-colors">
+                                        Careers
+                                    </Link>
+                                </li>
+                                <li>
+                                    <Link href="#" className="hover:text-white transition-colors">
+                                        Contact
+                                    </Link>
+                                </li>
                             </ul>
                         </div>
 
                         <div>
                             <h4 className="font-semibold mb-4">Legal</h4>
                             <ul className="space-y-2 text-sm text-gray-400">
-                                <li><Link href="#" className="hover:text-white transition-colors">Privacy</Link></li>
-                                <li><Link href="#" className="hover:text-white transition-colors">Terms</Link></li>
-                                <li><Link href="#" className="hover:text-white transition-colors">Security</Link></li>
-                                <li><Link href="#" className="hover:text-white transition-colors">Compliance</Link></li>
+                                <li>
+                                    <Link href="#" className="hover:text-white transition-colors">
+                                        Privacy
+                                    </Link>
+                                </li>
+                                <li>
+                                    <Link href="#" className="hover:text-white transition-colors">
+                                        Terms
+                                    </Link>
+                                </li>
+                                <li>
+                                    <Link href="#" className="hover:text-white transition-colors">
+                                        Security
+                                    </Link>
+                                </li>
+                                <li>
+                                    <Link href="#" className="hover:text-white transition-colors">
+                                        Compliance
+                                    </Link>
+                                </li>
                             </ul>
                         </div>
                     </div>

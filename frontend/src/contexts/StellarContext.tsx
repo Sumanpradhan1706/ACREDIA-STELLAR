@@ -1,11 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import {
-    isConnected,
-    requestAccess,
-    setAllowed,
-} from '@stellar/freighter-api';
+import { isConnected, requestAccess, setAllowed } from '@stellar/freighter-api';
 import { toast } from 'sonner';
 
 interface StellarContextType {
@@ -25,6 +21,8 @@ const StellarContext = createContext<StellarContextType>({
 export const StellarProvider = ({ children }: { children: React.ReactNode }) => {
     const [address, setAddress] = useState<string | null>(null);
     const [isConnecting, setIsConnecting] = useState(false);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
         const checkConnection = async () => {
@@ -33,8 +31,10 @@ export const StellarProvider = ({ children }: { children: React.ReactNode }) => 
                     const access = await requestAccess();
                     if (access && access.address) {
                         setAddress(access.address);
+                        setError(null);
                     }
                 }
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
             } catch (e) {
                 // Ignore silently, wallet just not unlocked/connected
             }
@@ -44,23 +44,35 @@ export const StellarProvider = ({ children }: { children: React.ReactNode }) => 
 
     const connect = async () => {
         setIsConnecting(true);
+        setError(null);
         try {
             const connected = await isConnected();
             if (!connected) {
-                toast.error("Freighter wallet not detected. Please install the browser extension!");
+                const msg = 'Freighter wallet not detected. Please install the browser extension!';
+                setError(msg);
+                toast.error(msg);
                 setIsConnecting(false);
                 return;
             }
-            
+
             await setAllowed();
             const access = await requestAccess();
             if (access && access.address) {
                 setAddress(access.address);
-                toast.success("Wallet connected!");
+                setError(null);
+                toast.success('Wallet connected!');
             }
-        } catch (error: any) {
-            console.error("Failed to connect Freighter:", error);
-            toast.error(error.message || "Connection refused");
+        } catch (error: unknown) {
+            console.error('Failed to connect Freighter:', error);
+            let msg = (error instanceof Error ? error.message : String(error)) || 'Connection refused';
+            // Detect user cancellation
+            if (msg.includes('User canceled') || msg.includes('canceled')) {
+                msg = 'Connection canceled by user';
+            } else if (msg.includes('not installed')) {
+                msg = 'Freighter wallet not found. Please install it first.';
+            }
+            setError(msg);
+            toast.error(msg);
         } finally {
             setIsConnecting(false);
         }
@@ -68,7 +80,8 @@ export const StellarProvider = ({ children }: { children: React.ReactNode }) => 
 
     const disconnect = () => {
         setAddress(null);
-        toast.info("Wallet disconnected from app level.");
+        setError(null);
+        toast.info('Wallet disconnected from app level.');
     };
 
     return (
