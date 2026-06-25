@@ -31,6 +31,7 @@ Single unified contract combining credential issuance, registry, and verificatio
 - `verify_credential(hash)` - Verify credential by hash
 - `is_revoked(token_id)` - Check revocation status
 - `total_credentials()` - Get total credentials issued
+- `bump_credential(token_id)` - Extend TTL of a credential (permissionless)
 
 ## Prerequisites
 
@@ -294,6 +295,62 @@ View deployed contracts on Stellar Expert:
 - **[Soroban Examples](https://github.com/stellar/rs-soroban-sdk/tree/master/examples)**
 - **[Stellar Laboratory](https://laboratory.stellar.org/)**
 
+## Storage Archival & TTL Strategy
+
+Soroban persistent storage entries have a finite TTL (Time-To-Live) measured in ledgers. Entries whose TTL expires are **archived** and become inaccessible until restored. For a credential platform this is a correctness failure — `verify_credential` would silently return `None` for a legitimately issued credential.
+
+### How this contract prevents archival
+
+Every write and read operation calls `extend_ttl` on all affected entries:
+
+| Entry type | Storage kind | TTL strategy |
+|---|---|---|
+| `Credential(token_id)` | Persistent | Extended to **6,312,000 ledgers (~1 year)** on every write and read |
+| `HashIndex(hash)` | Persistent | Same as above (co-extended with Credential) |
+| `TotalCredentials` | Persistent | Extended to 1 year on every write and read |
+| Instance (`Owner`, `Authorized`, `NextTokenId`, …) | Instance | Extended to 1 year on every entry point |
+
+The threshold to re-extend is set at **3,110,400 ledgers (~6 months)**. An `extend_ttl` call is a no-op when the current TTL is already above the threshold, so the cost is zero on most reads.
+
+### Constants (in `src/lib.rs`)
+
+```rust
+const PERSISTENT_BUMP_AMOUNT: u32 = 6_312_000; // max_entry_ttl (protocol 26)
+const PERSISTENT_THRESHOLD:   u32 = 3_110_400; // re-extend when < 6 months remain
+const INSTANCE_BUMP_AMOUNT:   u32 = 6_312_000;
+const INSTANCE_THRESHOLD:     u32 = 3_110_400;
+```
+
+### Public bump entry-point
+
+Anyone (no authorization required) can call `bump_credential(token_id)` to extend the TTL of a single credential and its hash index. This allows:
+
+- **Off-chain keepers / bots** to maintain credentials with a periodic sweep.
+- **Credential holders** to keep their own credential alive.
+- **Third-party verifiers** to ensure a credential they rely on stays accessible.
+
+```bash
+soroban contract invoke \
+  --id <CONTRACT_ID> \
+  --network testnet \
+  -- \
+  bump_credential \
+  --token_id 1
+```
+
+### Archival & restore model
+
+If an entry's TTL expires before it is bumped, the network archives it. The entry is no longer readable until it is restored via `RestoreFootprintOp`. After restoration the entry can be bumped again.
+
+Restoration is an off-chain operation performed via the Stellar CLI or Horizon API and is outside the scope of this contract. See [Stellar docs — restoring archived data](https://developers.stellar.org/docs/learn/smart-contract-internals/persisting-data) for details.
+
+### Recommended off-chain TTL maintenance
+
+For production deployments:
+1. Run a keeper bot that queries all issued token IDs and calls `bump_credential` for each one on a weekly basis.
+2. Monitor contract instance TTL and call `total_credentials` (which also bumps instance storage) periodically.
+3. Set alerts when a credential's live-until ledger falls below 1,000,000 (≈ 60 days).
+
 ## Security Notes
 
 ⚠️ **Critical**:
@@ -303,6 +360,7 @@ View deployed contracts on Stellar Expert:
 - Verify contract IDs on Stellar Expert before interactions
 - Implement proper access control in backend systems
 - Monitor for unauthorized issuers
+- Run a keeper bot to extend credential TTLs (see Storage Archival section above)
 
 ## License
 

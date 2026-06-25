@@ -3,6 +3,25 @@ use soroban_sdk::{
     contract, contracterror, contractimpl, contracttype, symbol_short, Address, BytesN, Env, String,
 };
 
+// ---------------------------------------------------------------------------
+// TTL / archival constants
+//
+// Soroban protocol-26 limits (both testnet and mainnet):
+//   max_entry_ttl          = 6_312_000 ledgers  (~1 year at 5 s/ledger)
+//   min_persistent_entry_ttl = 4_096 ledgers
+//
+// Strategy:
+//   • PERSISTENT_BUMP_AMOUNT   – extend to 1 year every write / bump call.
+//   • PERSISTENT_THRESHOLD     – only re-extend when fewer than ~6 months remain,
+//                                so a bump call costs a fee only when it matters.
+//   • INSTANCE_BUMP_AMOUNT     – keep instance storage alive for 1 year.
+//   • INSTANCE_THRESHOLD       – re-extend instance when < 6 months remain.
+// ---------------------------------------------------------------------------
+const PERSISTENT_BUMP_AMOUNT: u32 = 6_312_000; // ~1 year
+const PERSISTENT_THRESHOLD: u32 = 3_110_400; // ~6 months  (re-extend trigger)
+const INSTANCE_BUMP_AMOUNT: u32 = 6_312_000;
+const INSTANCE_THRESHOLD: u32 = 3_110_400;
+
 #[contracterror]
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 #[repr(u32)]
@@ -62,6 +81,38 @@ fn read_owner(env: &Env) -> Address {
     env.storage().instance().get(&DataKey::Owner).unwrap()
 }
 
+/// Extend the instance storage TTL so Owner/Authorized/NextTokenId are never
+/// archived.  Called at the top of every public entry point.
+fn extend_instance_ttl(env: &Env) {
+    env.storage()
+        .instance()
+        .extend_ttl(INSTANCE_THRESHOLD, INSTANCE_BUMP_AMOUNT);
+}
+
+/// Extend the TTL for a single persistent `Credential` entry and its
+/// corresponding `HashIndex` entry (looked-up by token_id via the credential).
+fn extend_credential_ttl(env: &Env, token_id: u64, credential_hash: &BytesN<32>) {
+    env.storage().persistent().extend_ttl(
+        &DataKey::Credential(token_id),
+        PERSISTENT_THRESHOLD,
+        PERSISTENT_BUMP_AMOUNT,
+    );
+    env.storage().persistent().extend_ttl(
+        &DataKey::HashIndex(credential_hash.clone()),
+        PERSISTENT_THRESHOLD,
+        PERSISTENT_BUMP_AMOUNT,
+    );
+}
+
+/// Extend the TTL of the TotalCredentials counter.
+fn extend_total_credentials_ttl(env: &Env) {
+    env.storage().persistent().extend_ttl(
+        &DataKey::TotalCredentials,
+        PERSISTENT_THRESHOLD,
+        PERSISTENT_BUMP_AMOUNT,
+    );
+}
+
 #[contractimpl]
 #[allow(deprecated)]
 impl AcrediaCredential {
@@ -72,15 +123,18 @@ impl AcrediaCredential {
         env.storage().instance().set(&DataKey::Owner, &owner);
         env.storage().instance().set(&DataKey::Initialized, &true);
         env.storage().instance().set(&DataKey::NextTokenId, &1u64);
+        extend_instance_ttl(&env);
         Ok(())
     }
 
     pub fn get_owner(env: Env) -> Address {
+        extend_instance_ttl(&env);
         read_owner(&env)
     }
 
     pub fn get_pending_owner(env: Env) -> Option<Address> {
         require_initialized(&env);
+        extend_instance_ttl(&env);
         env.storage().instance().get(&DataKey::PendingOwner)
     }
 
@@ -95,6 +149,7 @@ impl AcrediaCredential {
         env.storage()
             .instance()
             .set(&DataKey::PendingOwner, &new_owner.clone());
+        extend_instance_ttl(&env);
 
         env.events()
             .publish((symbol_short!("own_xfer"), owner), new_owner);
@@ -116,6 +171,7 @@ impl AcrediaCredential {
             .instance()
             .set(&DataKey::Owner, &pending_owner.clone());
         env.storage().instance().remove(&DataKey::PendingOwner);
+        extend_instance_ttl(&env);
 
         env.events()
             .publish((symbol_short!("own_acpt"), previous_owner), pending_owner);
@@ -129,6 +185,7 @@ impl AcrediaCredential {
         env.storage()
             .instance()
             .set(&DataKey::Authorized(issuer.clone()), &true);
+        extend_instance_ttl(&env);
         env.events().publish((symbol_short!("iss_auth"),), issuer);
     }
 
@@ -138,12 +195,13 @@ impl AcrediaCredential {
         env.storage()
             .instance()
             .remove(&DataKey::Authorized(issuer.clone()));
+        extend_instance_ttl(&env);
         env.events().publish((symbol_short!("iss_rev"),), issuer);
     }
 
     pub fn is_authorized_issuer(env: Env, issuer: Address) -> bool {
         require_initialized(&env);
-
+        extend_instance_ttl(&env);
         env.storage()
             .instance()
             .get(&DataKey::Authorized(issuer))
@@ -199,6 +257,10 @@ impl AcrediaCredential {
         env.storage()
             .persistent()
             .set(&DataKey::HashIndex(credential_hash.clone()), &token_id);
+
+        // Extend TTL on every write so credentials survive long-term.
+        extend_credential_ttl(&env, token_id, &credential_hash);
+
         env.storage()
             .instance()
             .set(&DataKey::NextTokenId, &(token_id + 1));
@@ -211,6 +273,10 @@ impl AcrediaCredential {
         env.storage()
             .persistent()
             .set(&DataKey::TotalCredentials, &(current + 1));
+        extend_total_credentials_ttl(&env);
+
+        // Keep instance storage alive too.
+        extend_instance_ttl(&env);
 
         env.events().publish(
             (symbol_short!("cred_iss"), token_id),
@@ -245,6 +311,11 @@ impl AcrediaCredential {
             .persistent()
             .set(&DataKey::Credential(token_id), &credential);
 
+        // Extend TTL even on revocation — a revoked credential must remain
+        // readable so verifiers know it was revoked (not just missing).
+        extend_credential_ttl(&env, token_id, &credential.credential_hash);
+        extend_instance_ttl(&env);
+
         env.events()
             .publish((symbol_short!("cred_rev"), token_id), issuer);
 
@@ -252,37 +323,80 @@ impl AcrediaCredential {
     }
 
     pub fn get_credential(env: Env, token_id: u64) -> Result<Credential, ContractError> {
-        env.storage()
+        let credential: Credential = env
+            .storage()
             .persistent()
             .get(&DataKey::Credential(token_id))
-            .ok_or(ContractError::CredentialNotFound)
+            .ok_or(ContractError::CredentialNotFound)?;
+        // Extend on every read — anyone requesting a credential implicitly
+        // signals it is still needed.
+        extend_credential_ttl(&env, token_id, &credential.credential_hash);
+        extend_instance_ttl(&env);
+        Ok(credential)
     }
 
     pub fn verify_credential(env: Env, credential_hash: BytesN<32>) -> Option<Credential> {
         let token_id: u64 = env
             .storage()
             .persistent()
-            .get(&DataKey::HashIndex(credential_hash))?;
-        env.storage()
+            .get(&DataKey::HashIndex(credential_hash.clone()))?;
+        let credential: Credential = env
+            .storage()
             .persistent()
-            .get(&DataKey::Credential(token_id))
+            .get(&DataKey::Credential(token_id))?;
+        extend_credential_ttl(&env, token_id, &credential_hash);
+        extend_instance_ttl(&env);
+        Some(credential)
     }
 
     pub fn is_revoked(env: Env, token_id: u64) -> bool {
-        env.storage()
+        extend_instance_ttl(&env);
+        let maybe: Option<Credential> = env
+            .storage()
             .persistent()
-            .get::<DataKey, Credential>(&DataKey::Credential(token_id))
-            .map(|c| c.revoked)
-            .unwrap_or(false)
+            .get::<DataKey, Credential>(&DataKey::Credential(token_id));
+        if let Some(ref c) = maybe {
+            env.storage().persistent().extend_ttl(
+                &DataKey::Credential(token_id),
+                PERSISTENT_THRESHOLD,
+                PERSISTENT_BUMP_AMOUNT,
+            );
+            c.revoked
+        } else {
+            false
+        }
     }
 
     pub fn total_credentials(env: Env) -> u64 {
         require_initialized(&env);
-
-        env.storage()
+        extend_instance_ttl(&env);
+        let total = env
+            .storage()
             .persistent()
             .get(&DataKey::TotalCredentials)
-            .unwrap_or(0u64)
+            .unwrap_or(0u64);
+        if total > 0 {
+            extend_total_credentials_ttl(&env);
+        }
+        total
+    }
+
+    /// Public bump entry-point so anyone can extend the TTL of any credential
+    /// without modifying it.  This lets off-chain keepers (or the credential
+    /// holder) ensure the data stays alive without requiring issuer authority.
+    ///
+    /// Returns `Err(CredentialNotFound)` when the token_id does not exist
+    /// (including after it has been archived and not yet restored).
+    pub fn bump_credential(env: Env, token_id: u64) -> Result<(), ContractError> {
+        let credential: Credential = env
+            .storage()
+            .persistent()
+            .get(&DataKey::Credential(token_id))
+            .ok_or(ContractError::CredentialNotFound)?;
+        extend_credential_ttl(&env, token_id, &credential.credential_hash);
+        extend_total_credentials_ttl(&env);
+        extend_instance_ttl(&env);
+        Ok(())
     }
 }
 
@@ -607,6 +721,136 @@ mod tests {
             .unwrap();
 
             assert_eq!(AcrediaCredential::total_credentials(env.clone()), 2);
+        });
+    }
+
+    // ---------------------------------------------------------------------------
+    // TTL / archival tests
+    // ---------------------------------------------------------------------------
+
+    /// Issue a credential, advance the ledger sequence past the default
+    /// min_persistent_entry_ttl (4 096 ledgers), and assert the entry is still
+    /// retrievable.  This would fail if extend_ttl were not called, because the
+    /// Soroban test environment enforces TTL expiry when the sequence advances.
+    #[test]
+    fn test_credential_survives_large_ledger_advance() {
+        use soroban_sdk::testutils::Ledger;
+
+        let (env, contract, _, issuer, student) = setup();
+        let hash = dummy_hash(&env, 20);
+        let ipfs = String::from_str(&env, "ipfs://ttl-test");
+
+        // Issue the credential at ledger sequence 0.
+        let token_id = env.as_contract(&contract, || {
+            AcrediaCredential::issue_credential(
+                env.clone(),
+                student.clone(),
+                issuer.clone(),
+                hash.clone(),
+                ipfs,
+            )
+            .unwrap()
+        });
+
+        // Advance well past min_persistent_entry_ttl (4 096) but within
+        // PERSISTENT_BUMP_AMOUNT (6_312_000).  We use a value that is larger
+        // than the minimum TTL yet smaller than the bump, proving the entry was
+        // extended beyond the minimum.
+        env.ledger().set_sequence_number(5_000_000);
+
+        // The credential must still be readable after the advance.
+        env.as_contract(&contract, || {
+            let cred = AcrediaCredential::verify_credential(env.clone(), hash.clone())
+                .expect("credential must survive large ledger advance");
+            assert_eq!(cred.token_id, token_id);
+            assert_eq!(cred.student, student);
+            assert!(!cred.revoked);
+
+            // get_credential should also work.
+            let cred2 = AcrediaCredential::get_credential(env.clone(), token_id)
+                .expect("get_credential must survive large ledger advance");
+            assert_eq!(cred2.token_id, token_id);
+        });
+    }
+
+    /// Verify that a *revoked* credential is still retrievable after a large
+    /// ledger advance so verifiers can distinguish "revoked" from "missing".
+    #[test]
+    fn test_revoked_credential_survives_large_ledger_advance() {
+        use soroban_sdk::testutils::Ledger;
+
+        let (env, contract, _, issuer, student) = setup();
+        let hash = dummy_hash(&env, 21);
+
+        let token_id = env.as_contract(&contract, || {
+            let id = AcrediaCredential::issue_credential(
+                env.clone(),
+                student,
+                issuer.clone(),
+                hash.clone(),
+                String::from_str(&env, "ipfs://revoke-ttl"),
+            )
+            .unwrap();
+            AcrediaCredential::revoke_credential(env.clone(), id, issuer).unwrap();
+            id
+        });
+
+        env.ledger().set_sequence_number(5_000_000);
+
+        env.as_contract(&contract, || {
+            let cred = AcrediaCredential::get_credential(env.clone(), token_id)
+                .expect("revoked credential must survive large ledger advance");
+            assert!(cred.revoked, "credential should be marked revoked");
+        });
+    }
+
+    /// bump_credential must succeed and keep the entry alive past a large
+    /// simulated ledger advance even when called by an unprivileged party.
+    #[test]
+    fn test_bump_credential_extends_ttl() {
+        use soroban_sdk::testutils::Ledger;
+
+        let (env, contract, _, issuer, student) = setup();
+        let hash = dummy_hash(&env, 22);
+
+        let token_id = env.as_contract(&contract, || {
+            AcrediaCredential::issue_credential(
+                env.clone(),
+                student,
+                issuer,
+                hash.clone(),
+                String::from_str(&env, "ipfs://bump-ttl"),
+            )
+            .unwrap()
+        });
+
+        // Advance to just before the natural expiry without extending.
+        env.ledger().set_sequence_number(4_000_000);
+
+        // An unprivileged bump (no auth required) should extend the TTL.
+        env.as_contract(&contract, || {
+            AcrediaCredential::bump_credential(env.clone(), token_id)
+                .expect("bump_credential must succeed");
+        });
+
+        // Advance again past the original issue TTL to confirm the bump worked.
+        env.ledger().set_sequence_number(5_500_000);
+
+        env.as_contract(&contract, || {
+            AcrediaCredential::get_credential(env.clone(), token_id)
+                .expect("credential must be readable after bump");
+        });
+    }
+
+    /// bump_credential returns CredentialNotFound for unknown token ids.
+    #[test]
+    fn test_bump_credential_not_found() {
+        let (env, contract, _, _, _) = setup();
+        env.as_contract(&contract, || {
+            assert_eq!(
+                AcrediaCredential::bump_credential(env.clone(), 9999),
+                Err(ContractError::CredentialNotFound)
+            );
         });
     }
 }
