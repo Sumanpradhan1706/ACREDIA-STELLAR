@@ -5,8 +5,15 @@ import {
     hasServiceRoleEnv,
     requireAuthenticatedRequest,
 } from '@/lib/serverAuth';
+import { enforceRateLimit } from '@/lib/rateLimit';
 
 export const dynamic = 'force-dynamic';
+
+const STUDENT_CREDENTIALS_RATE_LIMIT = {
+    windowSeconds: 60,
+    maxRequests: 60,
+    prefix: 'student-credentials',
+} as const;
 
 type CredentialRow = {
     id: string;
@@ -21,6 +28,11 @@ type CredentialRow = {
 
 export async function GET(request: NextRequest) {
     try {
+        const rateLimitResponse = enforceRateLimit(request, STUDENT_CREDENTIALS_RATE_LIMIT);
+        if (rateLimitResponse) {
+            return rateLimitResponse;
+        }
+
         const authCheck = await requireAuthenticatedRequest(request);
         if (!authCheck.ok) {
             return NextResponse.json(

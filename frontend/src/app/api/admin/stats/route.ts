@@ -1,10 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServiceRoleClient, requireAdminRequest } from '@/lib/serverAuth';
+import { enforceRateLimit } from '@/lib/rateLimit';
 
 export const dynamic = 'force-dynamic';
 
+const ADMIN_STATS_RATE_LIMIT = {
+    windowSeconds: 60,
+    maxRequests: 60,
+    prefix: 'admin-stats',
+} as const;
+
 export async function GET(request: NextRequest) {
     try {
+        const rateLimitResponse = enforceRateLimit(request, ADMIN_STATS_RATE_LIMIT);
+        if (rateLimitResponse) {
+            return rateLimitResponse;
+        }
+
         const adminCheck = await requireAdminRequest(request);
         if (!adminCheck.ok) {
             return NextResponse.json(

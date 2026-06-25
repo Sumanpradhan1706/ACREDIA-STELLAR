@@ -1,10 +1,22 @@
 import { NextResponse } from 'next/server';
 import { pinJsonToPinata, validatePinataJson } from '@/lib/ipfsServer';
+import { enforceRateLimit } from '@/lib/rateLimit';
 
 export const dynamic = 'force-dynamic';
 
+const IPFS_JSON_RATE_LIMIT = {
+    windowSeconds: 60,
+    maxRequests: 20,
+    prefix: 'ipfs-json',
+} as const;
+
 export async function POST(request: Request) {
     try {
+        const rateLimitResponse = enforceRateLimit(request, IPFS_JSON_RATE_LIMIT);
+        if (rateLimitResponse) {
+            return rateLimitResponse;
+        }
+
         const payload = await request.json();
         const content = payload?.content;
         const validationError = validatePinataJson(content);

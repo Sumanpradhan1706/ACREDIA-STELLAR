@@ -1,10 +1,22 @@
 import { NextResponse } from 'next/server';
 import { pinFileToPinata, validatePinataFile } from '@/lib/ipfsServer';
+import { enforceRateLimit } from '@/lib/rateLimit';
 
 export const dynamic = 'force-dynamic';
 
+const IPFS_FILE_RATE_LIMIT = {
+    windowSeconds: 60,
+    maxRequests: 20,
+    prefix: 'ipfs-file',
+} as const;
+
 export async function POST(request: Request) {
     try {
+        const rateLimitResponse = enforceRateLimit(request, IPFS_FILE_RATE_LIMIT);
+        if (rateLimitResponse) {
+            return rateLimitResponse;
+        }
+
         const formData = await request.formData();
         const file = formData.get('file');
 

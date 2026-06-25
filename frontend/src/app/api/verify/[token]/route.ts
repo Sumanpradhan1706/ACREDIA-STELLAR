@@ -2,14 +2,26 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServiceRoleClient } from '@/lib/serverAuth';
 import { getCredential, isRevoked } from '@/lib/contractReads';
 import { deriveCredentialHash } from '@/lib/credentialHash';
+import { enforceRateLimit } from '@/lib/rateLimit';
 
 export const dynamic = 'force-dynamic';
 
+const VERIFY_RATE_LIMIT = {
+    windowSeconds: 60,
+    maxRequests: 10,
+    prefix: 'verify',
+} as const;
+
 export async function GET(
-    _request: NextRequest,
+    request: NextRequest,
     { params }: { params: Promise<{ token: string }> }
 ) {
     try {
+        const rateLimitResponse = enforceRateLimit(request, VERIFY_RATE_LIMIT);
+        if (rateLimitResponse) {
+            return rateLimitResponse;
+        }
+
         const { token: rawToken } = await params;
         const token = rawToken?.trim();
 

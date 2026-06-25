@@ -1,11 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServiceRoleClient, requireAdminRequest } from '@/lib/serverAuth';
 import { verifyAdminAuthorizationTransaction } from '@/lib/adminAuthorizationVerification';
+import { enforceRateLimit } from '@/lib/rateLimit';
 
 export const dynamic = 'force-dynamic';
 
+const ADMIN_UPDATE_AUTHORIZATION_RATE_LIMIT = {
+    windowSeconds: 60,
+    maxRequests: 60,
+    prefix: 'admin-update-authorization',
+} as const;
+
 export async function POST(request: NextRequest) {
     try {
+        const rateLimitResponse = enforceRateLimit(request, ADMIN_UPDATE_AUTHORIZATION_RATE_LIMIT);
+        if (rateLimitResponse) {
+            return rateLimitResponse;
+        }
+
         const adminCheck = await requireAdminRequest(request);
         if (!adminCheck.ok) {
             return NextResponse.json(
