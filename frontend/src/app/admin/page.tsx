@@ -128,7 +128,7 @@ function AdminDashboardContent() {
             <div className="flex min-h-screen flex-col bg-linear-to-br from-gray-50 via-teal-50 to-cyan-50">
                 <div className="p-6 md:p-10 mx-auto w-full max-w-7xl">
                     <div className="flex items-center space-x-4 mb-8">
-                        <Skeleton className="h-10 w-10 rounded-xl" />
+                        <Skeleton className="h-11 w-11 rounded-xl" />
                         <div className="space-y-2">
                             <Skeleton className="h-8 w-48" />
                             <Skeleton className="h-4 w-64" />
@@ -178,7 +178,7 @@ function AdminDashboardContent() {
         <DashboardShell
             title="Admin Dashboard"
             subtitle="Manage institution authorizations and system settings"
-            icon={<Shield className="h-10 w-10 text-red-600" />}
+            icon={<Shield className="h-11 w-11 text-red-600" />}
             brandBadge="ADMIN"
             onSignOut={handleSignOut}
         >
@@ -240,7 +240,7 @@ function AdminDashboardContent() {
             <div className="mb-8 grid grid-cols-1 gap-6 md:grid-cols-3">
                 <Card className="border-gray-200 bg-white p-6 shadow-lg">
                     <div className="mb-2 flex items-center space-x-3">
-                        <Users className="h-8 w-8 text-teal-600" />
+                        <Users className="h-11 w-11 text-teal-600" />
                         <h3 className="text-lg font-semibold text-gray-900">Total Institutions</h3>
                     </div>
                     {loadingStats ? (
@@ -259,7 +259,7 @@ function AdminDashboardContent() {
 
                 <Card className="border-gray-200 bg-white p-6 shadow-lg">
                     <div className="mb-2 flex items-center space-x-3">
-                        <CheckCircle2 className="h-8 w-8 text-green-600" />
+                        <CheckCircle2 className="h-11 w-11 text-green-600" />
                         <h3 className="text-lg font-semibold text-gray-900">Authorized</h3>
                     </div>
                     {loadingStats ? (
@@ -278,7 +278,7 @@ function AdminDashboardContent() {
 
                 <Card className="border-gray-200 bg-white p-6 shadow-lg">
                     <div className="mb-2 flex items-center space-x-3">
-                        <Shield className="h-8 w-8 text-blue-600" />
+                        <Shield className="h-11 w-11 text-blue-600" />
                         <h3 className="text-lg font-semibold text-gray-900">Total Credentials</h3>
                     </div>
                     {loadingStats ? (

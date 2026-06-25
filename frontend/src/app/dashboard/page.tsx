@@ -218,7 +218,7 @@ function DashboardContent() {
                     <Card className="border-red-200 bg-gradient-to-br from-red-50 to-orange-50 p-8 shadow-lg">
                         <div className="mb-6 flex items-center space-x-4">
                             <div className="rounded-2xl bg-red-100 p-3">
-                                <Shield className="h-10 w-10 text-red-600" />
+                                <Shield className="h-11 w-11 text-red-600" />
                             </div>
                             <div>
                                 <h2 className="text-2xl font-bold text-gray-900">
@@ -233,7 +233,7 @@ function DashboardContent() {
                         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                             <Link href="/admin">
                                 <div className="group cursor-pointer rounded-xl border border-red-200 bg-white p-6 transition-all hover:border-red-400 hover:shadow-md">
-                                    <Shield className="mb-3 h-8 w-8 text-red-600 transition-transform group-hover:scale-110" />
+                                    <Shield className="mb-3 h-11 w-11 text-red-600 transition-transform group-hover:scale-110" />
                                     <h3 className="mb-1 font-bold text-gray-900">
                                         Admin Dashboard
                                     </h3>
@@ -247,7 +247,7 @@ function DashboardContent() {
                                 </div>
                             </Link>
                             <div className="rounded-xl border border-gray-200 bg-white p-6">
-                                <User className="mb-3 h-8 w-8 text-teal-600" />
+                                <User className="mb-3 h-11 w-11 text-teal-600" />
                                 <h3 className="mb-1 font-bold text-gray-900">Connected Wallet</h3>
                                 <p className="mb-2 text-sm text-gray-500">Your Stellar address:</p>
                                 <p className="break-all text-xs font-mono text-gray-700">

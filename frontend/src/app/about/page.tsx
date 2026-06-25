@@ -460,7 +460,7 @@ export default function AboutPage() {
                     {/* Institution Dashboard */}
                     <Card className="bg-white border border-gray-200 p-8 hover:shadow-2xl transition-all">
                         <div className="bg-gradient-to-br from-teal-500 to-cyan-500 w-16 h-16 rounded-2xl flex items-center justify-center mb-6">
-                            <Building2 className="w-8 h-8 text-white" />
+                            <Building2 className="w-11 h-11 text-white" />
                         </div>
                         <h3 className="text-2xl font-bold text-gray-900 mb-4">
                             Institution Dashboard
@@ -506,7 +506,7 @@ export default function AboutPage() {
                     {/* Student Web Wallet */}
                     <Card className="bg-white border border-gray-200 p-8 hover:shadow-2xl transition-all">
                         <div className="bg-gradient-to-br from-cyan-500 to-blue-500 w-16 h-16 rounded-2xl flex items-center justify-center mb-6">
-                            <GraduationCap className="w-8 h-8 text-white" />
+                            <GraduationCap className="w-11 h-11 text-white" />
                         </div>
                         <h3 className="text-2xl font-bold text-gray-900 mb-4">
                             Student Web Wallet
@@ -550,7 +550,7 @@ export default function AboutPage() {
                     {/* Verification Portal */}
                     <Card className="bg-white border border-gray-200 p-8 hover:shadow-2xl transition-all">
                         <div className="bg-gradient-to-br from-purple-500 to-pink-500 w-16 h-16 rounded-2xl flex items-center justify-center mb-6">
-                            <Search className="w-8 h-8 text-white" />
+                            <Search className="w-11 h-11 text-white" />
                         </div>
                         <h3 className="text-2xl font-bold text-gray-900 mb-4">
                             Global Verification Portal
@@ -592,7 +592,7 @@ export default function AboutPage() {
                     {/* AI Credential Engine */}
                     <Card className="bg-white border border-gray-200 p-8 hover:shadow-2xl transition-all">
                         <div className="bg-gradient-to-br from-orange-500 to-red-500 w-16 h-16 rounded-2xl flex items-center justify-center mb-6">
-                            <Database className="w-8 h-8 text-white" />
+                            <Database className="w-11 h-11 text-white" />
                         </div>
                         <h3 className="text-2xl font-bold text-gray-900 mb-4">
                             AI Credential Engine
@@ -650,7 +650,7 @@ export default function AboutPage() {
                     <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
                         <Card className="border border-gray-200 p-8 text-center hover:shadow-xl transition-all">
                             <div className="bg-gradient-to-br from-violet-500 to-purple-500 w-16 h-16 rounded-2xl flex items-center justify-center mb-6 mx-auto">
-                                <Fingerprint className="w-8 h-8 text-white" />
+                                <Fingerprint className="w-11 h-11 text-white" />
                             </div>
                             <h3 className="text-2xl font-bold text-gray-900 mb-3">
                                 Soulbound NFTs
@@ -667,7 +667,7 @@ export default function AboutPage() {
 
                         <Card className="border border-gray-200 p-8 text-center hover:shadow-xl transition-all">
                             <div className="bg-gradient-to-br from-cyan-500 to-blue-500 w-16 h-16 rounded-2xl flex items-center justify-center mb-6 mx-auto">
-                                <Eye className="w-8 h-8 text-white" />
+                                <Eye className="w-11 h-11 text-white" />
                             </div>
                             <h3 className="text-2xl font-bold text-gray-900 mb-3">
                                 Zero-Knowledge Proofs
@@ -684,7 +684,7 @@ export default function AboutPage() {
 
                         <Card className="border border-gray-200 p-8 text-center hover:shadow-xl transition-all">
                             <div className="bg-gradient-to-br from-pink-500 to-rose-500 w-16 h-16 rounded-2xl flex items-center justify-center mb-6 mx-auto">
-                                <Database className="w-8 h-8 text-white" />
+                                <Database className="w-11 h-11 text-white" />
                             </div>
                             <h3 className="text-2xl font-bold text-gray-900 mb-3">
                                 AI Verification
@@ -715,7 +715,7 @@ export default function AboutPage() {
 
                         <div className="grid md:grid-cols-2 gap-8">
                             <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
-                                <CloudUpload className="w-10 h-10 mb-4" />
+                                <CloudUpload className="w-11 h-11 mb-4" />
                                 <h3 className="text-xl font-bold mb-3">IPFS Storage</h3>
                                 <p className="text-teal-50">
                                     Credentials stored on InterPlanetary File System (IPFS) via
@@ -725,7 +725,7 @@ export default function AboutPage() {
                             </div>
 
                             <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
-                                <Coins className="w-10 h-10 mb-4" />
+                                <Coins className="w-11 h-11 mb-4" />
                                 <h3 className="text-xl font-bold mb-3">Smart Contracts</h3>
                                 <p className="text-teal-50">
                                     Single unified AcrediaCredential Soroban contract handles
@@ -735,7 +735,7 @@ export default function AboutPage() {
                             </div>
 
                             <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
-                                <Lock className="w-10 h-10 mb-4" />
+                                <Lock className="w-11 h-11 mb-4" />
                                 <h3 className="text-xl font-bold mb-3">Stellar Testnet</h3>
                                 <p className="text-teal-50">
                                     Deployed on Stellar Testnet via Soroban — ultra-low fees (~0.001
@@ -745,7 +745,7 @@ export default function AboutPage() {
                             </div>
 
                             <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
-                                <Shield className="w-10 h-10 mb-4" />
+                                <Shield className="w-11 h-11 mb-4" />
                                 <h3 className="text-xl font-bold mb-3">Access Control</h3>
                                 <p className="text-teal-50">
                                     Role-based permissions managed through smart contracts ensuring

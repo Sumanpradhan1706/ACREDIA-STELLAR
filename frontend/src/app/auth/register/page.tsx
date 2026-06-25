@@ -117,7 +117,7 @@ function RegisterForm() {
                 <Card className="w-full max-w-md border-gray-200 bg-white shadow-2xl p-8">
                     <div className="flex flex-col items-center mb-8">
                         <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-teal-50">
-                            <Mail className="h-8 w-8 text-teal-600" />
+                            <Mail className="h-11 w-11 text-teal-600" />
                         </div>
                         <h1 className="text-3xl font-bold text-gray-900 mb-2">Check Your Email</h1>
                         <p className="text-gray-600 text-center">
@@ -178,7 +178,7 @@ function RegisterForm() {
                     </p>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4 mb-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                     <button
                         type="button"
                         onClick={() => setRole('institution')}
@@ -190,7 +190,7 @@ function RegisterForm() {
                         }`}
                     >
                         <Building2
-                            className={`h-8 w-8 mx-auto mb-2 ${role === 'institution' ? 'text-blue-600' : 'text-slate-700'}`}
+                            className={`h-11 w-11 mx-auto mb-2 ${role === 'institution' ? 'text-blue-600' : 'text-slate-700'}`}
                         />
                         <p
                             className={`${role === 'institution' ? 'text-blue-700 font-medium' : 'text-slate-700 font-medium'}`}
@@ -209,7 +209,7 @@ function RegisterForm() {
                         }`}
                     >
                         <GraduationCap
-                            className={`h-8 w-8 mx-auto mb-2 ${role === 'student' ? 'text-blue-600' : 'text-slate-700'}`}
+                            className={`h-11 w-11 mx-auto mb-2 ${role === 'student' ? 'text-blue-600' : 'text-slate-700'}`}
                         />
                         <p
                             className={`${role === 'student' ? 'text-blue-700 font-medium' : 'text-slate-700 font-medium'}`}

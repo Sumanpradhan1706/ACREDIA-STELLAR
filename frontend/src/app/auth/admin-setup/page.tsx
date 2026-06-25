@@ -25,7 +25,7 @@ export default function AdminSetupPage() {
                                 height={80}
                                 className="rounded-lg"
                             />
-                            <Shield className="absolute -bottom-2 -right-2 h-8 w-8 rounded-full bg-white p-1 text-red-600 shadow-lg" />
+                            <Shield className="absolute -bottom-2 -right-2 h-11 w-11 rounded-full bg-white p-1 text-red-600 shadow-lg" />
                         </div>
                     </div>
                     <h1 className="text-3xl font-bold text-gray-900">Admin Setup Locked</h1>

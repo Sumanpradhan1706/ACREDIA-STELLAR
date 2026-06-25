@@ -83,7 +83,7 @@ export default function AdminLoginPage() {
                                 height={80}
                                 className="rounded-lg"
                             />
-                            <Shield className="absolute -bottom-2 -right-2 h-8 w-8 text-red-600 bg-white rounded-full p-1 shadow-lg" />
+                            <Shield className="absolute -bottom-2 -right-2 h-11 w-11 text-red-600 bg-white rounded-full p-1 shadow-lg" />
                         </div>
                     </div>
                     <h1 className="text-3xl font-bold text-gray-900">Admin Portal</h1>

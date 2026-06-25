@@ -325,7 +325,7 @@ export default function StudentSolutionsPage() {
 
                     <div className="max-w-4xl mx-auto space-y-6">
                         <div className="flex items-start space-x-4">
-                            <div className="flex-shrink-0 w-10 h-10 bg-cyan-600 text-white rounded-full flex items-center justify-center font-bold text-lg">
+                            <div className="flex-shrink-0 w-11 h-11 bg-cyan-600 text-white rounded-full flex items-center justify-center font-bold text-lg">
                                 1
                             </div>
                             <div>
@@ -340,7 +340,7 @@ export default function StudentSolutionsPage() {
                         </div>
 
                         <div className="flex items-start space-x-4">
-                            <div className="flex-shrink-0 w-10 h-10 bg-cyan-600 text-white rounded-full flex items-center justify-center font-bold text-lg">
+                            <div className="flex-shrink-0 w-11 h-11 bg-cyan-600 text-white rounded-full flex items-center justify-center font-bold text-lg">
                                 2
                             </div>
                             <div>
@@ -355,7 +355,7 @@ export default function StudentSolutionsPage() {
                         </div>
 
                         <div className="flex items-start space-x-4">
-                            <div className="flex-shrink-0 w-10 h-10 bg-cyan-600 text-white rounded-full flex items-center justify-center font-bold text-lg">
+                            <div className="flex-shrink-0 w-11 h-11 bg-cyan-600 text-white rounded-full flex items-center justify-center font-bold text-lg">
                                 3
                             </div>
                             <div>

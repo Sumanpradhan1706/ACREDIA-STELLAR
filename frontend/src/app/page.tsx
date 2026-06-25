@@ -95,7 +95,7 @@ export default function Home() {
                             type="button"
                             variant="ghost"
                             size="icon"
-                            className="h-10 w-10"
+                            className="h-11 w-11"
                             aria-label="Toggle menu"
                             onClick={() => {
                                 setMobileNavOpen((prev) => !prev);
@@ -136,7 +136,7 @@ export default function Home() {
                                 </Button>
 
                                 {mobileSolutionsOpen && (
-                                    <div className="grid grid-cols-1 gap-1.5 rounded-xl border border-gray-100 bg-gray-50 p-1.5">
+                                    <div className="grid grid-cols-1 md:grid-cols-1 gap-1.5 rounded-xl border border-gray-100 bg-gray-50 p-1.5">
                                         <button
                                             onClick={(e) => {
                                                 handleDashboardClick(e, 'institution');
@@ -433,7 +433,7 @@ export default function Home() {
                             </div>
 
                             {/* Stats Bar */}
-                            <div className="grid grid-cols-3 sm:flex sm:items-center gap-3 sm:gap-8 pt-5 sm:pt-8 border-t-2 border-gray-200">
+                            <div className="grid grid-cols-1 md:grid-cols-3 sm:flex sm:items-center gap-3 sm:gap-8 pt-5 sm:pt-8 border-t-2 border-gray-200">
                                 <div className="flex-1 text-center sm:text-left">
                                     <div className="text-2xl sm:text-4xl font-black bg-clip-text text-transparent bg-gradient-to-r from-teal-600 to-cyan-600">
                                         500+
@@ -902,7 +902,7 @@ export default function Home() {
                                 acceptance and regulatory compliance
                             </p>
 
-                            <div className="grid grid-cols-2 gap-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div className="bg-white/60 backdrop-blur-md rounded-xl p-6 border border-gray-300/50 hover:bg-white/80 hover:shadow-xl transition-all">
                                     <div className="text-3xl font-bold mb-2 text-gray-900">W3C</div>
                                     <div className="text-sm text-gray-700 font-medium">
