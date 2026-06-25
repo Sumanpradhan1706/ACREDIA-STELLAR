@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { normalizePublicSignupRole, type PublicSignupRole } from './adminAccess';
+import { normalizeEmail } from './authFlow';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
@@ -79,11 +80,12 @@ type PublicSignupData = {
     [key: string]: unknown;
 };
 
-export async function signUp(
-    email: string,
-    password: string,
-    options?: { data?: PublicSignupData },
-) {
+type PublicSignupOptions = {
+    data?: PublicSignupData;
+    emailRedirectTo?: string;
+};
+
+export async function signUp(email: string, password: string, options?: PublicSignupOptions) {
     const signupData = options?.data
         ? {
               ...options.data,
@@ -92,9 +94,12 @@ export async function signUp(
         : undefined;
 
     const { data, error } = await supabase.auth.signUp({
-        email,
+        email: normalizeEmail(email),
         password,
-        options: signupData ? { ...options, data: signupData } : options,
+        options: {
+            ...options,
+            data: signupData,
+        },
     });
 
     // Create student or institution record after successful signup
@@ -115,9 +120,33 @@ export async function signUp(
 
 export async function signIn(email: string, password: string) {
     const { data, error } = await supabase.auth.signInWithPassword({
-        email,
+        email: normalizeEmail(email),
         password,
     });
+    return { data, error };
+}
+
+export async function requestPasswordReset(email: string, redirectTo?: string) {
+    const { data, error } = await supabase.auth.resetPasswordForEmail(
+        normalizeEmail(email),
+        redirectTo ? { redirectTo } : undefined
+    );
+    return { data, error };
+}
+
+export async function updatePassword(password: string) {
+    const { data, error } = await supabase.auth.updateUser({ password });
+    return { data, error };
+}
+
+export async function resendVerificationEmail(email: string, emailRedirectTo?: string) {
+    const credentials = {
+        type: 'signup' as const,
+        email: normalizeEmail(email),
+        ...(emailRedirectTo ? { options: { emailRedirectTo } } : {}),
+    };
+
+    const { data, error } = await supabase.auth.resend(credentials);
     return { data, error };
 }
 
@@ -130,7 +159,7 @@ export async function signOut() {
 export const authHelpers = {
     async signUp(email: string, password: string, role: PublicSignupRole) {
         const { data, error } = await supabase.auth.signUp({
-            email,
+            email: normalizeEmail(email),
             password,
             options: {
                 data: {
@@ -143,10 +172,22 @@ export const authHelpers = {
 
     async signIn(email: string, password: string) {
         const { data, error } = await supabase.auth.signInWithPassword({
-            email,
+            email: normalizeEmail(email),
             password,
         });
         return { data, error };
+    },
+
+    async requestPasswordReset(email: string, redirectTo?: string) {
+        return requestPasswordReset(email, redirectTo);
+    },
+
+    async updatePassword(password: string) {
+        return updatePassword(password);
+    },
+
+    async resendVerificationEmail(email: string, emailRedirectTo?: string) {
+        return resendVerificationEmail(email, emailRedirectTo);
     },
 
     async signOut() {

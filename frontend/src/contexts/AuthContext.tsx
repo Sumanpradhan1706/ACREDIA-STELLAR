@@ -4,8 +4,8 @@ import { createContext, useContext, useEffect, useState } from 'react';
 import { User } from '@supabase/supabase-js';
 import { supabase, signOut, safeGetSession } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
-import { resolveUserRoleClient } from '@/lib/roleResolver';
-import type { AppRole, RoleState } from '@/types';
+import { normalizePublicSignupRole } from '@/lib/adminAccess';
+import { buildAuthRedirect } from '@/lib/authFlow';
 
 interface AuthContextType {
     user: User | null;
@@ -110,7 +110,11 @@ export function ProtectedRoute({
 
     useEffect(() => {
         if (!loading && !user) {
-            router.push('/auth/login');
+            const currentPath =
+                typeof window !== 'undefined'
+                    ? buildAuthRedirect(window.location.pathname, window.location.search)
+                    : '/auth/login';
+            router.push(currentPath);
         }
 
         if (
