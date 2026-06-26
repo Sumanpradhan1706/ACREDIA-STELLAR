@@ -1,0 +1,97 @@
+import { NextRequest, NextResponse } from 'next/server';
+import {
+    getServiceRoleClient,
+    hasServiceRoleEnv,
+    requireAuthenticatedRequest,
+} from '@/lib/serverAuth';
+
+export const dynamic = 'force-dynamic';
+
+export async function GET(request: NextRequest) {
+    try {
+        const authCheck = await requireAuthenticatedRequest(request);
+        if (!authCheck.ok) {
+            return NextResponse.json(
+                { success: false, error: authCheck.error },
+                { status: authCheck.status }
+            );
+        }
+
+        const supabase = hasServiceRoleEnv()
+            ? getServiceRoleClient()
+            : (() => { throw new Error('Service role key required'); })();
+
+        // ── Resolve institution row ────────────────────────────────────────────
+        const { data: institutionRow, error: instError } = await supabase
+            .from('institutions')
+            .select('id')
+            .eq('auth_user_id', authCheck.userId)
+            .maybeSingle();
+
+        if (instError) {
+            console.error('[institution/credentials] Error fetching institution row:', instError);
+            return NextResponse.json(
+                { success: false, error: 'Failed to load institution profile' },
+                { status: 500 }
+            );
+        }
+
+        if (!institutionRow?.id) {
+            return NextResponse.json(
+                { success: false, error: 'Institution not found' },
+                { status: 404 }
+            );
+        }
+
+        // ── Pagination & filter params ─────────────────────────────────────────
+        const { searchParams } = new URL(request.url);
+        const page     = Math.max(1, parseInt(searchParams.get('page')     ?? '1'));
+        const pageSize = Math.min(100, parseInt(searchParams.get('pageSize') ?? '20'));
+        const search   = searchParams.get('search')   ?? '';
+        const status   = searchParams.get('status')   ?? 'all';
+        const dateFrom = searchParams.get('dateFrom') ?? '';
+        const dateTo   = searchParams.get('dateTo')   ?? '';
+        const offset   = (page - 1) * pageSize;
+
+        // ── Build paginated query ──────────────────────────────────────────────
+        let query = supabase
+            .from('credentials')
+            .select('*', { count: 'exact' })
+            .eq('institution_id', institutionRow.id)
+            .order('issued_at', { ascending: false })
+            .range(offset, offset + pageSize - 1);
+
+        if (status === 'active')  query = query.eq('revoked', false);
+        if (status === 'revoked') query = query.eq('revoked', true);
+        if (dateFrom) query = query.gte('issued_at', dateFrom);
+        if (dateTo)   query = query.lte('issued_at', dateTo + 'T23:59:59Z');
+        if (search.trim()) {
+            const term = search.trim();
+            query = query.or(
+                `token_id.ilike.%${term}%,` +
+                `metadata->>studentName.ilike.%${term}%,` +
+                `metadata->>degree.ilike.%${term}%,` +
+                `metadata->>credentialType.ilike.%${term}%`
+            );
+        }
+
+        const { data, error, count } = await query;
+        if (error) throw error;
+
+        return NextResponse.json({
+            success: true,
+            credentials: data ?? [],
+            total: count ?? 0,
+            page,
+            pageSize,
+            totalPages: Math.ceil((count ?? 0) / pageSize),
+        });
+
+    } catch (err) {
+        console.error('[institution/credentials] Unhandled error:', err);
+        return NextResponse.json(
+            { success: false, error: 'Failed to fetch institution credentials' },
+            { status: 500 }
+        );
+    }
+}

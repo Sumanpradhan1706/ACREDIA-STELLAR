@@ -227,6 +227,28 @@ CREATE INDEX IF NOT EXISTS idx_credentials_student         ON public.credentials
 CREATE INDEX IF NOT EXISTS idx_credentials_institution     ON public.credentials (institution_id);
 CREATE INDEX IF NOT EXISTS idx_credentials_token           ON public.credentials (token_id);
 CREATE INDEX IF NOT EXISTS idx_verification_logs_credential ON public.verification_logs (credential_id);
+-- Pagination and filtering indexes (Issue #82)
+CREATE INDEX IF NOT EXISTS idx_credentials_institution_issued
+  ON public.credentials (institution_id, issued_at DESC, revoked);
+
+CREATE INDEX IF NOT EXISTS idx_credentials_student_issued
+  ON public.credentials (student_id, issued_at DESC);
+
+CREATE INDEX IF NOT EXISTS idx_credentials_fts
+  ON public.credentials USING gin(
+    to_tsvector('english',
+      COALESCE((metadata->>'studentName')::text, '') || ' ' ||
+      COALESCE((metadata->>'credentialType')::text, '') || ' ' ||
+      COALESCE((metadata->>'degree')::text, '') || ' ' ||
+      COALESCE(token_id::text, '')
+    )
+  );
+
+CREATE INDEX IF NOT EXISTS idx_credentials_institution_revoked
+  ON public.credentials (institution_id, revoked, issued_at DESC);
+
+CREATE INDEX IF NOT EXISTS idx_credentials_issued_at
+  ON public.credentials (issued_at DESC);
 
 -- ---------------------------------------------------------------------
 -- Enable Row Level Security
