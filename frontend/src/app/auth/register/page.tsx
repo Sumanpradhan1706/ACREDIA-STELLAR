@@ -12,6 +12,7 @@ import { Building2, CheckCircle2, GraduationCap, Mail } from 'lucide-react';
 import { resendVerificationEmail, signUp } from '@/lib/supabase';
 import {
     buildAuthCallbackUrl,
+    getErrorMessage,
     getPasswordRequirements,
     normalizeEmail,
     sanitizeAuthRedirect,
@@ -80,8 +81,8 @@ function RegisterForm() {
             setConfirmationEmail(normalizeEmail(email));
             setPassword('');
             setConfirmPassword('');
-        } catch (err: any) {
-            setError(err.message || 'An error occurred during registration');
+        } catch (err: unknown) {
+            setError(getErrorMessage(err, 'An error occurred during registration'));
         } finally {
             setLoading(false);
         }
@@ -104,8 +105,8 @@ function RegisterForm() {
             }
 
             setMessage('Verification email sent again. Check your inbox for the latest link.');
-        } catch (err: any) {
-            setError(err.message || 'Unable to resend verification email');
+        } catch (err: unknown) {
+            setError(getErrorMessage(err, 'Unable to resend verification email'));
         } finally {
             setResending(false);
         }

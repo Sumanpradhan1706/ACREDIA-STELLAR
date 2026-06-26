@@ -46,7 +46,7 @@ Located in [e2e.lifecycle.test.ts](./e2e.lifecycle.test.ts):
 
 ### 6. Verification Mismatch States
 
-- **Strategy**: Query verification for a token where the metadata stored in Supabase doesn't match the on-chain registered state (e.g. modified SHA-256 hash or altered wallet addresses). Assert that `verification.verified` resolves to `false` and specific mismatch flags are raised.
+- **Strategy**: Query verification for a token where the metadata stored in Supabase doesn't match the on-chain registered state (e.g. modified SHA-256 hash or altered wallet addresses). Assert that `verification.verified` resolves to `false`, public responses avoid granular mismatch internals, and the private audit log stores coarse mismatch reason codes.
 
 ### 7. Role-Based Access Validation
 

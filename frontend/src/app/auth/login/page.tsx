@@ -12,6 +12,7 @@ import { Shield } from 'lucide-react';
 import { resendVerificationEmail, safeGetSession, signIn } from '@/lib/supabase';
 import {
     buildAuthCallbackUrl,
+    getErrorMessage,
     isEmailConfirmationError,
     isValidEmail,
     sanitizeAuthRedirect,
@@ -59,8 +60,8 @@ function LoginForm() {
             }
 
             router.push(nextRedirect);
-        } catch (err: any) {
-            setError(err.message || 'An error occurred during login');
+        } catch (err: unknown) {
+            setError(getErrorMessage(err, 'An error occurred during login'));
         } finally {
             setLoading(false);
         }
@@ -89,8 +90,8 @@ function LoginForm() {
             }
 
             setMessage('Verification email sent. Check your inbox and follow the confirmation link.');
-        } catch (err: any) {
-            setError(err.message || 'Unable to resend verification email');
+        } catch (err: unknown) {
+            setError(getErrorMessage(err, 'Unable to resend verification email'));
         } finally {
             setResending(false);
         }

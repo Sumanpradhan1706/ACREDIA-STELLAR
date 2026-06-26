@@ -9,6 +9,7 @@ const {
     mockGetCredential,
     mockIsRevoked,
     mockSupabaseInsert,
+    mockVerificationLogInsert,
     mockSupabaseMaybeSingle,
     mockRequireAdminRequest,
 } = vi.hoisted(() => ({
@@ -17,6 +18,7 @@ const {
     mockGetCredential: vi.fn(),
     mockIsRevoked: vi.fn(),
     mockSupabaseInsert: vi.fn(),
+    mockVerificationLogInsert: vi.fn(),
     mockSupabaseMaybeSingle: vi.fn(),
     mockRequireAdminRequest: vi.fn(),
 }));
@@ -74,11 +76,49 @@ import {
     generateCanonicalCredentialHash,
 } from '../src/lib/credentialHash';
 
+function mockVerifyRouteClient(credentialResponse: unknown) {
+    const mockMaybeSingle = vi.fn().mockResolvedValue(credentialResponse);
+    const from = vi.fn((table: string) => {
+        if (table === 'verification_logs') {
+            return {
+                insert: mockVerificationLogInsert,
+            };
+        }
+
+        return {
+            select: vi.fn(() => ({
+                eq: vi.fn(() => ({
+                    maybeSingle: mockMaybeSingle,
+                })),
+            })),
+        };
+    });
+
+    mockGetServiceRoleClient.mockReturnValue({ from });
+    return { from, mockMaybeSingle };
+}
+
+function expectVerificationLog(resultType: string, credentialId: string | null) {
+    expect(mockVerificationLogInsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+            credential_id: credentialId,
+            verifier_email: null,
+            verifier_org: null,
+            verification_result: expect.objectContaining({
+                result_type: resultType,
+                token_hash: expect.stringMatching(/^[a-f0-9]{64}$/),
+                ip_hash: expect.stringMatching(/^[a-f0-9]{64}$/),
+            }),
+        }),
+    );
+}
+
 // ── CORE LIFECYCLE TESTS ──────────────────────────────────────────────────────
 
 describe('Academic Credential E2E Integration / Lifecycle', () => {
     beforeEach(() => {
         vi.clearAllMocks();
+        mockVerificationLogInsert.mockResolvedValue({ error: null });
     });
 
     const dummyFile = new File([new Uint8Array(100)], 'diploma.pdf', {
@@ -179,7 +219,7 @@ describe('Academic Credential E2E Integration / Lifecycle', () => {
         const expectedHash = await generateCanonicalCredentialHash(dbMetadata);
 
         // Mock Supabase service role client to return database credential record
-        const mockMaybeSingle = vi.fn().mockResolvedValue({
+        mockVerifyRouteClient({
             data: {
                 id: 'cred-001',
                 token_id: '123',
@@ -197,16 +237,6 @@ describe('Academic Credential E2E Integration / Lifecycle', () => {
                 },
             },
             error: null,
-        });
-
-        mockGetServiceRoleClient.mockReturnValue({
-            from: vi.fn(() => ({
-                select: vi.fn(() => ({
-                    eq: vi.fn(() => ({
-                        maybeSingle: mockMaybeSingle,
-                    })),
-                })),
-            })),
         });
 
         // Mock on-chain query to return matching credential
@@ -229,6 +259,7 @@ describe('Academic Credential E2E Integration / Lifecycle', () => {
         expect(payload.success).toBe(true);
         expect(payload.verification.verified).toBe(true);
         expect(payload.verification.onChainMatch).toBe(true);
+        expectVerificationLog('verified', 'cred-001');
     });
 
     // ── 4. VERIFICATION REVOKED ───────────────────────────────────────────────
@@ -243,7 +274,7 @@ describe('Academic Credential E2E Integration / Lifecycle', () => {
         const expectedHash = await generateCanonicalCredentialHash(dbMetadata);
 
         // Mock Supabase service role client to return active record but marked revoked on-chain
-        const mockMaybeSingle = vi.fn().mockResolvedValue({
+        mockVerifyRouteClient({
             data: {
                 id: 'cred-001',
                 token_id: '123',
@@ -258,16 +289,6 @@ describe('Academic Credential E2E Integration / Lifecycle', () => {
                 issuer_wallet_address: 'ginstitutionaddress12345678901234567890123456789',
             },
             error: null,
-        });
-
-        mockGetServiceRoleClient.mockReturnValue({
-            from: vi.fn(() => ({
-                select: vi.fn(() => ({
-                    eq: vi.fn(() => ({
-                        maybeSingle: mockMaybeSingle,
-                    })),
-                })),
-            })),
         });
 
         // Mock on-chain query to return matching credential
@@ -290,24 +311,15 @@ describe('Academic Credential E2E Integration / Lifecycle', () => {
         expect(payload.success).toBe(true);
         expect(payload.verification.verified).toBe(false); // Revoked credential is not verified
         expect(payload.verification.revoked).toBe(true);
+        expectVerificationLog('revoked', 'cred-001');
     });
 
     // ── 5. VERIFICATION NOT FOUND ─────────────────────────────────────────────
     it('covers verification not found states', async () => {
         // Mock Supabase to return null (no matching token ID)
-        const mockMaybeSingle = vi.fn().mockResolvedValue({
+        mockVerifyRouteClient({
             data: null,
             error: null,
-        });
-
-        mockGetServiceRoleClient.mockReturnValue({
-            from: vi.fn(() => ({
-                select: vi.fn(() => ({
-                    eq: vi.fn(() => ({
-                        maybeSingle: mockMaybeSingle,
-                    })),
-                })),
-            })),
         });
 
         const req = new NextRequest('http://localhost:3000/api/verify/999');
@@ -317,6 +329,7 @@ describe('Academic Credential E2E Integration / Lifecycle', () => {
         expect(response.status).toBe(404);
         expect(payload.success).toBe(false);
         expect(payload.error).toBe('Credential not found');
+        expectVerificationLog('not_found', null);
     });
 
     // ── 6. VERIFICATION MISMATCH ──────────────────────────────────────────────
@@ -329,7 +342,7 @@ describe('Academic Credential E2E Integration / Lifecycle', () => {
         };
 
         // Mock Supabase service role client to return valid metadata
-        const mockMaybeSingle = vi.fn().mockResolvedValue({
+        mockVerifyRouteClient({
             data: {
                 id: 'cred-001',
                 token_id: '123',
@@ -344,16 +357,6 @@ describe('Academic Credential E2E Integration / Lifecycle', () => {
                 issuer_wallet_address: 'ginstitutionaddress12345678901234567890123456789',
             },
             error: null,
-        });
-
-        mockGetServiceRoleClient.mockReturnValue({
-            from: vi.fn(() => ({
-                select: vi.fn(() => ({
-                    eq: vi.fn(() => ({
-                        maybeSingle: mockMaybeSingle,
-                    })),
-                })),
-            })),
         });
 
         // Mock on-chain query to return non-matching credential (e.g. completely different hash)
@@ -375,7 +378,15 @@ describe('Academic Credential E2E Integration / Lifecycle', () => {
         expect(payload.success).toBe(true);
         expect(payload.verification.verified).toBe(false); // Tampered hash means not verified
         expect(payload.verification.onChainMatch).toBe(false);
-        expect(payload.verification.checks.hashMatch).toBe(false);
+        expect(payload.verification).not.toHaveProperty('checks');
+        expectVerificationLog('mismatch', 'cred-001');
+        expect(mockVerificationLogInsert).toHaveBeenCalledWith(
+            expect.objectContaining({
+                verification_result: expect.objectContaining({
+                    mismatch_reasons: expect.arrayContaining(['hash']),
+                }),
+            }),
+        );
     });
 
     // ── 7. ROLE-BASED ROUTE ACCESS ────────────────────────────────────────────
@@ -403,6 +414,7 @@ describe('Academic Credential E2E Integration / Lifecycle', () => {
         const mockDbChain = {
             select: vi.fn().mockReturnThis(),
             eq: vi.fn().mockReturnThis(),
+            gte: vi.fn().mockReturnThis(),
             not: vi.fn().mockReturnThis(),
             then: vi.fn().mockImplementation((resolve) => {
                 resolve({ count: 5, data: [], error: null });
@@ -424,6 +436,19 @@ describe('Academic Credential E2E Integration / Lifecycle', () => {
             totalCredentials: 5,
             activeCredentials: 5,
             totalStudents: 5,
+            verificationActivity: {
+                totalAttempts: 5,
+                attemptsLast24h: 5,
+                resultCounts: {
+                    verified: 5,
+                    revoked: 5,
+                    not_found: 5,
+                    chain_unavailable: 5,
+                    mismatch: 5,
+                    invalid_request: 5,
+                    server_error: 5,
+                },
+            },
         });
     });
 });

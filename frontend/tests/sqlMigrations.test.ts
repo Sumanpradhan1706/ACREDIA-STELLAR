@@ -17,16 +17,17 @@ describe('database migration policy model', () => {
         expect(setup).not.toMatch(/CREATE POLICY\s+"Anyone can insert institutions"/i);
         expect(setup).not.toMatch(/CREATE POLICY\s+"Anyone can insert students"/i);
         expect(setup).not.toMatch(/CREATE POLICY\s+"Anyone can view verification logs"/i);
+        expect(setup).not.toMatch(/CREATE POLICY\s+"Anyone can insert verification logs"/i);
         expect(setup).not.toMatch(/CREATE POLICY\s+"Public can count institutions"/i);
         expect(setup).not.toMatch(/CREATE POLICY\s+"Public can count students"/i);
         expect(setup).not.toMatch(
             /CREATE POLICY\s+"Public can view credentials for verification"/i,
         );
 
-        // The only permissive INSERT allowed by design is the verification-log writer.
         const truthyChecks = setup.match(/WITH\s+CHECK\s*\(\s*true\s*\)/gi) ?? [];
-        expect(truthyChecks.length).toBe(1);
-        expect(setup).toContain('CREATE POLICY "Anyone can insert verification logs"');
+        expect(truthyChecks.length).toBe(0);
+        expect(setup).toContain('DROP POLICY IF EXISTS "Anyone can insert verification logs"');
+        expect(setup).toContain('CREATE POLICY "Admin can insert verification logs"');
     });
 
     it('keeps signup mirror triggers in the canonical schema path', () => {
@@ -61,6 +62,14 @@ describe('database migration policy model', () => {
             expect(sql).toContain(
                 "hash_algorithm          TEXT NOT NULL DEFAULT 'sha256:canonical-json:v1'",
             );
+        }
+    });
+
+    it('indexes privacy-safe verification audit aggregates', () => {
+        for (const sql of [baseSchema, setup]) {
+            expect(sql).toContain('idx_verification_logs_created_at');
+            expect(sql).toContain('idx_verification_logs_result_type');
+            expect(sql).toContain("verification_result->>'result_type'");
         }
     });
 

@@ -84,6 +84,10 @@ export function isEmailConfirmationError(message: string) {
     );
 }
 
+export function getErrorMessage(error: unknown, fallbackMessage: string) {
+    return error instanceof Error ? error.message : fallbackMessage;
+}
+
 export function sanitizeAuthRedirect(next: string | null | undefined) {
     if (!next) {
         return DEFAULT_AUTH_REDIRECT;

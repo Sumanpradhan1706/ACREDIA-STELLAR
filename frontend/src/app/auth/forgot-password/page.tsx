@@ -8,7 +8,12 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { buildAuthCallbackUrl, isValidEmail, sanitizeAuthRedirect } from '@/lib/authFlow';
+import {
+    buildAuthCallbackUrl,
+    getErrorMessage,
+    isValidEmail,
+    sanitizeAuthRedirect,
+} from '@/lib/authFlow';
 import { requestPasswordReset } from '@/lib/supabase';
 
 function ForgotPasswordForm() {
@@ -44,8 +49,8 @@ function ForgotPasswordForm() {
             }
 
             setMessage('Password reset link sent. Check your inbox and open the latest recovery email.');
-        } catch (err: any) {
-            setError(err.message || 'Unable to send password reset email');
+        } catch (err: unknown) {
+            setError(getErrorMessage(err, 'Unable to send password reset email'));
         } finally {
             setLoading(false);
         }

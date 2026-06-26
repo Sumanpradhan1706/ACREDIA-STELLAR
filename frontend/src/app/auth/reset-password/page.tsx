@@ -12,6 +12,7 @@ import { CheckCircle2 } from 'lucide-react';
 import {
     getPasswordRequirements,
     getPasswordValidationError,
+    getErrorMessage,
     sanitizeAuthRedirect,
 } from '@/lib/authFlow';
 import { safeGetSession, supabase, updatePassword } from '@/lib/supabase';
@@ -103,8 +104,8 @@ function ResetPasswordForm() {
             setMessage('Password updated. You can now continue to your account.');
             setPassword('');
             setConfirmPassword('');
-        } catch (err: any) {
-            setError(err.message || 'Unable to update password');
+        } catch (err: unknown) {
+            setError(getErrorMessage(err, 'Unable to update password'));
         } finally {
             setLoading(false);
         }

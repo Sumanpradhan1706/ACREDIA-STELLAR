@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { CheckCircle2, Shield, Users } from 'lucide-react';
+import { Activity, CheckCircle2, Shield, Users } from 'lucide-react';
 import { toast } from 'sonner';
 import { DashboardShell } from '@/components/dashboard/DashboardShell';
 import { AuthorizeIssuer } from '@/components/institution/AuthorizeIssuer';
@@ -21,6 +21,19 @@ interface AdminStats {
     totalCredentials: number;
     activeCredentials: number;
     totalStudents: number;
+    verificationActivity: {
+        totalAttempts: number;
+        attemptsLast24h: number;
+        resultCounts: {
+            verified: number;
+            revoked: number;
+            not_found: number;
+            chain_unavailable: number;
+            mismatch: number;
+            invalid_request: number;
+            server_error: number;
+        };
+    };
 }
 
 function AdminDashboardContent() {
@@ -36,6 +49,19 @@ function AdminDashboardContent() {
         totalCredentials: 0,
         activeCredentials: 0,
         totalStudents: 0,
+        verificationActivity: {
+            totalAttempts: 0,
+            attemptsLast24h: 0,
+            resultCounts: {
+                verified: 0,
+                revoked: 0,
+                not_found: 0,
+                chain_unavailable: 0,
+                mismatch: 0,
+                invalid_request: 0,
+                server_error: 0,
+            },
+        },
     });
     const [loadingStats, setLoadingStats] = useState(true);
 
@@ -237,7 +263,7 @@ function AdminDashboardContent() {
                 </div>
             </Card>
 
-            <div className="mb-8 grid grid-cols-1 gap-6 md:grid-cols-3">
+            <div className="mb-8 grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
                 <Card className="border-gray-200 bg-white p-6 shadow-lg">
                     <div className="mb-2 flex items-center space-x-3">
                         <Users className="h-11 w-11 text-teal-600" />
@@ -293,6 +319,29 @@ function AdminDashboardContent() {
                             <p className="mt-1 text-sm text-gray-500">
                                 {stats.activeCredentials} active,{' '}
                                 {stats.totalCredentials - stats.activeCredentials} revoked
+                            </p>
+                        </>
+                    )}
+                </Card>
+
+                <Card className="border-gray-200 bg-white p-6 shadow-lg">
+                    <div className="mb-2 flex items-center space-x-3">
+                        <Activity className="h-8 w-8 text-indigo-600" />
+                        <h3 className="text-lg font-semibold text-gray-900">
+                            Verification Checks
+                        </h3>
+                    </div>
+                    {loadingStats ? (
+                        <div className="animate-pulse">
+                            <div className="mb-2 h-10 w-16 rounded bg-gray-200"></div>
+                        </div>
+                    ) : (
+                        <>
+                            <p className="text-3xl font-bold text-indigo-600">
+                                {stats.verificationActivity.totalAttempts}
+                            </p>
+                            <p className="mt-1 text-sm text-gray-500">
+                                {stats.verificationActivity.attemptsLast24h} in last 24h
                             </p>
                         </>
                     )}

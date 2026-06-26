@@ -17,7 +17,7 @@ const buckets = new Map<string, number[]>();
 const CLEANUP_INTERVAL_MS = 5 * 60 * 1000; // every 5 minutes
 let lastCleanup = Date.now();
 
-const getClientIp = (request: Request): string => {
+export const getClientIp = (request: Request): string => {
     const forwardedFor = request.headers.get('x-forwarded-for');
     if (forwardedFor) {
         const [firstIp] = forwardedFor.split(',');

@@ -62,6 +62,9 @@ CREATE TABLE IF NOT EXISTS public.verification_logs (
     created_at          TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+COMMENT ON TABLE public.verification_logs IS
+    'Privacy-safe audit log for public verification attempts. Store coarse outcomes and hashed request identifiers only.';
+
 CREATE INDEX IF NOT EXISTS idx_institutions_auth_user       ON public.institutions (auth_user_id);
 CREATE INDEX IF NOT EXISTS idx_institutions_wallet          ON public.institutions (wallet_address);
 CREATE INDEX IF NOT EXISTS idx_students_auth_user           ON public.students (auth_user_id);
@@ -70,6 +73,9 @@ CREATE INDEX IF NOT EXISTS idx_credentials_student          ON public.credential
 CREATE INDEX IF NOT EXISTS idx_credentials_institution      ON public.credentials (institution_id);
 CREATE INDEX IF NOT EXISTS idx_credentials_token            ON public.credentials (token_id);
 CREATE INDEX IF NOT EXISTS idx_verification_logs_credential ON public.verification_logs (credential_id);
+CREATE INDEX IF NOT EXISTS idx_verification_logs_created_at ON public.verification_logs (created_at);
+CREATE INDEX IF NOT EXISTS idx_verification_logs_result_type
+    ON public.verification_logs ((verification_result->>'result_type'));
 
 ALTER TABLE IF EXISTS public.profiles          ENABLE ROW LEVEL SECURITY;
 ALTER TABLE IF EXISTS public.institutions      ENABLE ROW LEVEL SECURITY;

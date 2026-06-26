@@ -4,8 +4,9 @@ import { createContext, useContext, useEffect, useState } from 'react';
 import { User } from '@supabase/supabase-js';
 import { supabase, signOut, safeGetSession } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
-import { normalizePublicSignupRole } from '@/lib/adminAccess';
 import { buildAuthRedirect } from '@/lib/authFlow';
+import { resolveUserRoleClient } from '@/lib/roleResolver';
+import type { AppRole, RoleState } from '@/types';
 
 interface AuthContextType {
     user: User | null;

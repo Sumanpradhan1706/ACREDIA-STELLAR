@@ -592,6 +592,7 @@ NEXT_PUBLIC_SOROBAN_RPC_URL=https://soroban-testnet.stellar.org
 NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
+VERIFICATION_LOG_HASH_SECRET=your_random_audit_hash_secret
 
 # Admin access control
 # Comma-separated list of emails that may access admin API routes.
@@ -997,7 +998,7 @@ institutions
 verification_logs
 ├── id (uuid)
 ├── credential_id (uuid)
-├── verified_at (timestamp)
+├── created_at (timestamp)
 └── verification_result (jsonb)
 ```
 
