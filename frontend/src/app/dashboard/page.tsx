@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { List, Shield, Upload, User, Wallet } from 'lucide-react';
@@ -23,11 +23,16 @@ function DashboardContent() {
     const { address } = useStellarAccount();
     const [refreshTrigger, setRefreshTrigger] = useState(0);
     const [institutionId, setInstitutionId] = useState('');
+    const [institutionWalletAddress, setInstitutionWalletAddress] = useState<string | null>(null);
     const [loadingInstitution, setLoadingInstitution] = useState(true);
+    const [linkingInstitutionWallet, setLinkingInstitutionWallet] = useState(false);
+    const walletLinkInFlight = useRef<string | null>(null);
 
     useEffect(() => {
         const fetchInstitutionId = async () => {
             if (!user || userRole !== 'institution') {
+                setInstitutionId('');
+                setInstitutionWalletAddress(null);
                 setLoadingInstitution(false);
                 return;
             }
@@ -47,6 +52,7 @@ function DashboardContent() {
 
                 if (data) {
                     setInstitutionId(data.id);
+                    setInstitutionWalletAddress(data.wallet_address ?? null);
                     debugLog('Institution profile loaded for dashboard.');
                     return;
                 }
@@ -63,7 +69,7 @@ function DashboardContent() {
                             name: user.email?.split('@')[0] || 'Institution',
                         },
                     ])
-                    .select('id')
+                    .select('id, wallet_address')
                     .single();
 
                 if (createError) {
@@ -74,6 +80,7 @@ function DashboardContent() {
 
                 if (newInstitution) {
                     setInstitutionId(newInstitution.id);
+                    setInstitutionWalletAddress(newInstitution.wallet_address ?? null);
                     toast.success('Institution profile created');
                 }
             } catch (error) {
@@ -86,6 +93,55 @@ function DashboardContent() {
 
         fetchInstitutionId();
     }, [user, userRole]);
+
+    useEffect(() => {
+        const linkConnectedWallet = async () => {
+            if (!user?.id || userRole !== 'institution' || !institutionId || !address) {
+                return;
+            }
+
+            if (institutionWalletAddress?.toLowerCase() === address.toLowerCase()) {
+                return;
+            }
+
+            if (walletLinkInFlight.current === address) {
+                return;
+            }
+
+            walletLinkInFlight.current = address;
+            setLinkingInstitutionWallet(true);
+
+            try {
+                const { error } = await supabase
+                    .from('institutions')
+                    .update({
+                        wallet_address: address,
+                        verified: false,
+                        authorization_tx_hash: null,
+                    })
+                    .eq('id', institutionId)
+                    .eq('auth_user_id', user.id);
+
+                if (error) {
+                    throw error;
+                }
+
+                setInstitutionWalletAddress(address);
+                debugLog('Connected wallet linked to institution profile.');
+                toast.success('Institution wallet linked');
+            } catch (error) {
+                console.error('Error linking institution wallet:', error);
+                toast.error('Failed to link connected wallet to your institution');
+            } finally {
+                if (walletLinkInFlight.current === address) {
+                    walletLinkInFlight.current = null;
+                }
+                setLinkingInstitutionWallet(false);
+            }
+        };
+
+        linkConnectedWallet();
+    }, [address, institutionId, institutionWalletAddress, user?.id, userRole]);
 
     const handleSignOut = async () => {
         await signOut();
@@ -149,8 +205,8 @@ function DashboardContent() {
                                     <p className="font-medium text-gray-900">
                                         {address ? (
                                             <span className="text-teal-600">
-                                                Connected: {address.slice(0, 6)}...
-                                                {address.slice(-4)}
+                                                {linkingInstitutionWallet ? 'Linking' : 'Connected'}:{' '}
+                                                {address.slice(0, 6)}...{address.slice(-4)}
                                             </span>
                                         ) : (
                                             <span className="text-orange-600">Not Connected</span>
