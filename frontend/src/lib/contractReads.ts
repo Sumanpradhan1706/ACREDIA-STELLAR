@@ -16,11 +16,11 @@ import {
     xdr,
 } from '@stellar/stellar-sdk';
 import { credentialHashBytesToHex, credentialHashHexToScVal } from './credentialHashEncoding';
+import { runtimeConfig } from './runtimeConfig';
 
-const RPC_URL = process.env.NEXT_PUBLIC_SOROBAN_RPC_URL || 'https://soroban-testnet.stellar.org';
-const NETWORK_PASSPHRASE =
-    process.env.NEXT_PUBLIC_NETWORK_PASSPHRASE || 'Test SDF Network ; September 2015';
-const CONTRACT_ID = process.env.NEXT_PUBLIC_CREDENTIAL_NFT_CONTRACT || '';
+const RPC_URL = runtimeConfig.stellar.sorobanRpcUrl;
+const NETWORK_PASSPHRASE = runtimeConfig.stellar.networkPassphrase;
+const CONTRACT_ID = runtimeConfig.contracts.CREDENTIAL_NFT;
 
 // Dummy funded account used as transaction source for read-only simulations.
 // The contract itself is always present on-ledger, so we borrow its address.
