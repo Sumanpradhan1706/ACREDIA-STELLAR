@@ -1,6 +1,7 @@
 import { debugLog } from './debug';
+import { runtimeConfig } from './runtimeConfig';
 
-const PINATA_GATEWAY = process.env.NEXT_PUBLIC_PINATA_GATEWAY || 'https://gateway.pinata.cloud';
+const PINATA_GATEWAY = runtimeConfig.ipfs.gatewayUrl;
 const IPFS_FILE_ROUTE = '/api/ipfs/file';
 const IPFS_JSON_ROUTE = '/api/ipfs/json';
 

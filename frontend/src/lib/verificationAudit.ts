@@ -1,5 +1,6 @@
 import { createHmac } from 'node:crypto';
 import { getClientIp } from './rateLimit';
+import { serverRuntimeConfig } from './runtimeConfig';
 
 export const VERIFICATION_RESULT_TYPES = [
     'verified',
@@ -37,11 +38,7 @@ type VerificationAuditLog = {
 };
 
 function getHashSecret() {
-    return (
-        process.env.VERIFICATION_LOG_HASH_SECRET ||
-        process.env.SUPABASE_SERVICE_ROLE_KEY ||
-        'local-verification-log-hash-secret'
-    );
+    return serverRuntimeConfig.verification.hashSecret;
 }
 
 export function hashAuditValue(value: string | null | undefined): string | null {

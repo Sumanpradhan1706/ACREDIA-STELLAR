@@ -1,4 +1,5 @@
 import { StrKey } from '@stellar/stellar-sdk';
+import { z } from 'zod';
 
 export type StellarNetworkKind = 'testnet' | 'mainnet' | 'custom';
 export type ContractName = 'CREDENTIAL_NFT' | 'CREDENTIAL_REGISTRY';
@@ -17,12 +18,32 @@ type RuntimeConfig = {
     supabase: {
         url: string;
         anonKey: string;
-        serviceRoleKey: string;
     };
     stellar: StellarNetworkConfig;
     contracts: Record<ContractName, string>;
     ipfs: {
         gatewayUrl: string;
+    };
+    debug: {
+        enableLogs: boolean;
+    };
+};
+
+type ServerRuntimeConfig = {
+    admin: {
+        emailAllowlist: string[];
+    };
+    auth: {
+        serviceRoleKey: string;
+    };
+    ipfs: {
+        jwt: string;
+    };
+    verification: {
+        hashSecret: string;
+    };
+    debug: {
+        enableLogs: boolean;
     };
 };
 
@@ -48,8 +69,12 @@ const NETWORK_DEFAULTS: Record<Exclude<StellarNetworkKind, 'custom'>, StellarNet
     },
 };
 
-function cleanEnv(name: string): string {
-    return process.env[name]?.trim() ?? '';
+const networkKindSchema = z.enum(['testnet', 'mainnet', 'custom']);
+const debugFlagSchema = z.enum(['true', 'false']).optional().transform((value) => value === 'true');
+
+function readEnv(name: string): string | undefined {
+    const value = process.env[name]?.trim();
+    return value ? value : undefined;
 }
 
 function looksLikePlaceholder(value: string): boolean {
@@ -66,15 +91,21 @@ function configError(message: string): never {
     throw new Error(`[runtime-config] ${message}`);
 }
 
-function requireProductionValue(name: string, value: string, isProduction: boolean): string {
-    if (isProduction && (!value || looksLikePlaceholder(value))) {
+function requireProductionValue(name: string, value: string | undefined, isProduction: boolean): string {
+    const normalizedValue = value?.trim() ?? '';
+
+    if (isProduction && (!normalizedValue || looksLikePlaceholder(normalizedValue))) {
         configError(`${name} is required in production and must not be a placeholder value.`);
     }
 
-    return value;
+    return normalizedValue;
 }
 
-function parseHttpUrl(name: string, value: string): string {
+function parseHttpUrl(name: string, value: string | undefined): string {
+    if (!value) {
+        return '';
+    }
+
     try {
         const url = new URL(value);
         if (url.protocol !== 'https:' && url.protocol !== 'http:') {
@@ -91,16 +122,10 @@ function parseHttpUrl(name: string, value: string): string {
     }
 }
 
-function optionalHttpUrl(name: string, value: string): string {
-    return value ? parseHttpUrl(name, value) : '';
-}
+function parseNetworkKind(value: string | undefined, isProduction: boolean): StellarNetworkKind {
+    const normalizedValue = (value ?? '').toLowerCase().trim();
 
-function parseNetworkKind(isProduction: boolean): StellarNetworkKind {
-    const value = (cleanEnv('NEXT_PUBLIC_STELLAR_NETWORK') || cleanEnv('NEXT_PUBLIC_CHAIN_ID'))
-        .toLowerCase()
-        .trim();
-
-    if (!value) {
+    if (!normalizedValue) {
         if (isProduction) {
             configError(
                 'NEXT_PUBLIC_STELLAR_NETWORK is required in production. Use testnet, mainnet, or custom.',
@@ -110,35 +135,36 @@ function parseNetworkKind(isProduction: boolean): StellarNetworkKind {
         return 'testnet';
     }
 
-    if (value === 'testnet' || value === 'mainnet' || value === 'custom') {
-        return value;
+    const parsed = networkKindSchema.safeParse(normalizedValue);
+    if (!parsed.success) {
+        configError('NEXT_PUBLIC_STELLAR_NETWORK must be testnet, mainnet, or custom.');
     }
 
-    configError('NEXT_PUBLIC_STELLAR_NETWORK must be testnet, mainnet, or custom.');
+    return parsed.data;
 }
 
-function requireCustomValue(name: string, value: string, networkKind: StellarNetworkKind): string {
-    if (networkKind === 'custom' && !value) {
+function requireCustomValue(name: string, value: string | undefined, networkKind: StellarNetworkKind): string {
+    const normalizedValue = value?.trim() ?? '';
+
+    if (networkKind === 'custom' && !normalizedValue) {
         configError(`${name} is required when NEXT_PUBLIC_STELLAR_NETWORK=custom.`);
     }
 
-    return value;
+    return normalizedValue;
 }
 
 function buildStellarConfig(isProduction: boolean): StellarNetworkConfig {
-    const kind = parseNetworkKind(isProduction);
+    const kind = parseNetworkKind(
+        readEnv('NEXT_PUBLIC_STELLAR_NETWORK') || readEnv('NEXT_PUBLIC_CHAIN_ID'),
+        isProduction,
+    );
     const defaults = kind === 'custom' ? null : NETWORK_DEFAULTS[kind];
 
-    const horizonValue =
-        cleanEnv('NEXT_PUBLIC_HORIZON_URL') || defaults?.horizonUrl || '';
-    const rpcValue =
-        cleanEnv('NEXT_PUBLIC_SOROBAN_RPC_URL') || defaults?.sorobanRpcUrl || '';
-    const passphraseValue =
-        cleanEnv('NEXT_PUBLIC_NETWORK_PASSPHRASE') || defaults?.networkPassphrase || '';
-    const networkName =
-        cleanEnv('NEXT_PUBLIC_NETWORK_NAME') || defaults?.networkName || 'custom';
-    const explorerValue =
-        cleanEnv('NEXT_PUBLIC_STELLAR_EXPLORER_BASE_URL') || defaults?.explorerBaseUrl || '';
+    const horizonValue = readEnv('NEXT_PUBLIC_HORIZON_URL') || defaults?.horizonUrl || '';
+    const rpcValue = readEnv('NEXT_PUBLIC_SOROBAN_RPC_URL') || defaults?.sorobanRpcUrl || '';
+    const passphraseValue = readEnv('NEXT_PUBLIC_NETWORK_PASSPHRASE') || defaults?.networkPassphrase || '';
+    const networkName = readEnv('NEXT_PUBLIC_NETWORK_NAME') || defaults?.networkName || 'custom';
+    const explorerValue = readEnv('NEXT_PUBLIC_STELLAR_EXPLORER_BASE_URL') || defaults?.explorerBaseUrl || '';
 
     const networkPassphrase = requireCustomValue(
         'NEXT_PUBLIC_NETWORK_PASSPHRASE',
@@ -147,9 +173,7 @@ function buildStellarConfig(isProduction: boolean): StellarNetworkConfig {
     );
 
     if (defaults && networkPassphrase !== defaults.networkPassphrase) {
-        configError(
-            `NEXT_PUBLIC_NETWORK_PASSPHRASE does not match the selected ${kind} network.`,
-        );
+        configError(`NEXT_PUBLIC_NETWORK_PASSPHRASE does not match the selected ${kind} network.`);
     }
 
     return {
@@ -172,7 +196,7 @@ function buildStellarConfig(isProduction: boolean): StellarNetworkConfig {
 }
 
 function readContractId(name: ContractName, envName: string, isProduction: boolean): string {
-    const value = requireProductionValue(envName, cleanEnv(envName), isProduction);
+    const value = requireProductionValue(envName, readEnv(envName), isProduction);
     if (value && !StrKey.isValidContract(value)) {
         configError(`${envName} must be a valid Stellar contract ID for ${name}.`);
     }
@@ -180,27 +204,32 @@ function readContractId(name: ContractName, envName: string, isProduction: boole
     return value;
 }
 
+function parseEmailAllowlist(value: string | undefined): string[] {
+    return (value ?? '')
+        .split(',')
+        .map((entry) => entry.trim().toLowerCase())
+        .filter(Boolean);
+}
+
 function buildRuntimeConfig(): RuntimeConfig {
     const isProduction = process.env.NODE_ENV === 'production';
     const supabaseUrl = requireProductionValue(
         'NEXT_PUBLIC_SUPABASE_URL',
-        cleanEnv('NEXT_PUBLIC_SUPABASE_URL'),
+        readEnv('NEXT_PUBLIC_SUPABASE_URL'),
         isProduction,
     );
     const supabaseAnonKey = requireProductionValue(
         'NEXT_PUBLIC_SUPABASE_ANON_KEY',
-        cleanEnv('NEXT_PUBLIC_SUPABASE_ANON_KEY'),
+        readEnv('NEXT_PUBLIC_SUPABASE_ANON_KEY'),
         isProduction,
     );
-    const ipfsGateway =
-        cleanEnv('NEXT_PUBLIC_PINATA_GATEWAY') || 'https://gateway.pinata.cloud';
+    const debugFlag = debugFlagSchema.safeParse(readEnv('NEXT_PUBLIC_ENABLE_DEBUG_LOGS'));
 
     return {
         isProduction,
         supabase: {
-            url: optionalHttpUrl('NEXT_PUBLIC_SUPABASE_URL', supabaseUrl),
+            url: parseHttpUrl('NEXT_PUBLIC_SUPABASE_URL', supabaseUrl),
             anonKey: supabaseAnonKey,
-            serviceRoleKey: cleanEnv('SUPABASE_SERVICE_ROLE_KEY'),
         },
         stellar: buildStellarConfig(isProduction),
         contracts: {
@@ -216,12 +245,45 @@ function buildRuntimeConfig(): RuntimeConfig {
             ),
         },
         ipfs: {
-            gatewayUrl: parseHttpUrl('NEXT_PUBLIC_PINATA_GATEWAY', ipfsGateway),
+            gatewayUrl: parseHttpUrl(
+                'NEXT_PUBLIC_PINATA_GATEWAY',
+                readEnv('NEXT_PUBLIC_PINATA_GATEWAY') || 'https://gateway.pinata.cloud',
+            ),
+        },
+        debug: {
+            enableLogs: debugFlag.success ? debugFlag.data : false,
+        },
+    };
+}
+
+function buildServerRuntimeConfig(): ServerRuntimeConfig {
+    const serviceRoleKey = readEnv('SUPABASE_SERVICE_ROLE_KEY') ?? '';
+    const pinataJwt = readEnv('PINATA_JWT') ?? '';
+
+    return {
+        admin: {
+            emailAllowlist: parseEmailAllowlist(readEnv('ADMIN_EMAIL_ALLOWLIST')),
+        },
+        auth: {
+            serviceRoleKey,
+        },
+        ipfs: {
+            jwt: pinataJwt,
+        },
+        verification: {
+            hashSecret:
+                readEnv('VERIFICATION_LOG_HASH_SECRET') ??
+                serviceRoleKey ??
+                'local-verification-log-hash-secret',
+        },
+        debug: {
+            enableLogs: runtimeConfig.debug.enableLogs,
         },
     };
 }
 
 export const runtimeConfig = buildRuntimeConfig();
+export const serverRuntimeConfig = buildServerRuntimeConfig();
 
 export function getConfiguredContractId(contractName: ContractName): string {
     const contractId = runtimeConfig.contracts[contractName];

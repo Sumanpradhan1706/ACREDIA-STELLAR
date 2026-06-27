@@ -11,6 +11,7 @@ import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { getContractOwner } from '@/lib/contracts';
 import { debugLog, debugWarn } from '@/lib/debug';
+import { runtimeConfig } from '@/lib/runtimeConfig';
 import { safeGetSession } from '@/lib/supabase';
 import { useStellarAccount } from '@/contexts/StellarContext';
 import { ProtectedRoute, useAuth } from '@/contexts/AuthContext';
@@ -255,7 +256,7 @@ function AdminDashboardContent() {
                                     Contract Address:
                                 </p>
                                 <p className="break-all text-xs font-mono text-red-800">
-                                    {process.env.NEXT_PUBLIC_CREDENTIAL_NFT_CONTRACT}
+                                    {runtimeConfig.contracts.CREDENTIAL_NFT}
                                 </p>
                             </div>
                         </div>
