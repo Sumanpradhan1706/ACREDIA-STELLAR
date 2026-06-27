@@ -121,6 +121,74 @@
         overflow-x: hidden;
     }
     body {
-        @apply bg-background text-foreground;
+        @apply bg-background text-foreground antialiased;
+    }
+}
+
+@layer utilities {
+    .container-shell {
+        @apply mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8;
+    }
+
+    .section-stack {
+        @apply space-y-6 md:space-y-8;
+    }
+
+    .surface-card {
+        @apply rounded-2xl border border-border/80 bg-card/95 p-6 shadow-sm;
+    }
+
+    .section-heading {
+        @apply text-3xl font-semibold tracking-tight text-foreground sm:text-4xl;
+    }
+
+    .section-copy {
+        @apply max-w-3xl text-base leading-7 text-muted-foreground sm:text-lg;
+    }
+
+    .text-gray-900,
+    .text-gray-800,
+    .text-gray-700 {
+        color: var(--foreground) !important;
+    }
+
+    .text-gray-600,
+    .text-gray-500,
+    .text-gray-400,
+    .text-gray-300 {
+        color: var(--muted-foreground) !important;
+    }
+
+    .bg-white {
+        background-color: var(--card) !important;
+    }
+
+    .bg-gray-50,
+    .bg-gray-100 {
+        background-color: var(--muted) !important;
+    }
+
+    .border-gray-200,
+    .border-gray-100 {
+        border-color: var(--border) !important;
+    }
+
+    .bg-orange-50,
+    .from-red-50,
+    .to-orange-50,
+    .via-red-50 {
+        background-color: var(--accent) !important;
+    }
+
+    .from-gray-50 {
+        --tw-gradient-from: var(--muted) !important;
+    }
+
+    .via-teal-50 {
+        --tw-gradient-via: color-mix(in srgb, var(--accent) 75%, transparent) !important;
+    }
+
+    .to-cyan-50 {
+        --tw-gradient-to: color-mix(in srgb, var(--accent) 70%, transparent) !important;
     }
 }

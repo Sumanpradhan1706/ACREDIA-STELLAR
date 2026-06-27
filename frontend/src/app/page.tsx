@@ -7,6 +7,7 @@ import { Card } from '@/components/ui/card';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
+import { useTheme } from 'next-themes';
 import { useAuth } from '@/contexts/AuthContext';
 import {
     Shield,
@@ -39,6 +40,7 @@ export default function Home() {
     const [showSolutions, setShowSolutions] = useState(false);
     const [mobileNavOpen, setMobileNavOpen] = useState(false);
     const [mobileSolutionsOpen, setMobileSolutionsOpen] = useState(false);
+    const { theme, setTheme } = useTheme();
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { user, userRole } = useAuth();
     const router = useRouter();
@@ -70,11 +72,11 @@ export default function Home() {
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-gray-50 via-teal-50 to-cyan-50">
+        <div className="min-h-screen bg-background text-foreground">
             {/* Navigation */}
-            <nav className="border-b border-gray-200 bg-white/90 backdrop-blur-lg sticky top-0 z-50 shadow-sm">
-                <div className="container mx-auto px-4 py-3 md:py-4">
-                    <div className="flex items-center justify-between rounded-2xl border border-teal-100/80 bg-white/95 px-2.5 py-2 shadow-[0_12px_32px_-20px_rgba(13,148,136,0.65)] md:hidden">
+            <nav className="sticky top-0 z-50 border-b border-border/80 bg-background/90 shadow-sm backdrop-blur-lg">
+                <div className="container-shell py-3 md:py-4">
+                    <div className="flex items-center justify-between rounded-2xl border border-border/80 bg-card/95 px-2.5 py-2 shadow-sm md:hidden">
                         <Link
                             href="/"
                             className="flex items-center space-x-2.5"
@@ -111,12 +113,12 @@ export default function Home() {
                     </div>
 
                     {mobileNavOpen && (
-                        <div className="mt-2 rounded-2xl border border-teal-100/90 bg-white p-2.5 shadow-[0_14px_36px_-24px_rgba(13,148,136,0.75)] md:hidden">
+                        <div className="mt-2 rounded-2xl border border-border/80 bg-card p-2.5 shadow-sm md:hidden">
                             <div className="flex flex-col gap-1.5">
                                 <Button
                                     type="button"
                                     variant="ghost"
-                                    className="h-9 justify-between px-2.5 text-sm text-gray-700 hover:text-teal-600"
+                                    className="h-9 justify-between px-2.5 text-sm text-muted-foreground hover:text-primary"
                                     onClick={() => setMobileSolutionsOpen((prev) => !prev)}
                                 >
                                     Solutions
@@ -143,7 +145,7 @@ export default function Home() {
                                                 setMobileNavOpen(false);
                                                 setMobileSolutionsOpen(false);
                                             }}
-                                            className="w-full rounded-lg border border-transparent bg-white p-2.5 text-left hover:border-teal-200 hover:bg-teal-50"
+                                            className="w-full rounded-lg border border-transparent bg-background p-2.5 text-left hover:border-primary/20 hover:bg-accent/80"
                                         >
                                             <p className="text-sm font-semibold text-gray-900">
                                                 For Institutions
@@ -158,7 +160,7 @@ export default function Home() {
                                                 setMobileNavOpen(false);
                                                 setMobileSolutionsOpen(false);
                                             }}
-                                            className="w-full rounded-lg border border-transparent bg-white p-2.5 text-left hover:border-cyan-200 hover:bg-cyan-50"
+                                            className="w-full rounded-lg border border-transparent bg-background p-2.5 text-left hover:border-primary/20 hover:bg-accent/80"
                                         >
                                             <p className="text-sm font-semibold text-gray-900">
                                                 For Students
@@ -170,10 +172,18 @@ export default function Home() {
                                     </div>
                                 )}
 
+                                <Button
+                                    type="button"
+                                    variant="surface"
+                                    className="h-9 justify-start px-2.5 text-sm"
+                                    onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+                                >
+                                    {theme === 'dark' ? 'Light mode' : 'Dark mode'}
+                                </Button>
                                 <Link href="/about" onClick={() => setMobileNavOpen(false)}>
                                     <Button
                                         variant="ghost"
-                                        className="h-9 w-full justify-start px-2.5 text-sm text-gray-700 hover:text-teal-600"
+                                        className="h-9 w-full justify-start px-2.5 text-sm text-muted-foreground hover:text-primary"
                                     >
                                         About
                                     </Button>
@@ -181,14 +191,14 @@ export default function Home() {
                                 <Link href="/auth/login" onClick={() => setMobileNavOpen(false)}>
                                     <Button
                                         variant="ghost"
-                                        className="h-9 w-full justify-start px-2.5 text-sm text-gray-700 hover:text-teal-600"
+                                        className="h-9 w-full justify-start px-2.5 text-sm text-muted-foreground hover:text-primary"
                                     >
                                         Sign In
                                     </Button>
                                 </Link>
                                 <Link href="/verify" onClick={() => setMobileNavOpen(false)}>
-                                    <Button className="h-10 w-full text-sm bg-gradient-to-r from-teal-600 to-cyan-600 hover:from-teal-700 hover:to-cyan-700 text-white">
-                                        <Shield className="w-4 h-4 mr-2" />
+                                    <Button className="h-10 w-full text-sm">
+                                        <Shield className="mr-2 h-4 w-4" />
                                         Verify
                                     </Button>
                                 </Link>
@@ -219,7 +229,7 @@ export default function Home() {
                                 <Button
                                     type="button"
                                     variant="ghost"
-                                    className="text-gray-700 hover:text-teal-600 flex items-center gap-1"
+                                    className="flex items-center gap-1 text-muted-foreground hover:text-primary"
                                 >
                                     Solutions
                                     <svg
@@ -240,7 +250,7 @@ export default function Home() {
                                 {/* Dropdown Menu */}
                                 {showSolutions && (
                                     <div
-                                        className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-[95vw] sm:w-[500px] max-w-[500px] bg-white rounded-2xl shadow-2xl border border-gray-200 p-4 sm:p-6 animate-in fade-in slide-in-from-top-5 duration-200"
+                                        className="absolute top-full left-1/2 mt-2 w-[95vw] max-w-[500px] -translate-x-1/2 rounded-2xl border border-border/80 bg-card p-4 shadow-xl sm:w-[500px] sm:p-6"
                                         onMouseEnter={handleMouseEnter}
                                         onMouseLeave={handleMouseLeave}
                                     >
@@ -252,12 +262,12 @@ export default function Home() {
                                                 }
                                                 className="group text-left w-full"
                                             >
-                                                <div className="flex flex-col items-center space-y-2 sm:space-y-3 p-4 sm:p-6 rounded-xl hover:bg-teal-50 transition-all duration-300 border-2 border-transparent hover:border-teal-300 hover:shadow-lg">
+                                                <div className="flex flex-col items-center space-y-2 rounded-xl border-2 border-transparent p-4 transition-all duration-300 hover:border-primary/20 hover:bg-accent/80 hover:shadow-lg sm:space-y-3 sm:p-6">
                                                     <div className="bg-gradient-to-br from-teal-500 to-cyan-500 p-3 sm:p-4 rounded-2xl shadow-lg group-hover:scale-110 transition-transform duration-300">
                                                         <Building2 className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
                                                     </div>
                                                     <div className="text-center">
-                                                        <h3 className="font-bold text-gray-900 mb-1 sm:mb-2 group-hover:text-teal-600 transition-colors text-base sm:text-lg">
+                                                        <h3 className="mb-1 text-base font-bold text-foreground transition-colors group-hover:text-primary sm:mb-2 sm:text-lg">
                                                             For Institutions
                                                         </h3>
                                                         <p className="text-xs sm:text-sm text-gray-600 mb-2 sm:mb-3 px-2">
@@ -277,12 +287,12 @@ export default function Home() {
                                                 onClick={(e) => handleDashboardClick(e, 'student')}
                                                 className="group text-left w-full"
                                             >
-                                                <div className="flex flex-col items-center space-y-2 sm:space-y-3 p-4 sm:p-6 rounded-xl hover:bg-cyan-50 transition-all duration-300 border-2 border-transparent hover:border-cyan-300 hover:shadow-lg">
+                                                <div className="flex flex-col items-center space-y-2 rounded-xl border-2 border-transparent p-4 transition-all duration-300 hover:border-primary/20 hover:bg-accent/80 hover:shadow-lg sm:space-y-3 sm:p-6">
                                                     <div className="bg-gradient-to-br from-cyan-500 to-blue-500 p-3 sm:p-4 rounded-2xl shadow-lg group-hover:scale-110 transition-transform duration-300">
                                                         <GraduationCap className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
                                                     </div>
                                                     <div className="text-center">
-                                                        <h3 className="font-bold text-gray-900 mb-1 sm:mb-2 group-hover:text-cyan-600 transition-colors text-base sm:text-lg">
+                                                        <h3 className="mb-1 text-base font-bold text-foreground transition-colors group-hover:text-primary sm:mb-2 sm:text-lg">
                                                             For Students
                                                         </h3>
                                                         <p className="text-xs sm:text-sm text-gray-600 mb-2 sm:mb-3 px-2">
@@ -320,25 +330,27 @@ export default function Home() {
                                 )}
                             </div>
 
+                            <Button
+                                type="button"
+                                variant="surface"
+                                className="hidden sm:inline-flex"
+                                onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+                            >
+                                {theme === 'dark' ? 'Light' : 'Dark'}
+                            </Button>
                             <Link href="/about">
-                                <Button
-                                    variant="ghost"
-                                    className="text-gray-700 hover:text-teal-600"
-                                >
+                                <Button variant="ghost" className="text-muted-foreground hover:text-primary">
                                     About
                                 </Button>
                             </Link>
                             <Link href="/auth/login">
-                                <Button
-                                    variant="ghost"
-                                    className="text-gray-700 hover:text-teal-600"
-                                >
+                                <Button variant="ghost" className="text-muted-foreground hover:text-primary">
                                     Sign In
                                 </Button>
                             </Link>
                             <Link href="/verify">
-                                <Button className="bg-gradient-to-r from-teal-600 to-cyan-600 hover:from-teal-700 hover:to-cyan-700 text-white">
-                                    <Shield className="w-4 h-4 mr-2" />
+                                <Button>
+                                    <Shield className="mr-2 h-4 w-4" />
                                     Verify
                                 </Button>
                             </Link>
@@ -350,16 +362,16 @@ export default function Home() {
             {/* Hero Section */}
             <section className="relative overflow-hidden">
                 {/* Background decoration */}
-                <div className="absolute inset-0 bg-gradient-to-br from-teal-50/50 via-cyan-50/30 to-blue-50/50"></div>
-                <div className="absolute top-20 right-0 w-96 h-96 bg-teal-200/20 rounded-full blur-3xl"></div>
-                <div className="absolute bottom-0 left-0 w-96 h-96 bg-cyan-200/20 rounded-full blur-3xl"></div>
+                <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-background to-accent/60"></div>
+                <div className="absolute top-20 right-0 h-96 w-96 rounded-full bg-primary/10 blur-3xl"></div>
+                <div className="absolute bottom-0 left-0 h-96 w-96 rounded-full bg-cyan-500/10 blur-3xl"></div>
 
-                <div className="relative container mx-auto px-4 py-6 sm:py-14 md:py-28">
+                <div className="container-shell relative py-6 sm:py-14 md:py-28">
                     <div className="grid lg:grid-cols-2 gap-8 sm:gap-10 lg:gap-16 items-center">
                         {/* Left Content */}
                         <div className="space-y-6 sm:space-y-8 z-10">
                             {/* Badge */}
-                            <div className="inline-flex max-w-full items-center gap-2 bg-white/80 backdrop-blur-sm border border-teal-200 text-teal-700 px-4 sm:px-5 py-2.5 sm:py-3 rounded-full text-xs sm:text-sm font-semibold shadow-lg hover:shadow-xl transition-all duration-300">
+                            <div className="inline-flex max-w-full items-center gap-2 rounded-full border border-primary/20 bg-background/80 px-4 py-2.5 text-xs font-semibold text-primary shadow-sm backdrop-blur-sm transition-all duration-300 hover:shadow-md sm:px-5 sm:py-3 sm:text-sm">
                                 <div className="w-2 h-2 bg-teal-500 rounded-full animate-pulse"></div>
                                 <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                                 <span className="truncate sm:whitespace-nowrap">
@@ -369,11 +381,11 @@ export default function Home() {
 
                             {/* Main Headline */}
                             <div className="space-y-4">
-                                <h1 className="text-[2.25rem] leading-[1.05] sm:text-5xl md:text-6xl lg:text-7xl font-black sm:leading-[1.1] tracking-tight">
-                                    <span className="block text-gray-900">Transform</span>
-                                    <span className="block text-gray-900">Education</span>
-                                    <span className="block mt-2">
-                                        <span className="bg-clip-text text-transparent bg-gradient-to-r from-teal-600 via-cyan-500 to-blue-600 animate-gradient">
+                                <h1 className="text-[2.25rem] font-black leading-[1.05] tracking-tight sm:text-5xl sm:leading-[1.1] md:text-6xl lg:text-7xl">
+                                    <span className="block text-foreground">Transform</span>
+                                    <span className="block text-foreground">Education</span>
+                                    <span className="mt-2 block">
+                                        <span className="animate-gradient bg-gradient-to-r from-primary via-cyan-500 to-blue-600 bg-clip-text text-transparent">
                                             Credentials
                                         </span>
                                     </span>
@@ -396,7 +408,7 @@ export default function Home() {
                             </div>
 
                             {/* Description */}
-                            <p className="text-[1.05rem] sm:text-xl text-gray-600 leading-relaxed max-w-xl">
+                            <p className="max-w-xl text-[1.05rem] leading-relaxed text-muted-foreground sm:text-xl">
                                 Issue, verify, and manage{' '}
                                 <span className="font-bold text-teal-600">tamper-proof</span>{' '}
                                 academic credentials on the blockchain with{' '}
@@ -413,7 +425,7 @@ export default function Home() {
                                 <Link href="/auth/register?role=institution" className="group">
                                     <Button
                                         size="lg"
-                                        className="w-full sm:w-auto bg-gradient-to-r from-teal-600 to-cyan-600 hover:from-teal-700 hover:to-cyan-700 text-white px-6 sm:px-10 py-4 sm:py-7 text-base sm:text-lg font-bold shadow-2xl hover:shadow-teal-500/50 transition-all duration-300 hover:scale-105"
+                                        className="w-full px-6 py-4 text-base font-bold shadow-lg transition-all duration-300 hover:scale-105 sm:w-auto sm:px-10 sm:py-7 sm:text-lg"
                                     >
                                         <Building2 className="w-4 h-4 sm:w-5 sm:h-5 mr-2 group-hover:rotate-12 transition-transform" />
                                         Get Started Now
@@ -424,7 +436,7 @@ export default function Home() {
                                     <Button
                                         size="lg"
                                         variant="outline"
-                                        className="w-full sm:w-auto border-2 border-gray-300 hover:border-teal-600 text-gray-700 hover:text-teal-600 hover:bg-teal-50 px-6 sm:px-10 py-4 sm:py-7 text-base sm:text-lg font-bold transition-all duration-300"
+                                        className="w-full px-6 py-4 text-base font-bold transition-all duration-300 sm:w-auto sm:px-10 sm:py-7 sm:text-lg"
                                     >
                                         Learn More
                                         <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 ml-2 group-hover:translate-x-1 transition-transform" />
@@ -433,7 +445,7 @@ export default function Home() {
                             </div>
 
                             {/* Stats Bar */}
-                            <div className="grid grid-cols-1 md:grid-cols-3 sm:flex sm:items-center gap-3 sm:gap-8 pt-5 sm:pt-8 border-t-2 border-gray-200">
+                            <div className="grid grid-cols-1 gap-3 border-t border-border/80 pt-5 sm:flex sm:items-center sm:gap-8 sm:pt-8 md:grid-cols-3">
                                 <div className="flex-1 text-center sm:text-left">
                                     <div className="text-2xl sm:text-4xl font-black bg-clip-text text-transparent bg-gradient-to-r from-teal-600 to-cyan-600">
                                         500+
