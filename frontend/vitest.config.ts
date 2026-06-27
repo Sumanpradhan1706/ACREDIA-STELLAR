@@ -7,5 +7,15 @@ export default defineConfig({
         environment: 'node',
         include: ['tests/**/*.test.ts'],
         globals: true,
+        coverage: {
+            reporter: ['text', 'json-summary', 'lcov'],
+            reportOnFailure: true,
+            thresholds: {
+                lines: 55,
+                functions: 55,
+                branches: 55,
+                statements: 55,
+            },
+        },
     },
 });

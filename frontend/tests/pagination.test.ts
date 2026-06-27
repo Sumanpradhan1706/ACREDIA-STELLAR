@@ -17,16 +17,26 @@ import {
 const INST_ID    = 'inst-abc-123';
 const STUDENT_ID = 'student-xyz-456';
 
-function mockChain(returnValue: object) {
+type MockChain = {
+    select: ReturnType<typeof vi.fn>;
+    eq: ReturnType<typeof vi.fn>;
+    order: ReturnType<typeof vi.fn>;
+    range: ReturnType<typeof vi.fn>;
+    gte: ReturnType<typeof vi.fn>;
+    lte: ReturnType<typeof vi.fn>;
+    or: ReturnType<typeof vi.fn>;
+};
+
+function mockChain(returnValue: object): MockChain {
     const resolved = vi.fn().mockResolvedValue(returnValue);
-    const chain: Record<string, unknown> = {
-        select:  vi.fn().mockReturnThis(),
-        eq:      vi.fn().mockReturnThis(),
-        order:   vi.fn().mockReturnThis(),
-        range:   resolved,
-        gte:     vi.fn().mockReturnThis(),
-        lte:     vi.fn().mockReturnThis(),
-        or:      resolved,
+    const chain: MockChain = {
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        order: vi.fn().mockReturnThis(),
+        range: resolved,
+        gte: vi.fn().mockReturnThis(),
+        lte: vi.fn().mockReturnThis(),
+        or: resolved,
     };
     (supabase.from as ReturnType<typeof vi.fn>).mockReturnValue(chain);
     return chain;
@@ -260,7 +270,9 @@ describe('student credentials API — permission boundaries', () => {
         const eqCalls = mockCredChain.eq.mock.calls;
         const studentIdCall = eqCalls.find((c: unknown[]) => c[0] === 'student_id');
         expect(studentIdCall).toBeDefined();
-        expect(studentIdCall[1]).toBe('student-111');
+        if (studentIdCall) {
+            expect(studentIdCall[1]).toBe('student-111');
+        }
     });
 
     it('returns empty result for authenticated user with no student row', async () => {
