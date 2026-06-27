@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { GET } from '@/app/api/verify/[token]/route';
 import { resetRateLimitStore } from '@/lib/rateLimit';
@@ -10,6 +9,7 @@ vi.mock('@/lib/serverAuth', () => ({
                 eq: () => ({
                     maybeSingle: async () => ({
                         data: {
+                            id: 'cred-001',
                             token_id: 'token-123',
                             issued_at: '2026-01-01T00:00:00.000Z',
                             revoked: false,
@@ -37,48 +37,34 @@ vi.mock('@/lib/serverAuth', () => ({
 
 vi.mock('@/lib/contractReads', () => ({
     getCredential: async () => ({
-        issuer: 'gissuer',
-        student: 'gstudent',
+        issuer: 'GIssuer',
+        student: 'GStudent',
         hash: 'derived-hash',
         uri: 'ipfs://cid-123',
     }),
     isRevoked: async () => false,
-    isAuthorizedIssuer: async () => true,
+    isAuthorizedIssuer: async () => false,
 }));
 
 vi.mock('@/lib/credentialHash', () => ({
     deriveCredentialHash: async () => 'derived-hash',
 }));
 
-describe('verify route rate limiting', () => {
+describe('verify route issuer semantics', () => {
     beforeEach(() => {
         resetRateLimitStore();
     });
 
-    it('returns 429 with Retry-After after the verify limit is exceeded', async () => {
-        const makeRequest = () =>
-            new Request('http://localhost/api/verify/token-123', {
-                headers: {
-                    'x-forwarded-for': '203.0.113.10',
-                },
-            });
-
-        for (let index = 0; index < 10; index += 1) {
-            const response = await GET(makeRequest() as any, {
-                params: Promise.resolve({ token: 'token-123' }),
-            });
-
-            expect(response.status).toBe(200);
-        }
-        const blockedResponse = await GET(makeRequest() as any, {
+    it('exposes issuer authorization state in the verification payload', async () => {
+        const response = await GET(new Request('http://localhost/api/verify/token-123') as never, {
             params: Promise.resolve({ token: 'token-123' }),
         });
 
-        expect(blockedResponse.status).toBe(429);
-        expect(blockedResponse.headers.get('Retry-After')).toBeTruthy();
-        await expect(blockedResponse.json()).resolves.toEqual({
-            success: false,
-            error: 'Too many requests',
-        });
+        const payload = await response.json();
+
+        expect(response.status).toBe(200);
+        expect(payload.success).toBe(true);
+        expect(payload.verification.issuerAuthorized).toBe(false);
+        expect(payload.verification.issuerStatus).toBe('revoked');
     });
 });
