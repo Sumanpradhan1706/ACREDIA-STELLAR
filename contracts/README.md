@@ -213,6 +213,24 @@ soroban contract invoke \
   --issuer <INSTITUTION_ADDRESS>
 ```
 
+### Revoke an Issuer (Institution)
+
+```bash
+soroban contract invoke \
+  --id <CONTRACT_ID> \
+  --source admin \
+  --network testnet \
+  -- \
+  revoke_issuer \
+  --issuer <INSTITUTION_ADDRESS>
+```
+
+Important semantics:
+- `revoke_issuer` only prevents that institution from issuing new credentials.
+- Previously issued credentials remain stored immutably and remain verifiable.
+- Revoking an issuer does not retroactively invalidate or alter older credentials.
+- The verify UI surfaces the issuer authorization state explicitly so verifiers can see whether the issuer is currently authorized.
+
 ### Issue a Credential
 
 ```bash
