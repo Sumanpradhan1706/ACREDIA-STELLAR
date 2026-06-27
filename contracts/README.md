@@ -71,10 +71,10 @@ contracts/
 
 ```bash
 cd contracts
-cargo build --target wasm32-unknown-unknown --release
+cargo build --target wasm32v1-none --release
 ```
 
-**Output**: `target/wasm32-unknown-unknown/release/acredia_stellar.wasm`
+**Output**: `target/wasm32v1-none/release/acredia_stellar.wasm`
 
 ### Run Tests
 
@@ -108,14 +108,14 @@ soroban config identity address --name admin
 ### Step 2: Build Contract
 
 ```bash
-cargo build --target wasm32-unknown-unknown --release
+cargo build --target wasm32v1-none --release
 ```
 
 ### Step 3: Deploy to Stellar Testnet
 
 ```bash
 soroban contract deploy \
-  --wasm target/wasm32-unknown-unknown/release/acredia_stellar.wasm \
+  --wasm target/wasm32v1-none/release/acredia_stellar.wasm \
   --source admin \
   --network testnet
 ```
@@ -184,11 +184,11 @@ NEXT_PUBLIC_SOROBAN_RPC_URL=https://soroban-testnet.stellar.org
 
 ```bash
 # Build with optimizations (same command)
-cargo build --target wasm32-unknown-unknown --release
+cargo build --target wasm32v1-none --release
 
 # Deploy to Stellar Mainnet
 soroban contract deploy \
-  --wasm target/wasm32-unknown-unknown/release/acredia_stellar.wasm \
+  --wasm target/wasm32v1-none/release/acredia_stellar.wasm \
   --source admin \
   --network public
 ```

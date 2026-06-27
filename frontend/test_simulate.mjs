@@ -11,8 +11,8 @@ import {
 
 async function main() {
     const server = new rpc.Server('https://soroban-testnet.stellar.org');
-    const contractId = 'CCGDFDLPELTOWG5H5OA4MBR5OZWDP4XJI3S3TQZVZ7XTVP77EKOFORYF';
-    const sourceAddress = 'GAJRNUO6HSMQG4FNHNWQVRXJZJZ7QRA7HXPYYB6H5PTA3EAAJXJNZD7U';
+    const contractId = 'CARWFW27MJ3OJADAUAHI3TDFHIL62YMLVEKTUTMSNXOMH7JJTNZKC3DK';
+    const sourceAddress = 'GAMI3XDDII72W23RADNPPAZ2GYEZ2MTYXLETOU36R4ISXMQ7IURFEKFP';
 
     const sourceAccount = new Account(sourceAddress, '0');
     const contract = new Contract(contractId);

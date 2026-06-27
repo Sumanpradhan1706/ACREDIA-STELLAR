@@ -245,11 +245,11 @@ Acredia uses a unified Soroban smart contract deployed on **Stellar Network**:
 
 ### ✅ AcrediaCredential Contract — Live on Testnet
 
-> **Contract ID**: `CCGDFDLPELTOWG5H5OA4MBR5OZWDP4XJI3S3TQZVZ7XTVP77EKOFORYF`  
+> **Contract ID**: `CARWFW27MJ3OJADAUAHI3TDFHIL62YMLVEKTUTMSNXOMH7JJTNZKC3DK`  
 > **Network**: Stellar Testnet  
-> **Owner / Deployer**: `GAJRNUO6HSMQG4FNHNWQVRXJZJZ7QRA7HXPYYB6H5PTA3EAAJXJNZD7U`  
-> **Deployed**: 2026-04-01 (Updated Setup)
-> **Explorer**: [View on Stellar Expert ↗](https://stellar.expert/explorer/testnet/contract/CCGDFDLPELTOWG5H5OA4MBR5OZWDP4XJI3S3TQZVZ7XTVP77EKOFORYF)
+> **Owner / Deployer**: `GAMI3XDDII72W23RADNPPAZ2GYEZ2MTYXLETOU36R4ISXMQ7IURFEKFP`  
+> **Deployed**: 2026-06-27 (Redeployed)
+> **Explorer**: [View on Stellar Expert ↗](https://stellar.expert/explorer/testnet/contract/CARWFW27MJ3OJADAUAHI3TDFHIL62YMLVEKTUTMSNXOMH7JJTNZKC3DK)
 
 This single contract replaces two separate EVM contracts (CredentialNFT + CredentialRegistry) with one unified Soroban contract written in Rust. Additionally, it features upgraded Next.js boundary protection to bypass `@stellar/stellar-sdk` object coercions on the browser.
 
@@ -301,8 +301,8 @@ This single contract replaces two separate EVM contracts (CredentialNFT + Creden
 
 All deployments, metadata hashes, and transaction executions can be publicly verified directly on the Stellar ledger explorer:
 
-1. **Main Contract Viewer**: [AcrediaCredential Testnet Explorer ↗](https://stellar.expert/explorer/testnet/contract/CCGDFDLPELTOWG5H5OA4MBR5OZWDP4XJI3S3TQZVZ7XTVP77EKOFORYF)
-2. **Deployer Account Ledger**: [Stellar Account Overview ↗](https://stellar.expert/explorer/testnet/account/GAJRNUO6HSMQG4FNHNWQVRXJZJZ7QRA7HXPYYB6H5PTA3EAAJXJNZD7U)
+1. **Main Contract Viewer**: [AcrediaCredential Testnet Explorer ↗](https://stellar.expert/explorer/testnet/contract/CARWFW27MJ3OJADAUAHI3TDFHIL62YMLVEKTUTMSNXOMH7JJTNZKC3DK)
+2. **Deployer Account Ledger**: [Stellar Account Overview ↗](https://stellar.expert/explorer/testnet/account/GAMI3XDDII72W23RADNPPAZ2GYEZ2MTYXLETOU36R4ISXMQ7IURFEKFP)
 3. **Soroban RPC Instance**: `https://soroban-testnet.stellar.org`
 
 > **⚠️ Important**: Always verify contract IDs on Stellar Expert before interacting with them. Never trust addresses from unofficial sources.
@@ -557,7 +557,7 @@ npm ci
 ```powershell
 cd ../contracts
 # Install the WASM32 build target (one-time setup)
-rustup target add wasm32-unknown-unknown
+rustup target add wasm32v1-none
 # Install Stellar CLI if not already installed
 cargo install --locked stellar-cli
 ```
@@ -576,10 +576,10 @@ Copy-Item .env.local.example .env.local
 Edit `frontend\.env.local` and replace placeholder values:
 
 ```env
-# Smart Contract Addresses — Stellar Testnet (deployed 2026-04-01)
+# Smart Contract Addresses — Stellar Testnet (deployed 2026-06-27)
 # Single unified AcrediaCredential contract (replaces separate NFT + Registry)
-NEXT_PUBLIC_CREDENTIAL_NFT_CONTRACT=CCGDFDLPELTOWG5H5OA4MBR5OZWDP4XJI3S3TQZVZ7XTVP77EKOFORYF
-NEXT_PUBLIC_CREDENTIAL_REGISTRY_CONTRACT=CCGDFDLPELTOWG5H5OA4MBR5OZWDP4XJI3S3TQZVZ7XTVP77EKOFORYF
+NEXT_PUBLIC_CREDENTIAL_NFT_CONTRACT=CARWFW27MJ3OJADAUAHI3TDFHIL62YMLVEKTUTMSNXOMH7JJTNZKC3DK
+NEXT_PUBLIC_CREDENTIAL_REGISTRY_CONTRACT=CARWFW27MJ3OJADAUAHI3TDFHIL62YMLVEKTUTMSNXOMH7JJTNZKC3DK
 
 # Stellar Network Configuration
 NEXT_PUBLIC_CHAIN_ID=testnet
@@ -665,18 +665,18 @@ stellar keys address deployer
 cd contracts
 
 # Step 1: Build the WASM binary
-cargo build --target wasm32-unknown-unknown --release
+cargo build --target wasm32v1-none --release
 
 # Step 2: Deploy to Stellar Testnet
 stellar contract deploy \
-  --wasm target/wasm32-unknown-unknown/release/acredia_credential.wasm \
+  --wasm target/wasm32v1-none/release/acredia_stellar.wasm \
   --source deployer \
   --network testnet
-# => Returns: CCGDFDLPELTOWG5H5OA4MBR5OZWDP4XJI3S3TQZVZ7XTVP77EKOFORYF
+# => Returns: CARWFW27MJ3OJADAUAHI3TDFHIL62YMLVEKTUTMSNXOMH7JJTNZKC3DK
 
 # Step 3: Initialize the contract with your admin address
 stellar contract invoke \
-  --id CCGDFDLPELTOWG5H5OA4MBR5OZWDP4XJI3S3TQZVZ7XTVP77EKOFORYF \
+  --id CARWFW27MJ3OJADAUAHI3TDFHIL62YMLVEKTUTMSNXOMH7JJTNZKC3DK \
   --source deployer \
   --network testnet \
   -- initialize \
@@ -684,7 +684,7 @@ stellar contract invoke \
 
 # Step 4: Authorize an institution to issue credentials
 stellar contract invoke \
-  --id CCGDFDLPELTOWG5H5OA4MBR5OZWDP4XJI3S3TQZVZ7XTVP77EKOFORYF \
+  --id CARWFW27MJ3OJADAUAHI3TDFHIL62YMLVEKTUTMSNXOMH7JJTNZKC3DK \
   --source deployer \
   --network testnet \
   -- authorize_issuer \
@@ -1068,7 +1068,7 @@ cd contracts
 cargo test
 
 # Build WASM
-cargo build --target wasm32-unknown-unknown --release
+cargo build --target wasm32v1-none --release
 
 # Frontend tests (if configured)
 cd frontend
