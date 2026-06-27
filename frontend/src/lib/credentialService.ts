@@ -313,7 +313,7 @@ export interface CredentialFilters {
 }
 
 export interface PaginatedResult {
-  data: any[];
+  data: unknown[];
   total: number;
   page: number;
   pageSize: number;

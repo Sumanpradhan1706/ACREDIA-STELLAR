@@ -63,11 +63,13 @@ export async function GET(request: NextRequest) {
         const offset   = (page - 1) * pageSize;
 
         // ── Resolve student row ───────────────────────────────────────────────
-        let { data: studentRow, error: studentError } = await supabase
+        const { data: initialStudentRow, error: studentError } = await supabase
             .from('students')
             .select('id, wallet_address')
             .eq('auth_user_id', authCheck.userId)
             .maybeSingle();
+
+        let studentRow = initialStudentRow;
 
         if (studentError) {
             console.error('[student/credentials] Error fetching student row:', studentError);

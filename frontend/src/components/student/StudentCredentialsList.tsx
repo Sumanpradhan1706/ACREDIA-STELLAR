@@ -121,7 +121,7 @@ export default function StudentCredentialsList({
                 ...(dateTo   && { dateTo }),
             });
 
-            const response = await fetch(`/api/student/credentials?${params}`, {
+            let response = await fetch(`/api/student/credentials?${params}`, {
                 headers: { Authorization: `Bearer ${accessToken}` },
             });
             let payload = await response.json();
@@ -129,13 +129,17 @@ export default function StudentCredentialsList({
             if (response.status === 401 && payload?.error === 'Invalid or expired access token') {
                 const { data: refreshed, error: refreshError } =
                     await supabase.auth.refreshSession();
-                accessToken = refreshed.session?.access_token;
+                const newAccessToken = refreshed.session?.access_token;
 
-                if (refreshError || !accessToken) {
+                if (refreshError || !newAccessToken) {
                     throw new Error('Your session expired. Please sign in again.');
                 }
 
-            const payload = await response.json();
+                response = await fetch(`/api/student/credentials?${params}`, {
+                    headers: { Authorization: `Bearer ${newAccessToken}` },
+                });
+                payload = await response.json();
+            }
 
             if (!response.ok || !payload?.success) {
                 throw new Error(payload?.error || 'Failed to load credentials');
@@ -145,9 +149,9 @@ export default function StudentCredentialsList({
             setCredentials(payload.credentials ?? []);
             setTotal(payload.total ?? 0);
             setTotalPages(payload.totalPages ?? 0);
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error('Error loading credentials:', err);
-            setError(err.message || 'Failed to load credentials');
+            setError((err instanceof Error ? err.message : String(err)) || 'Failed to load credentials');
         } finally {
             setLoading(false);
         }

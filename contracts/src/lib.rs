@@ -113,6 +113,40 @@ fn extend_total_credentials_ttl(env: &Env) {
     );
 }
 
+/// Checks if an issuer is authorized, handles TTL extension for persistent storage,
+/// and transparently migrates existing instance-based authorizations to persistent storage.
+fn check_and_extend_authorization(env: &Env, issuer: &Address) -> bool {
+    // 1. Check persistent storage (new behavior)
+    if let Some(authorized) = env.storage().persistent().get::<_, bool>(&DataKey::Authorized(issuer.clone())) {
+        if authorized {
+            env.storage().persistent().extend_ttl(
+                &DataKey::Authorized(issuer.clone()),
+                PERSISTENT_THRESHOLD,
+                PERSISTENT_BUMP_AMOUNT,
+            );
+        }
+        return authorized;
+    }
+
+    // 2. Fallback to instance storage (for existing deployments)
+    if let Some(authorized) = env.storage().instance().get::<_, bool>(&DataKey::Authorized(issuer.clone())) {
+        if authorized {
+            // Migrate to persistent
+            env.storage().persistent().set(&DataKey::Authorized(issuer.clone()), &true);
+            env.storage().persistent().extend_ttl(
+                &DataKey::Authorized(issuer.clone()),
+                PERSISTENT_THRESHOLD,
+                PERSISTENT_BUMP_AMOUNT,
+            );
+            // Clean up instance storage
+            env.storage().instance().remove(&DataKey::Authorized(issuer.clone()));
+        }
+        return authorized;
+    }
+
+    false
+}
+
 #[contractimpl]
 #[allow(deprecated)]
 impl AcrediaCredential {
@@ -183,8 +217,16 @@ impl AcrediaCredential {
         let owner = read_owner(&env);
         owner.require_auth();
         env.storage()
-            .instance()
+            .persistent()
             .set(&DataKey::Authorized(issuer.clone()), &true);
+        env.storage().persistent().extend_ttl(
+            &DataKey::Authorized(issuer.clone()),
+            PERSISTENT_THRESHOLD,
+            PERSISTENT_BUMP_AMOUNT,
+        );
+        env.storage()
+            .instance()
+            .remove(&DataKey::Authorized(issuer.clone())); // Cleanup existing
         extend_instance_ttl(&env);
         env.events().publish((symbol_short!("iss_auth"),), issuer);
     }
@@ -192,6 +234,9 @@ impl AcrediaCredential {
     pub fn revoke_issuer(env: Env, issuer: Address) {
         let owner = read_owner(&env);
         owner.require_auth();
+        env.storage()
+            .persistent()
+            .remove(&DataKey::Authorized(issuer.clone()));
         env.storage()
             .instance()
             .remove(&DataKey::Authorized(issuer.clone()));
@@ -202,10 +247,7 @@ impl AcrediaCredential {
     pub fn is_authorized_issuer(env: Env, issuer: Address) -> bool {
         require_initialized(&env);
         extend_instance_ttl(&env);
-        env.storage()
-            .instance()
-            .get(&DataKey::Authorized(issuer))
-            .unwrap_or(false)
+        check_and_extend_authorization(&env, &issuer)
     }
 
     pub fn issue_credential(
@@ -217,12 +259,7 @@ impl AcrediaCredential {
     ) -> Result<u64, ContractError> {
         issuer.require_auth();
 
-        let is_authorized: bool = env
-            .storage()
-            .instance()
-            .get(&DataKey::Authorized(issuer.clone()))
-            .unwrap_or(false);
-        if !is_authorized {
+        if !check_and_extend_authorization(&env, &issuer) {
             return Err(ContractError::IssuerNotAuthorized);
         }
 
@@ -397,6 +434,14 @@ impl AcrediaCredential {
         extend_total_credentials_ttl(&env);
         extend_instance_ttl(&env);
         Ok(())
+    }
+
+    /// Upgrade the contract to a new WebAssembly code using a WASM hash.
+    pub fn upgrade(env: Env, new_wasm_hash: BytesN<32>) {
+        let owner = read_owner(&env);
+        owner.require_auth();
+        env.deployer().update_current_contract_wasm(new_wasm_hash);
+        extend_instance_ttl(&env);
     }
 }
 
@@ -783,16 +828,18 @@ mod tests {
         let hash = dummy_hash(&env, 21);
 
         let token_id = env.as_contract(&contract, || {
-            let id = AcrediaCredential::issue_credential(
+            AcrediaCredential::issue_credential(
                 env.clone(),
                 student,
                 issuer.clone(),
                 hash.clone(),
                 String::from_str(&env, "ipfs://revoke-ttl"),
             )
-            .unwrap();
-            AcrediaCredential::revoke_credential(env.clone(), id, issuer).unwrap();
-            id
+            .unwrap()
+        });
+
+        env.as_contract(&contract, || {
+            AcrediaCredential::revoke_credential(env.clone(), token_id, issuer).unwrap();
         });
 
         env.ledger().set_sequence_number(5_000_000);
@@ -851,6 +898,44 @@ mod tests {
                 AcrediaCredential::bump_credential(env.clone(), 9999),
                 Err(ContractError::CredentialNotFound)
             );
+        });
+    }
+    #[test]
+    fn test_authorization_migration() {
+        let env = Env::default();
+        env.mock_all_auths();
+        let contract = AcrediaCredential.register(&env, None, ());
+        let owner = Address::generate(&env);
+        let issuer = Address::generate(&env);
+        let student = Address::generate(&env);
+
+        env.as_contract(&contract, || {
+            AcrediaCredential::initialize(env.clone(), owner.clone()).unwrap();
+            
+            // Manually simulate an old deployment by writing to instance storage directly
+            env.storage().instance().set(&DataKey::Authorized(issuer.clone()), &true);
+            
+            // Confirm it's not in persistent storage
+            assert!(!env.storage().persistent().has(&DataKey::Authorized(issuer.clone())));
+            
+            // Call is_authorized_issuer, which should trigger the migration
+            let is_auth = AcrediaCredential::is_authorized_issuer(env.clone(), issuer.clone());
+            assert!(is_auth, "Issuer should be authorized via migration fallback");
+            
+            // Check that it's now in persistent storage and removed from instance
+            assert!(env.storage().persistent().has(&DataKey::Authorized(issuer.clone())));
+            assert!(!env.storage().instance().has(&DataKey::Authorized(issuer.clone())));
+        });
+        
+        env.as_contract(&contract, || {
+            let hash = dummy_hash(&env, 99);
+            AcrediaCredential::issue_credential(
+                env.clone(),
+                student,
+                issuer,
+                hash,
+                String::from_str(&env, "ipfs://test"),
+            ).expect("Should issue credential using migrated authorization");
         });
     }
 }

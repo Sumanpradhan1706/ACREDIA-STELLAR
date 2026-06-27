@@ -19,7 +19,7 @@ const STUDENT_ID = 'student-xyz-456';
 
 function mockChain(returnValue: object) {
     const resolved = vi.fn().mockResolvedValue(returnValue);
-    const chain: any = {
+    const chain: Record<string, unknown> = {
         select:  vi.fn().mockReturnThis(),
         eq:      vi.fn().mockReturnThis(),
         order:   vi.fn().mockReturnThis(),
@@ -153,7 +153,7 @@ describe('getStudentCredentialsPaginated', () => {
         );
 
         const eqCalls = chain.eq.mock.calls;
-        const revokedCall = eqCalls.find((c: any[]) => c[0] === 'revoked');
+        const revokedCall = eqCalls.find((c: unknown[]) => c[0] === 'revoked');
         expect(revokedCall).toBeUndefined();
     });
 
@@ -258,7 +258,7 @@ describe('student credentials API — permission boundaries', () => {
         // Credentials query must be scoped to the resolved student id,
         // not any id supplied by the caller
         const eqCalls = mockCredChain.eq.mock.calls;
-        const studentIdCall = eqCalls.find((c: any[]) => c[0] === 'student_id');
+        const studentIdCall = eqCalls.find((c: unknown[]) => c[0] === 'student_id');
         expect(studentIdCall).toBeDefined();
         expect(studentIdCall[1]).toBe('student-111');
     });

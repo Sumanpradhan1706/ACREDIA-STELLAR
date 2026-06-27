@@ -60,7 +60,7 @@ interface Credential {
 
 const PAGE_SIZE = 20;
 
-export function IssuedCredentialsList({ institutionId, refreshTrigger }: IssuedCredentialsListProps) {
+export function IssuedCredentialsList({ refreshTrigger }: IssuedCredentialsListProps) {
     const router     = useRouter();
     const pathname   = usePathname();
     const searchParams = useSearchParams();
@@ -124,7 +124,7 @@ const res = await fetch(`/api/institution/credentials?${params}`, {
             setCredentials(json.credentials ?? []);
             setTotal(json.total ?? 0);
             setTotalPages(json.totalPages ?? 0);
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error('Error loading credentials:', err);
             setError((err instanceof Error ? err.message : String(err)) || 'Failed to load credentials');
         } finally {
