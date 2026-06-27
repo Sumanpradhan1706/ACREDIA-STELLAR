@@ -282,8 +282,16 @@ function buildServerRuntimeConfig(): ServerRuntimeConfig {
     };
 }
 
-export const runtimeConfig = buildRuntimeConfig();
-export const serverRuntimeConfig = buildServerRuntimeConfig();
+export function getRuntimeConfig(): RuntimeConfig {
+    return buildRuntimeConfig();
+}
+
+export function getServerRuntimeConfig(): ServerRuntimeConfig {
+    return buildServerRuntimeConfig();
+}
+
+export const runtimeConfig = getRuntimeConfig();
+export const serverRuntimeConfig = getServerRuntimeConfig();
 
 export function getConfiguredContractId(contractName: ContractName): string {
     const contractId = runtimeConfig.contracts[contractName];

@@ -1,7 +1,7 @@
-import { runtimeConfig } from './runtimeConfig';
+import { getRuntimeConfig } from './runtimeConfig';
 
 export function isDebugLoggingEnabled(): boolean {
-    return process.env.NODE_ENV !== 'production' && runtimeConfig.debug.enableLogs;
+    return process.env.NODE_ENV !== 'production' && getRuntimeConfig().debug.enableLogs;
 }
 
 export function debugLog(...args: unknown[]) {
