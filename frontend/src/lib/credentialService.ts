@@ -297,3 +297,119 @@ export async function revokeCredentialById(
         throw error;
     }
 }
+
+// ─── Paginated functions for Issue #82 ───────────────────────────────────────
+
+export interface PaginationParams {
+  page: number;
+  pageSize: number;
+}
+
+export interface CredentialFilters {
+  search?: string;
+  status?: 'active' | 'revoked' | 'all';
+  dateFrom?: string;
+  dateTo?: string;
+}
+
+export interface PaginatedResult {
+  data: any[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+}
+
+export async function getInstitutionCredentialsPaginated(
+  institutionId: string,
+  pagination: PaginationParams,
+  filters: CredentialFilters = {}
+): Promise<PaginatedResult> {
+  const { page, pageSize } = pagination;
+  const offset = (page - 1) * pageSize;
+
+  let query = supabase
+    .from('credentials')
+    .select('*', { count: 'exact' })
+    .eq('institution_id', institutionId)
+    .order('issued_at', { ascending: false });
+
+  if (filters.status && filters.status !== 'all') {
+    query = query.eq('revoked', filters.status === 'revoked');
+  }
+  if (filters.dateFrom) {
+    query = query.gte('issued_at', filters.dateFrom);
+  }
+  if (filters.dateTo) {
+    query = query.lte('issued_at', filters.dateTo + 'T23:59:59Z');
+  }
+  if (filters.search?.trim()) {
+    const term = filters.search.trim();
+    query = query.or(
+      `token_id.ilike.%${term}%,` +
+      `metadata->credentialData->>studentName.ilike.%${term}%,` +
+      `metadata->credentialData->>degree.ilike.%${term}%,` +
+      `metadata->credentialData->>credentialType.ilike.%${term}%`
+    );
+  }
+
+  query = query.range(offset, offset + pageSize - 1);
+
+  const { data, error, count } = await query;
+  if (error) throw new Error(error.message ?? String(error));
+
+  return {
+    data: data ?? [],
+    total: count ?? 0,
+    page,
+    pageSize,
+    totalPages: Math.ceil((count ?? 0) / pageSize),
+  };
+}
+
+export async function getStudentCredentialsPaginated(
+  studentId: string,
+  pagination: PaginationParams,
+  filters: CredentialFilters = {}
+): Promise<PaginatedResult> {
+  const { page, pageSize } = pagination;
+  const offset = (page - 1) * pageSize;
+
+  let query = supabase
+    .from('credentials')
+    .select('*', { count: 'exact' })
+    .eq('student_id', studentId)
+    .order('issued_at', { ascending: false });
+
+  if (filters.status && filters.status !== 'all') {
+    query = query.eq('revoked', filters.status === 'revoked');
+  }
+  if (filters.dateFrom) {
+    query = query.gte('issued_at', filters.dateFrom);
+  }
+  if (filters.dateTo) {
+    query = query.lte('issued_at', filters.dateTo + 'T23:59:59Z');
+  }
+  if (filters.search?.trim()) {
+    const term = filters.search.trim();
+    query = query.or(
+      `metadata->credentialData->>institutionName.ilike.%${term}%,` +
+      `metadata->credentialData->>credentialType.ilike.%${term}%,` +
+      `metadata->credentialData->>degree.ilike.%${term}%,` +
+      `token_id.ilike.%${term}%`
+    );
+  }
+
+  query = query.range(offset, offset + pageSize - 1);
+
+  const { data, error, count } = await query;
+  if (error) throw new Error(error.message ?? String(error));
+
+  return {
+    data: data ?? [],
+    total: count ?? 0,
+    page,
+    pageSize,
+    totalPages: Math.ceil((count ?? 0) / pageSize),
+  };
+}

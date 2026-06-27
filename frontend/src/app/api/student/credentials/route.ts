@@ -46,14 +46,23 @@ export async function GET(request: NextRequest) {
             ? authHeader.slice(7)
             : '';
 
-        // Always prefer the service role client on the server side so RLS
-        // never blocks legitimate server-to-server reads.
-        // Falls back to a user-scoped client when the key is not configured.
         const supabase = hasServiceRoleEnv()
             ? getServiceRoleClient()
             : createUserScopedServerClient(accessToken);
 
-        // eslint-disable-next-line prefer-const
+        // ── Pagination & filter params ────────────────────────────────────────
+        const { searchParams } = new URL(request.url);
+        const rawPage     = parseInt(searchParams.get('page')     ?? '1');
+        const rawPageSize = parseInt(searchParams.get('pageSize') ?? '20');
+        const page     = Math.max(1, isNaN(rawPage)     ? 1  : rawPage);
+        const pageSize = Math.min(100, Math.max(1, isNaN(rawPageSize) ? 20 : rawPageSize));
+        const search   = searchParams.get('search')   ?? '';
+        const status   = searchParams.get('status')   ?? 'all';
+        const dateFrom = searchParams.get('dateFrom') ?? '';
+        const dateTo   = searchParams.get('dateTo')   ?? '';
+        const offset   = (page - 1) * pageSize;
+
+        // ── Resolve student row ───────────────────────────────────────────────
         let { data: studentRow, error: studentError } = await supabase
             .from('students')
             .select('id, wallet_address')
@@ -68,10 +77,7 @@ export async function GET(request: NextRequest) {
             );
         }
 
-        // ── Auto-create the student row if it is missing ──────────────────────
-        // This fixes students who registered after the secure RLS migration was
-        // applied — their signUp() INSERT was silently blocked because auth.uid()
-        // is NULL when using the anon client directly after supabase.auth.signUp().
+        // ── Auto-create student row if missing ────────────────────────────────
         if (!studentRow) {
             console.warn(
                 '[student/credentials] No student row found for userId:',
@@ -106,8 +112,6 @@ export async function GET(request: NextRequest) {
                             newStudent.id,
                         );
                     } else {
-                        // E-mail collision — row exists with a different auth_user_id,
-                        // try fetching the row by email and adopt it.
                         const { data: byEmail } = await serviceClient
                             .from('students')
                             .select('id, wallet_address')
@@ -119,53 +123,55 @@ export async function GET(request: NextRequest) {
             }
         }
 
-        const fetchByStudentId = async (): Promise<CredentialRow[]> => {
-            if (!studentRow?.id) return [];
+        if (!studentRow?.id) {
+            return NextResponse.json({ success: true, credentials: [], total: 0, page, pageSize, totalPages: 0 });
+        }
 
-            const { data, error } = await supabase
-                .from('credentials')
-                .select(
-                    `id, token_id, ipfs_hash, blockchain_hash, metadata, issued_at, revoked,
-                     institution:institutions(name)`,
-                )
-                .eq('student_id', studentRow.id)
-                .order('issued_at', { ascending: false });
+        // ── Build paginated query ─────────────────────────────────────────────
+        let query = supabase
+            .from('credentials')
+            .select(
+                `id, token_id, ipfs_hash, blockchain_hash, metadata, issued_at, revoked,
+                 institution:institutions(name)`,
+                { count: 'exact' }
+            )
+            .eq('student_id', studentRow.id)
+            .order('issued_at', { ascending: false })
+            .range(offset, offset + pageSize - 1);
 
-            if (error) throw error;
-            return (data || []) as CredentialRow[];
-        };
+        if (status === 'active')  query = query.eq('revoked', false);
+        if (status === 'revoked') query = query.eq('revoked', true);
+        if (dateFrom) query = query.gte('issued_at', dateFrom);
+        if (dateTo)   query = query.lte('issued_at', dateTo + 'T23:59:59Z');
+        if (search.trim()) {
+            const term = search.trim();
+            query = query.or(
+                `token_id.ilike.%${term}%,` +
+                `metadata->credentialData->>institutionName.ilike.%${term}%,` +
+                `metadata->credentialData->>credentialType.ilike.%${term}%,` +
+                `metadata->credentialData->>degree.ilike.%${term}%`
+            );
+        }
 
-        const fetchByWallet = async (): Promise<CredentialRow[]> => {
-            if (!studentRow?.wallet_address) return [];
+        const { data, error, count } = await query;
+        if (error) throw error;
 
-            const { data, error } = await supabase
-                .from('credentials')
-                .select(
-                    `id, token_id, ipfs_hash, blockchain_hash, metadata, issued_at, revoked,
-                     institution:institutions(name)`,
-                )
-                .eq('student_wallet_address', studentRow.wallet_address)
-                .order('issued_at', { ascending: false });
+        const credentials = (data || []).map((c: CredentialRow) => ({
+            ...c,
+            institution: Array.isArray(c.institution)
+                ? c.institution[0] || null
+                : c.institution || null,
+        }));
 
-            if (error) throw error;
-            return (data || []) as CredentialRow[];
-        };
+        return NextResponse.json({
+            success: true,
+            credentials,
+            total: count ?? 0,
+            page,
+            pageSize,
+            totalPages: Math.ceil((count ?? 0) / pageSize),
+        });
 
-        const [byStudentId, byWallet] = await Promise.all([fetchByStudentId(), fetchByWallet()]);
-
-        const merged = new Map<string, CredentialRow>();
-        [...byStudentId, ...byWallet].forEach((c) => merged.set(c.id, c));
-
-        const credentials = Array.from(merged.values())
-            .map((c) => ({
-                ...c,
-                institution: Array.isArray(c.institution)
-                    ? c.institution[0] || null
-                    : c.institution || null,
-            }))
-            .sort((a, b) => new Date(b.issued_at).getTime() - new Date(a.issued_at).getTime());
-
-        return NextResponse.json({ success: true, credentials });
     } catch (err) {
         console.error('[student/credentials] Unhandled error:', err);
         return NextResponse.json(
